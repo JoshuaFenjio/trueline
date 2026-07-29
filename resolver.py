@@ -65,6 +65,38 @@ COMPANY_NAMES = [
     "Typeform", "Pitch", "Miro", "Mews", "TravelPerk", "Juro", "Beamery",
     "PayFit", "Swile", "Leapsome", "Humaans", "Pipedrive", "Darktrace",
     "Graphcore", "Truecaller", "Kahoot", "Cognite", "Contentsquare", "Peak",
+    # --- 2026 expansion -----------------------------------------------------
+    # AI/ML
+    "Aleph Alpha", "Poolside", "H Company", "Photoroom", "Nabla", "Owkin",
+    "Hugging Face", "LightOn", "Kyutai", "Black Forest Labs", "Parloa", "Langdock",
+    "DeepJudge", "Lakera", "Giskard", "Dust", "Finegrain", "Gladia", "LeChat",
+    "Unbabel",
+    # Fintech
+    "Zilch", "Curve", "Cleo", "Plum", "Moneybox", "Freetrade", "PrimaryBid",
+    "Codat", "Yapily", "TrueLayer", "Volt", "Vivid Money", "Solaris", "Raisin",
+    "Scalable Capital", "Bitpanda", "Ramp Network", "Payhawk", "Wamo", "Finom",
+    "Bunq", "Alma", "Lydia", "Swan", "Defacto", "Memo Bank",
+    # Devtools / infra
+    "Sentry", "Checkly", "Appsmith", "Directus", "Strapi", "Meilisearch", "Qovery",
+    "Koyeb", "Scaleway", "OVHcloud", "Upstash", "Weaviate", "Qdrant", "Neo4j",
+    "Camunda", "Cypress", "Storyblok", "Hygraph", "Crowdin", "Localazy",
+    # SaaS / B2B
+    "Pigment", "Payflows", "360Learning", "Yousign", "Agicap", "Sellsy", "Odoo",
+    "Teamleader", "Silae", "Combo", "Skello", "Shine", "Regate", "Libeo", "Upflow",
+    "Front", "Intercom", "Matomo", "Klaxoon", "Slite", "Notion", "Whereby",
+    "Superside",
+    # Consumer / marketplace / mobility
+    "Too Good To Go", "Voi", "Tier Mobility", "Bolt", "Heetch", "Cabify",
+    "Free Now", "Flink", "Getir", "Picnic", "Rohlik", "La Fourche", "Ankorstore",
+    "Mirakl", "Veepee", "Zalando", "About You", "Otto Group", "Douglas", "Idealo",
+    # Health / bio
+    "Zava", "Kaia Health", "Ada Health", "Doctorly", "Avi Medical", "Patient21",
+    "Medwing", "Heartbeat Medical",
+    # Security
+    "Tines", "Detectify", "Truffle Security", "Hoxhunt", "CybelAngel", "Gatewatcher",
+    # Nordics
+    "Spotify", "Epidemic Sound", "Kognity", "Mentimeter", "Voyado", "Dixa",
+    "Templafy", "Supermetrics", "Smartly", "Swappie", "Silo AI",
 ]
 
 

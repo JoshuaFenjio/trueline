@@ -43,6 +43,51 @@ const SECTOR_BY_COMPANY: Record<string, Sector> = {
 
   // Security
   Snyk: "Security", Darktrace: "Security", Onfido: "Security",
+
+  // ---- 2026 expansion ------------------------------------------------------
+  // AI / ML
+  "Aleph Alpha": "AI", Poolside: "AI", "H Company": "AI", Photoroom: "AI",
+  "Hugging Face": "AI", LightOn: "AI", Kyutai: "AI", "Black Forest Labs": "AI",
+  Parloa: "AI", Langdock: "AI", DeepJudge: "AI", Giskard: "AI", Dust: "AI",
+  Finegrain: "AI", Gladia: "AI", LeChat: "AI", Unbabel: "AI", "Silo AI": "AI",
+  // Fintech
+  Zilch: "Fintech", Curve: "Fintech", Cleo: "Fintech", Plum: "Fintech",
+  Moneybox: "Fintech", Freetrade: "Fintech", PrimaryBid: "Fintech", Codat: "Fintech",
+  Yapily: "Fintech", TrueLayer: "Fintech", Volt: "Fintech", "Vivid Money": "Fintech",
+  Solaris: "Fintech", Raisin: "Fintech", "Scalable Capital": "Fintech", Bitpanda: "Fintech",
+  "Ramp Network": "Fintech", Payhawk: "Fintech", Wamo: "Fintech", Finom: "Fintech",
+  Bunq: "Fintech", Alma: "Fintech", Lydia: "Fintech", Swan: "Fintech",
+  Defacto: "Fintech", "Memo Bank": "Fintech",
+  // Devtools / infra
+  Sentry: "Devtools", Checkly: "Devtools", Appsmith: "Devtools", Directus: "Devtools",
+  Strapi: "Devtools", Meilisearch: "Devtools", Qovery: "Devtools", Koyeb: "Devtools",
+  Scaleway: "Devtools", OVHcloud: "Devtools", Upstash: "Devtools", Weaviate: "Devtools",
+  Qdrant: "Devtools", Neo4j: "Devtools", Camunda: "Devtools", Cypress: "Devtools",
+  Storyblok: "Devtools", Hygraph: "Devtools", Crowdin: "Devtools", Localazy: "Devtools",
+  // SaaS / B2B
+  Pigment: "SaaS", Payflows: "SaaS", "360Learning": "SaaS", Yousign: "SaaS",
+  Agicap: "SaaS", Sellsy: "SaaS", Odoo: "SaaS", Teamleader: "SaaS", Silae: "SaaS",
+  Combo: "SaaS", Skello: "SaaS", Shine: "SaaS", Regate: "SaaS", Libeo: "SaaS",
+  Upflow: "SaaS", Front: "SaaS", Intercom: "SaaS", Matomo: "SaaS", Klaxoon: "SaaS",
+  Slite: "SaaS", Notion: "SaaS", Whereby: "SaaS", Superside: "SaaS", Kognity: "SaaS",
+  Mentimeter: "SaaS", Voyado: "SaaS", Dixa: "SaaS", Templafy: "SaaS",
+  Supermetrics: "SaaS", Smartly: "SaaS",
+  // Consumer / marketplace
+  "Too Good To Go": "Consumer", Flink: "Consumer", Getir: "Consumer", Picnic: "Consumer",
+  Rohlik: "Consumer", "La Fourche": "Consumer", Ankorstore: "Consumer", Mirakl: "Consumer",
+  Veepee: "Consumer", Zalando: "Consumer", "About You": "Consumer", "Otto Group": "Consumer",
+  Douglas: "Consumer", Idealo: "Consumer", Spotify: "Consumer", "Epidemic Sound": "Consumer",
+  Swappie: "Consumer",
+  // Mobility
+  Voi: "Mobility", "Tier Mobility": "Mobility", Bolt: "Mobility", Heetch: "Mobility",
+  Cabify: "Mobility", "Free Now": "Mobility",
+  // Health / bio
+  Nabla: "Health", Owkin: "Health", Zava: "Health", "Kaia Health": "Health",
+  "Ada Health": "Health", Doctorly: "Health", "Avi Medical": "Health", Patient21: "Health",
+  Medwing: "Health", "Heartbeat Medical": "Health",
+  // Security
+  Lakera: "Security", Tines: "Security", Detectify: "Security", "Truffle Security": "Security",
+  Hoxhunt: "Security", CybelAngel: "Security", Gatewatcher: "Security",
 };
 
 export function sectorOf(company: string): Sector {
