@@ -74,3 +74,33 @@ export function percentileRank(pop: number[], value: number): number {
   const equal = pop.filter((v) => v === value).length;
   return Math.round(((below + 0.5 * equal) / pop.length) * 100);
 }
+
+// Trend: median of values dated in the last 90d vs the prior 90d.
+export type TrendDir = "up" | "down" | "flat" | "new" | "insufficient";
+export interface Trend {
+  dir: TrendDir;
+  pct: number | null;
+  recentN: number;
+  priorN: number;
+}
+
+const DAY = 86_400_000;
+
+export function computeTrend(items: { dateMs: number; value: number }[], nowMs: number): Trend {
+  const recent: number[] = [];
+  const prior: number[] = [];
+  for (const it of items) {
+    if (!it.dateMs) continue;
+    const age = nowMs - it.dateMs;
+    if (age < 0) continue;
+    if (age <= 90 * DAY) recent.push(it.value);
+    else if (age <= 180 * DAY) prior.push(it.value);
+  }
+  if (recent.length < 8) return { dir: "insufficient", pct: null, recentN: recent.length, priorN: prior.length };
+  if (prior.length < 8) return { dir: "new", pct: null, recentN: recent.length, priorN: prior.length };
+  const mr = median(recent);
+  const mp = median(prior);
+  const pct = mp > 0 ? ((mr - mp) / mp) * 100 : 0;
+  const dir: TrendDir = pct > 2 ? "up" : pct < -2 ? "down" : "flat";
+  return { dir, pct, recentN: recent.length, priorN: prior.length };
+}

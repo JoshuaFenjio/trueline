@@ -72,7 +72,7 @@ export default async function CompaniesPage({
                 </div>
                 <div className="mt-4 flex items-end justify-between">
                   <div>
-                    <div className="tnum text-xl font-semibold">{eur(c.medianBase)}</div>
+                    <div className="tnum text-xl font-semibold">{eur(c.midpoint)}</div>
                     <div className="text-xs text-ink-faint">median advertised base</div>
                   </div>
                   <div className="tnum text-xs text-ink-faint">{c.n} roles</div>

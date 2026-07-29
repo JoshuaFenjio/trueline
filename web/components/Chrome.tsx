@@ -13,6 +13,7 @@ export function Logo({ className = "" }: { className?: string }) {
 }
 
 const links = [
+  { href: "/leaderboards", label: "Leaderboards" },
   { href: "/companies", label: "Companies" },
   { href: "/add", label: "Add salary" },
   { href: "/methodology", label: "Methodology" },
