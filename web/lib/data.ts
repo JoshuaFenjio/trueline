@@ -34,6 +34,18 @@ function parseDate(s: string | null): number {
   return Number.isNaN(t) ? 0 : t;
 }
 
+// A USD salary on a posting that also names a US locality is US-market comp,
+// not EMEA base pay (e.g. Wayve "London; Sunnyvale", GitLab "Remote, US"). Such
+// postings are kept in the dataset because they also list an EMEA office, but
+// their advertised band reflects the US market and must not skew EMEA medians.
+const US_MARKET =
+  /\b(united states|u\.?s\.?a?|north america|americas?|sunnyvale|san francisco|mountain view|palo alto|menlo park|san jose|new york|seattle|austin|boston|los angeles|san diego|chicago|denver|atlanta|miami|illinois|california|texas)\b|,\s*(ca|ny|tx|wa|il|co|ga|fl|ma|nc|va|az|or|pa)\b/i;
+
+function isUsMarketPay(currency: string | null, city: string | null, location: string | null): boolean {
+  if ((currency || "").toUpperCase() !== "USD") return false;
+  return US_MARKET.test(`${city || ""} ${location || ""}`);
+}
+
 const _fetch = unstable_cache(
   async (): Promise<Posting[]> => {
     const sb = getSupabase();
@@ -44,7 +56,7 @@ const _fetch = unstable_cache(
       const { data, error } = await sb
         .from("job_postings")
         .select(
-          "company,role_family,title,city,location,country,remote,salary_eur_min,salary_eur_max,salary_period,salary_source,url,posted_at"
+          "company,role_family,title,city,location,country,remote,salary_eur_min,salary_eur_max,salary_period,salary_source,currency,url,posted_at"
         )
         .eq("status", "active")
         .range(from, from + PAGE - 1);
@@ -54,7 +66,9 @@ const _fetch = unstable_cache(
     }
     return all.map((r): Posting => {
       const disclosed = r.salary_source && r.salary_source !== "none";
-      const annual = disclosed ? annualMidpointEur(r) : null;
+      let annual = disclosed ? annualMidpointEur(r) : null;
+      // Drop US-market comp from EMEA base-pay stats (see US_MARKET above).
+      if (annual !== null && isUsMarketPay(r.currency, r.city, r.location)) annual = null;
       const place = resolvePlace(r.city || r.location, r.country);
       return {
         company: r.company,
@@ -71,7 +85,7 @@ const _fetch = unstable_cache(
       };
     });
   },
-  ["trueline-active-v2"],
+  ["trueline-active-v3"],
   { revalidate: 3600 }
 );
 
