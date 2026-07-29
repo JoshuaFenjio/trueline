@@ -1,0 +1,37 @@
+# Runs the Trueline scraper every 6 hours and writes fresh data to Supabase.
+#
+# Why GitHub Actions and not a Vercel cron: the scraper is a multi-minute Python
+# job (78 companies, polite delays). Vercel's free serverless functions time out
+# long before it finishes. GitHub Actions is free for public repos and has no
+# such limit, so it's the right home for the refresh. Both stay on free tiers.
+#
+# SETUP (once): in the GitHub repo -> Settings -> Secrets and variables ->
+# Actions, add two repository secrets:
+#   SUPABASE_URL          your https://xxxx.supabase.co
+#   SUPABASE_SERVICE_KEY  your service_role key
+name: Refresh salary data
+
+on:
+  schedule:
+    - cron: "0 */6 * * *" # every 6 hours (UTC)
+  workflow_dispatch: {} # lets you run it manually from the Actions tab
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scraper -> Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python pipeline.py

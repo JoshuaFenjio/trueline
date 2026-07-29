@@ -1,0 +1,76 @@
+import Link from "next/link";
+import { ReactNode } from "react";
+
+export function Card({
+  children, className = "", as: Tag = "div",
+}: { children: ReactNode; className?: string; as?: any }) {
+  return (
+    <Tag className={`surface rounded-card p-5 md:p-6 ${className}`}>{children}</Tag>
+  );
+}
+
+export function Pill({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs md:text-sm ${className}`}
+      style={{ background: "var(--surface-2)" }}
+    >
+      {children}
+    </span>
+  );
+}
+
+export function LiveDot() {
+  return (
+    <span className="relative flex h-2 w-2">
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60" style={{ background: "var(--mint)" }} />
+      <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: "var(--mint)" }} />
+    </span>
+  );
+}
+
+export function PrimaryButton({ children, type = "submit", className = "" }: { children: ReactNode; type?: "submit" | "button"; className?: string }) {
+  return (
+    <button type={type} className={`btn-primary rounded-xl px-5 py-3 text-sm ${className}`}>
+      {children}
+    </button>
+  );
+}
+
+export function GhostLink({ href, children, className = "" }: { href: string; children: ReactNode; className?: string }) {
+  return (
+    <Link href={href} className={`btn-ghost inline-flex items-center rounded-xl px-4 py-2.5 text-sm ${className}`}>
+      {children}
+    </Link>
+  );
+}
+
+// Pay Score color by band: mint / blue / amber / ember
+export function scoreColor(score: number): string {
+  if (score >= 75) return "var(--mint)";
+  if (score >= 50) return "#5E8BFF";
+  if (score >= 30) return "#F5B84B";
+  return "var(--ember)";
+}
+
+export function ScoreBadge({ score, size = "md" }: { score: number; size?: "sm" | "md" | "lg" }) {
+  const color = scoreColor(score);
+  const dim = size === "lg" ? "h-20 w-20 text-3xl" : size === "sm" ? "h-10 w-10 text-sm" : "h-14 w-14 text-xl";
+  return (
+    <div
+      className={`tnum inline-flex items-center justify-center rounded-2xl font-semibold ${dim}`}
+      style={{ color, border: `1px solid ${color}55`, background: `${color}14`, boxShadow: `0 0 22px -6px ${color}66` }}
+    >
+      {score}
+    </div>
+  );
+}
+
+export function Stat({ label, value, tone }: { label: string; value: ReactNode; tone?: string }) {
+  return (
+    <div>
+      <div className="tnum text-lg md:text-xl font-semibold" style={tone ? { color: tone } : undefined}>{value}</div>
+      <div className="text-xs text-ink-faint mt-0.5">{label}</div>
+    </div>
+  );
+}

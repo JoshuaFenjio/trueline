@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #07080b;
+  --surface-1: rgba(255, 255, 255, 0.032);
+  --surface-2: rgba(255, 255, 255, 0.045);
+  --surface-3: rgba(255, 255, 255, 0.055);
+  --border: rgba(255, 255, 255, 0.085);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --ink: #f4f5f7;
+  --ink-muted: #a3a9b5;
+  --ink-faint: #6e7480;
+  --ember: #ff6a45;
+  --mint: #4ade9c;
+  --brand-ring: #7c6cff;
+  --gradient: linear-gradient(92deg, #8f7bff, #5e8bff 55%, #4ec9ff);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Ambient layers — radial glow from top + faint fading grid ----------------- */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(124, 108, 255, 0.16), transparent 60%);
+  pointer-events: none;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(100% 60% at 50% 0%, black, transparent 75%);
+  mask-image: radial-gradient(100% 60% at 50% 0%, black, transparent 75%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Utilities ----------------------------------------------------------------- */
+.gradient-text {
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.gradient-bg {
+  background: var(--gradient);
+}
+
+.surface {
+  background:
+    linear-gradient(180deg, var(--surface-2), var(--surface-1));
+  border: 1px solid var(--border);
+}
+
+.surface-hover:hover {
+  border-color: var(--border-strong);
+  background: linear-gradient(180deg, var(--surface-3), var(--surface-1));
+}
+
+.serif-accent {
+  font-family: var(--font-instrument), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.tnum {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Focus rings --------------------------------------------------------------- */
+:focus-visible {
+  outline: 2px solid var(--brand-ring);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Buttons ------------------------------------------------------------------- */
+.btn-primary {
+  background: var(--gradient);
+  color: #0a0b10;
+  font-weight: 600;
+  box-shadow: 0 6px 30px -6px rgba(124, 108, 255, 0.6);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+.btn-primary:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 8px 40px -6px rgba(124, 108, 255, 0.8);
+}
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-ghost {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.btn-ghost:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+
+/* Form controls ------------------------------------------------------------- */
+.field {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  border-radius: 12px;
+}
+.field::placeholder {
+  color: var(--ink-faint);
+}
+.field:focus {
+  border-color: var(--brand-ring);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(124, 108, 255, 0.25);
+}
+select.field option {
+  background: #0d0f15;
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
