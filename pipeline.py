@@ -994,10 +994,6 @@ class SupabaseDB:
                                     "ats_job_id": "eq." + p["ats_job_id"],
                                     "select": "id"})
         body = dict(p)
-        # region / multi_market are derived at read-time by the web layer and are
-        # not (yet) columns in Supabase — drop them so the upsert stays valid.
-        body.pop("region", None)
-        body.pop("multi_market", None)
         body.update({"last_seen": ts, "status": "active", "expired_at": None})
         if existing:
             self._req("PATCH", "/job_postings",

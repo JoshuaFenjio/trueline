@@ -53,7 +53,11 @@ POSTING_COLS = [
     "country", "remote", "salary_min", "salary_max", "currency", "salary_period",
     "salary_eur_min", "salary_eur_max", "salary_source", "posted_at", "url",
     "description", "first_seen", "last_seen", "expired_at", "status",
+    "region", "multi_market",
 ]
+
+# Columns stored as 0/1 in SQLite that must go up as JSON booleans.
+BOOL_COLS = {"remote", "multi_market"}
 
 
 def rows_from_sqlite(table, cols):
@@ -63,8 +67,9 @@ def rows_from_sqlite(table, cols):
     out = []
     for r in cur.fetchall():
         d = {c: r[c] for c in cols}
-        if "remote" in d and d["remote"] is not None:
-            d["remote"] = bool(d["remote"])
+        for b in BOOL_COLS:
+            if b in d and d[b] is not None:
+                d[b] = bool(d[b])
         out.append(d)
     conn.close()
     return out

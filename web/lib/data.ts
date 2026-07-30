@@ -6,7 +6,7 @@ import {
 } from "./stats";
 import { levelBucket, isTrainee, Level, LEVELS } from "./levels";
 import { sectorOf, Sector } from "./sectors";
-import { resolvePlace, classifyRegion } from "./geo";
+import { resolvePlace } from "./geo";
 import { slugify } from "./format";
 
 export { isConfigured };
@@ -48,7 +48,7 @@ const _fetch = unstable_cache(
       const { data, error } = await sb
         .from("job_postings")
         .select(
-          "company,role_family,title,city,location,country,remote,salary_eur_min,salary_eur_max,salary_period,salary_source,currency,url,posted_at"
+          "company,role_family,title,city,location,country,remote,salary_eur_min,salary_eur_max,salary_period,salary_source,currency,url,posted_at,region,multi_market"
         )
         .eq("status", "active")
         .range(from, from + PAGE - 1);
@@ -58,10 +58,11 @@ const _fetch = unstable_cache(
     }
     return all
       .map((r): Posting | null => {
-        const { region, multiMarket } = classifyRegion(r.location, r.city, r.country);
-        // The tightened filter reclassifies some stored rows (e.g. "Lake Zurich,
-        // Illinois") as non-EMEA — exclude them from the EMEA dataset entirely.
-        if (region === "NONEMEA") return null;
+        // region / multi_market are tagged by the pipeline (see classify_region)
+        // and stored in Supabase — read them directly, no recompute.
+        const multiMarket = r.multi_market === true;
+        // Non-EMEA rows (e.g. "Lake Zurich, Illinois") are excluded entirely.
+        if (r.region === "NONEMEA") return null;
 
         const disclosed = r.salary_source && r.salary_source !== "none";
         let annual = disclosed ? annualMidpointEur(r) : null;
@@ -91,7 +92,7 @@ const _fetch = unstable_cache(
       })
       .filter((p): p is Posting => p !== null);
   },
-  ["trueline-active-v5"],
+  ["trueline-active-v6"],
   { revalidate: 3600 }
 );
 
