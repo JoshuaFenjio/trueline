@@ -154,3 +154,71 @@ export function resolvePlace(rawCity: string | null, rawCountry: string | null):
   const city = CITY_DISPLAY[key] || titleCase(cleaned);
   return { city, country, remote: false };
 }
+
+// ---------------------------------------------------------------------------
+// Region classification (mirrors pipeline.py classify_region). Splits a posting
+// into office-segments on ; / | and, WITHIN each segment, checks US-state /
+// non-EMEA locality BEFORE EMEA city names — so "Lake Zurich, Illinois" resolves
+// to the US, not Switzerland. multiMarket = spans both an EMEA and a non-EMEA
+// office (kept for EMEA candidates, but its non-EMEA-currency pay is excluded).
+// ---------------------------------------------------------------------------
+// Non-EMEA cities/countries (word-boundary; \b already stops "lima"⊂"Limassol",
+// "peru"⊂"Perugia", "arlington"⊂"Darlington").
+const NON_RE =
+  /\b(united states|north america|americas?|us[- ]only|new york|brooklyn|san francisco|bay area|silicon valley|los angeles|san diego|san jose|palo alto|mountain view|menlo park|sunnyvale|santa clara|seattle|bellevue|austin|dallas|houston|boston|chicago|denver|boulder|atlanta|miami|arlington|philadelphia|phoenix|portland|nashville|raleigh|durham|charlotte|columbus|detroit|minneapolis|salt lake city|las vegas|san antonio|pittsburgh|kansas city|tampa|orlando|sacramento|irvine|washington|canada|toronto|vancouver|montreal|ottawa|calgary|edmonton|waterloo|ontario|quebec|british columbia|mexico|brazil|brasil|argentina|chile|colombia|peru|uruguay|venezuela|ecuador|latam|latin america|s[aã]o paulo|mexico city|buenos aires|bogota|lima|santiago|india|china|japan|singapore|australia|new zealand|hong kong|korea|taiwan|thailand|malaysia|indonesia|philippines|vietnam|apac|asia pacific|bangalore|bengaluru|mumbai|delhi|hyderabad|chennai|pune|gurgaon|beijing|shanghai|shenzhen|tokyo|osaka|sydney|melbourne|seoul|taipei|bangkok|jakarta|manila)\b/i;
+// US state / Canadian province / non-EMEA country = a DISAMBIGUATOR. Hyphen-safe
+// lookarounds so "maine" does not match "Maine-et-Loire".
+const US_DISAMBIG_RE =
+  /(?<![\w-])(alabama|alaska|arizona|arkansas|california|colorado|connecticut|delaware|florida|hawaii|idaho|illinois|indiana|iowa|kansas|kentucky|louisiana|maine|maryland|massachusetts|michigan|minnesota|mississippi|missouri|montana|nebraska|nevada|new hampshire|new jersey|new mexico|north carolina|north dakota|ohio|oklahoma|oregon|pennsylvania|rhode island|south carolina|south dakota|tennessee|texas|utah|vermont|virginia|west virginia|wisconsin|wyoming|ontario|quebec|québec|alberta|manitoba|saskatchewan|british columbia|nova scotia|new brunswick|newfoundland|prince edward island|yukon|nunavut|united states|usa|canada|north america|us[- ]only)(?![\w-])/i;
+const US_PHRASE_RE = /\b(us|usa)\b|\bu\.s\.?a?\.?\b/i;
+const NON_CC = new Set(["us", "ca", "mx", "br", "ar", "cl", "co", "pe", "uy", "ve",
+  "ec", "in", "cn", "jp", "sg", "au", "nz", "hk", "kr", "tw", "th", "my", "id", "ph", "vn"]);
+
+function wbRe(words: string[]): RegExp {
+  return new RegExp("(?<![\\w-])(" + words
+    .sort((a, b) => b.length - a.length)
+    .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")(?![\\w-])", "i");
+}
+// EMEA country/region names (not cities) — an EMEA country overrides a stray
+// US-state match in the same segment.
+const EMEA_COUNTRY_RE = wbRe([
+  ...Object.values(COUNTRY_ALIASES).map((s) => s.toLowerCase()),
+  "europe", "emea", "middle east", "africa", "nordics", "benelux", "dach",
+]);
+// Any EMEA signal (countries + cities).
+const EMEA_RE = wbRe([
+  ...Object.values(COUNTRY_ALIASES).map((s) => s.toLowerCase()),
+  ...Object.keys(CITY_COUNTRY), "europe", "emea", "middle east", "africa", "uk", "uae",
+]);
+
+type Seg = "EMEA" | "NONEMEA" | "MULTI" | "UNKNOWN";
+function segRegion(seg: string): Seg {
+  const l = seg.toLowerCase();
+  const emeaCountry = EMEA_COUNTRY_RE.test(l);
+  const emea = emeaCountry || EMEA_RE.test(l);
+  const usDisambig = US_DISAMBIG_RE.test(l) || US_PHRASE_RE.test(l);
+  const usLocal = usDisambig || NON_RE.test(l);
+  if (usDisambig && !emeaCountry) return "NONEMEA";
+  if (emea && usLocal) return "MULTI";
+  if (emea) return "EMEA";
+  if (usLocal) return "NONEMEA";
+  return "UNKNOWN";
+}
+
+export interface RegionTag { region: "EMEA" | "NONEMEA" | "UNKNOWN"; multiMarket: boolean; }
+
+export function classifyRegion(location: string | null, city: string | null, country: string | null): RegionTag {
+  const text = [location, city].filter(Boolean).join(" ");
+  const labels: Seg[] = text.split(/[;/|\n]/).map((s) => s.trim()).filter(Boolean).map(segRegion);
+  const cc = (country || "").trim().toLowerCase();
+  if (cc && COUNTRY_ALIASES[cc]) labels.push("EMEA");
+  else if (NON_CC.has(cc)) labels.push("NONEMEA");
+  else if (country) labels.push(segRegion(country));
+
+  const hasE = labels.some((l) => l === "EMEA" || l === "MULTI");
+  const hasN = labels.some((l) => l === "NONEMEA" || l === "MULTI");
+  if (hasE && hasN) return { region: "EMEA", multiMarket: true };
+  if (hasE) return { region: "EMEA", multiMarket: false };
+  if (hasN) return { region: "NONEMEA", multiMarket: false };
+  return { region: "UNKNOWN", multiMarket: false };
+}

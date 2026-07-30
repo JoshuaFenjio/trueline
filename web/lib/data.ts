@@ -6,7 +6,7 @@ import {
 } from "./stats";
 import { levelBucket, Level, LEVELS } from "./levels";
 import { sectorOf, Sector } from "./sectors";
-import { resolvePlace } from "./geo";
+import { resolvePlace, classifyRegion } from "./geo";
 import { slugify } from "./format";
 
 export { isConfigured };
@@ -24,6 +24,7 @@ export interface Posting {
   remote: boolean;
   annual: number | null; // usable base for stats, or null
   disclosed: boolean; // ad stated any salary (source !== none)
+  multiMarket: boolean; // spans an EMEA and a non-EMEA office
   url: string | null;
   dateMs: number; // posted_at parsed (temporal signal for trends)
 }
@@ -34,17 +35,8 @@ function parseDate(s: string | null): number {
   return Number.isNaN(t) ? 0 : t;
 }
 
-// A USD salary on a posting that also names a US locality is US-market comp,
-// not EMEA base pay (e.g. Wayve "London; Sunnyvale", GitLab "Remote, US"). Such
-// postings are kept in the dataset because they also list an EMEA office, but
-// their advertised band reflects the US market and must not skew EMEA medians.
-const US_MARKET =
-  /\b(united states|u\.?s\.?a?|north america|americas?|sunnyvale|san francisco|mountain view|palo alto|menlo park|san jose|new york|seattle|austin|boston|los angeles|san diego|chicago|denver|atlanta|miami|illinois|california|texas)\b|,\s*(ca|ny|tx|wa|il|co|ga|fl|ma|nc|va|az|or|pa)\b/i;
-
-function isUsMarketPay(currency: string | null, city: string | null, location: string | null): boolean {
-  if ((currency || "").toUpperCase() !== "USD") return false;
-  return US_MARKET.test(`${city || ""} ${location || ""}`);
-}
+// Currencies whose salary we trust as EMEA base pay on a multi-market posting.
+const EMEA_CURRENCIES = new Set(["EUR", "GBP", "CHF", "SEK", "DKK", "NOK", "PLN"]);
 
 const _fetch = unstable_cache(
   async (): Promise<Posting[]> => {
@@ -64,28 +56,39 @@ const _fetch = unstable_cache(
       all.push(...data);
       if (data.length < PAGE) break;
     }
-    return all.map((r): Posting => {
-      const disclosed = r.salary_source && r.salary_source !== "none";
-      let annual = disclosed ? annualMidpointEur(r) : null;
-      // Drop US-market comp from EMEA base-pay stats (see US_MARKET above).
-      if (annual !== null && isUsMarketPay(r.currency, r.city, r.location)) annual = null;
-      const place = resolvePlace(r.city || r.location, r.country);
-      return {
-        company: r.company,
-        sector: sectorOf(r.company),
-        roleFamily: r.role_family || "Other",
-        level: levelBucket(r.title),
-        city: place.city,
-        country: place.country,
-        remote: place.remote || !!r.remote,
-        annual,
-        disclosed: !!disclosed,
-        url: r.url || null,
-        dateMs: parseDate(r.posted_at),
-      };
-    });
+    return all
+      .map((r): Posting | null => {
+        const { region, multiMarket } = classifyRegion(r.location, r.city, r.country);
+        // The tightened filter reclassifies some stored rows (e.g. "Lake Zurich,
+        // Illinois") as non-EMEA — exclude them from the EMEA dataset entirely.
+        if (region === "NONEMEA") return null;
+
+        const disclosed = r.salary_source && r.salary_source !== "none";
+        let annual = disclosed ? annualMidpointEur(r) : null;
+        // On a multi-market posting, only trust the salary if it's in an EMEA
+        // currency; otherwise it reflects the non-EMEA office (e.g. USD/California).
+        if (annual !== null && multiMarket && !EMEA_CURRENCIES.has((r.currency || "").toUpperCase()))
+          annual = null;
+
+        const place = resolvePlace(r.city || r.location, r.country);
+        return {
+          company: r.company,
+          sector: sectorOf(r.company),
+          roleFamily: r.role_family || "Other",
+          level: levelBucket(r.title),
+          city: place.city,
+          country: place.country,
+          remote: place.remote || !!r.remote,
+          annual,
+          disclosed: !!disclosed,
+          multiMarket,
+          url: r.url || null,
+          dateMs: parseDate(r.posted_at),
+        };
+      })
+      .filter((p): p is Posting => p !== null);
   },
-  ["trueline-active-v3"],
+  ["trueline-active-v4"],
   { revalidate: 3600 }
 );
 

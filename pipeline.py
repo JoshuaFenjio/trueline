@@ -366,7 +366,8 @@ EMEA_TERMS = [
     "lagos", "nairobi", "accra", "cape town", "johannesburg", "pretoria",
 ]
 NONEMEA_TERMS = [
-    "united states", "usa", "u.s.", "americas",
+    "united states", "usa", "u.s.", "americas", "north america", "us only",
+    "us-only", "united states of america",
     # US cities
     "new york", "brooklyn", "san francisco", "bay area", "silicon valley",
     "los angeles", "san diego", "san jose", "palo alto", "mountain view",
@@ -398,51 +399,118 @@ NONEMEA_TERMS = [
     "auckland", "wellington", "seoul", "busan", "taipei", "bangkok",
     "kuala lumpur", "jakarta", "manila", "cebu", "ho chi minh", "hanoi",
 ]
-# US state codes used in "City, XX" strings. Codes that collide with EMEA country
-# codes (e.g. MA=Morocco, DE=Germany, IL=Israel, MT=Malta...) are deliberately
-# excluded so we never mis-drop an EMEA role. EMEA names are also checked first.
-US_STATE_CODES = [
-    "ak", "ar", "ca", "co", "ct", "dc", "fl", "hi", "ia", "id", "in", "ks", "ky",
-    "la", "mi", "mn", "mo", "ms", "nc", "nd", "nh", "nj", "nm", "nv", "ny", "oh",
-    "ok", "or", "pa", "ri", "sc", "tx", "ut", "va", "vt", "wa", "wi", "wv", "wy",
-]
-_STATE_RE = re.compile(r",\s*(" + "|".join(US_STATE_CODES) + r")\b")
+# US state FULL names — the disambiguator that beats an EMEA city match, e.g.
+# "Lake Zurich, Illinois". "georgia" is omitted (collides with the country
+# Georgia); "Atlanta, Georgia" is still caught via the US city "atlanta".
+US_STATE_NAMES = {
+    "alabama", "alaska", "arizona", "arkansas", "california", "colorado",
+    "connecticut", "delaware", "florida", "hawaii", "idaho", "illinois",
+    "indiana", "iowa", "kansas", "kentucky", "louisiana", "maine", "maryland",
+    "massachusetts", "michigan", "minnesota", "mississippi", "missouri",
+    "montana", "nebraska", "nevada", "new hampshire", "new jersey", "new mexico",
+    "north carolina", "north dakota", "ohio", "oklahoma", "oregon",
+    "pennsylvania", "rhode island", "south carolina", "south dakota",
+    "tennessee", "texas", "utah", "vermont", "virginia", "washington",
+    "west virginia", "wisconsin", "wyoming",
+}
+CANADA_PROVINCES = {
+    "ontario", "quebec", "québec", "alberta", "manitoba", "saskatchewan",
+    "british columbia", "nova scotia", "new brunswick", "newfoundland",
+    "prince edward island", "yukon", "nunavut", "northwest territories",
+}
+# Country/region names (not cities) — an EMEA country in a segment overrides a
+# stray US-state match (so "Angers, Maine-et-Loire, France" stays EMEA).
+EMEA_COUNTRIES = {
+    "europe", "emea", "middle east", "africa", "nordics", "benelux", "dach",
+    "united kingdom", "england", "scotland", "wales", "northern ireland",
+    "ireland", "france", "germany", "spain", "portugal", "italy", "netherlands",
+    "holland", "belgium", "luxembourg", "switzerland", "austria", "denmark",
+    "sweden", "norway", "finland", "iceland", "poland", "czech", "czechia",
+    "slovakia", "slovenia", "hungary", "romania", "bulgaria", "greece", "croatia",
+    "serbia", "ukraine", "estonia", "latvia", "lithuania", "malta", "cyprus",
+    "monaco", "turkey", "türkiye", "turkiye", "israel", "united arab emirates",
+    "saudi arabia", "qatar", "kuwait", "bahrain", "oman", "jordan", "lebanon",
+    "egypt", "morocco", "tunisia", "algeria", "nigeria", "kenya", "south africa",
+    "ghana", "ethiopia", "uganda", "tanzania", "rwanda", "senegal",
+}
 
 
-def region_of(location, city, country):
-    """Return 'EMEA', 'NONEMEA', or 'UNKNOWN' for a posting's location."""
-    cc = (country or "").strip().lower()
-    if cc in EMEA_CC:
-        return "EMEA"
-    if cc in NONEMEA_CC:
-        return "NONEMEA"
+def _wb(terms):
+    # Word-boundary regex that also refuses to match inside hyphenated compounds,
+    # so "maine" does NOT match "Maine-et-Loire" and "peru" not "Perugia".
+    body = "|".join(re.escape(t) for t in sorted(terms, key=len, reverse=True))
+    return re.compile(r"(?<![\w-])(" + body + r")(?![\w-])", re.IGNORECASE)
 
-    text = " ".join([p for p in [location, city] if p]).lower().strip()
-    if not text:
+
+_EMEA_COUNTRY_RE = _wb(EMEA_COUNTRIES)
+_EMEA_ALL_RE = _wb(set(EMEA_TERMS) | {"uk", "uae"})
+_NONEMEA_RE = _wb(set(NONEMEA_TERMS))
+_US_DISAMBIG_RE = _wb(US_STATE_NAMES | CANADA_PROVINCES |
+                      {"united states", "usa", "canada", "north america", "us only", "us-only"})
+_US_PHRASE_RE = re.compile(r"\b(us|usa)\b|\bu\.s\.?a?\.?\b", re.IGNORECASE)
+
+
+def _segment_region(seg):
+    """Classify one office-segment -> EMEA | NONEMEA | MULTI | UNKNOWN.
+
+    A US STATE / Canadian province / "United States" is a *disambiguator*: when
+    present without an EMEA country it converts an ambiguous city to the US
+    ("Lake Zurich, Illinois" -> US). When an EMEA and a non-EMEA place appear as
+    peers ("London, Paris, Toronto, New York") the segment is MULTI (kept)."""
+    s = (seg or "").strip().lower()
+    if not s:
         return "UNKNOWN"
+    emea_country = bool(_EMEA_COUNTRY_RE.search(s))
+    emea = emea_country or bool(_EMEA_ALL_RE.search(s))
+    us_disambig = bool(_US_DISAMBIG_RE.search(s)) or bool(_US_PHRASE_RE.search(s))
+    us_local = us_disambig or bool(_NONEMEA_RE.search(s))
 
-    # 1) EMEA wins — also rescues multi-office roles that include an EMEA city.
-    for term in EMEA_TERMS:
-        if term in text:
-            return "EMEA"
-    if re.search(r"\b(uk|uae)\b", text):
+    if us_disambig and not emea_country:
+        return "NONEMEA"          # "Lake Zurich, Illinois", "Paris, Texas", "Remote, US"
+    if emea and us_local:
+        return "MULTI"            # "London, Paris, Toronto, New York"
+    if emea:
         return "EMEA"
-
-    # 2) Clearly outside EMEA?
-    for term in NONEMEA_TERMS:
-        if term in text:
-            return "NONEMEA"
-    if re.search(r"\b(us|usa)\b", text) or _STATE_RE.search(text):
-        return "NONEMEA"
-
-    # 3) Can't place it -> keep.
+    if us_local:
+        return "NONEMEA"          # "Sunnyvale", "Bangalore"
     return "UNKNOWN"
 
 
+def classify_region(location, city, country):
+    """Return (region, multi_market).
+
+    region is 'EMEA' | 'NONEMEA' | 'UNKNOWN'. multi_market is True when the
+    posting spans BOTH an EMEA and a non-EMEA office (e.g. 'London; Sunnyvale')
+    — such roles are kept (EMEA candidates can apply) but flagged so their
+    non-EMEA-currency salary can be excluded from EMEA stats.
+    """
+    text = " ".join([p for p in [location, city] if p])
+    labels = [_segment_region(x) for x in re.split(r"[;/|\n]", text) if x.strip()]
+
+    cc = (country or "").strip().lower()
+    if cc in EMEA_CC:
+        labels.append("EMEA")
+    elif cc in NONEMEA_CC:
+        labels.append("NONEMEA")
+    elif country:
+        labels.append(_segment_region(country))
+
+    has_emea = any(l in ("EMEA", "MULTI") for l in labels)
+    has_non = any(l in ("NONEMEA", "MULTI") for l in labels)
+    if has_emea and has_non:
+        return "EMEA", True
+    if has_emea:
+        return "EMEA", False
+    if has_non:
+        return "NONEMEA", False
+    return "UNKNOWN", False
+
+
 def is_emea(posting):
-    """Keep EMEA and unknown-location postings; drop only clearly non-EMEA ones."""
-    return region_of(posting.get("location"), posting.get("city"),
-                      posting.get("country")) != "NONEMEA"
+    """Keep EMEA and unknown-location postings; drop clearly non-EMEA ones."""
+    region, _ = classify_region(posting.get("location"), posting.get("city"),
+                                posting.get("country"))
+    return region != "NONEMEA"
 
 
 # -----------------------------------------------------------------------------
@@ -470,6 +538,8 @@ def build_posting(ats, company, ats_job_id, title, location, city, country, remo
             period = parsed["period"]
             salary_source = "parsed"
 
+    region, multi_market = classify_region(location, city, country)
+
     return {
         "ats": ats,
         "company": company,
@@ -490,6 +560,8 @@ def build_posting(ats, company, ats_job_id, title, location, city, country, remo
         "posted_at": posted_at,
         "url": url,
         "description": (description or "")[:20000],  # cap stored text
+        "region": region,
+        "multi_market": multi_market,
     }
 
 
@@ -754,7 +826,7 @@ POSTING_FIELDS = [
     "company", "ats", "ats_job_id", "title", "role_family", "location", "city",
     "country", "remote", "salary_min", "salary_max", "currency", "salary_period",
     "salary_eur_min", "salary_eur_max", "salary_source", "posted_at", "url",
-    "description",
+    "description", "region", "multi_market",
 ]
 
 
@@ -785,8 +857,15 @@ class SQLiteDB:
                 salary_eur_min REAL, salary_eur_max REAL, salary_source TEXT,
                 posted_at TEXT, url TEXT, description TEXT,
                 first_seen TEXT, last_seen TEXT, expired_at TEXT, status TEXT,
+                region TEXT, multi_market INTEGER,
                 UNIQUE(ats, ats_job_id)
             )""")
+        # Add region / multi_market to pre-existing databases (idempotent).
+        for col, decl in (("region", "TEXT"), ("multi_market", "INTEGER")):
+            try:
+                c.execute("ALTER TABLE job_postings ADD COLUMN {} {}".format(col, decl))
+            except sqlite3.OperationalError:
+                pass  # column already exists
         self.conn.commit()
 
     def upsert_company(self, name, ats, token, ts):
@@ -902,6 +981,10 @@ class SupabaseDB:
                                     "ats_job_id": "eq." + p["ats_job_id"],
                                     "select": "id"})
         body = dict(p)
+        # region / multi_market are derived at read-time by the web layer and are
+        # not (yet) columns in Supabase — drop them so the upsert stays valid.
+        body.pop("region", None)
+        body.pop("multi_market", None)
         body.update({"last_seen": ts, "status": "active", "expired_at": None})
         if existing:
             self._req("PATCH", "/job_postings",
