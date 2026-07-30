@@ -131,10 +131,14 @@ CURRENCY_CODES = ["EUR", "GBP", "USD", "CHF", "PLN", "SEK", "DKK", "NOK"]
 
 # Words that tell us the pay period.
 PERIOD_HINTS = [
-    ("hour", ["per hour", "/hour", "/hr", "an hour", "hourly", "per hr"]),
-    ("month", ["per month", "/month", "/mo", "a month", "monthly", "pcm", "per mo"]),
+    ("hour", ["per hour", "/hour", "/hr", "an hour", "hourly", "per hr",
+              "par heure", "pro stunde"]),
+    ("month", ["per month", "/month", "/mo", "a month", "monthly", "pcm", "per mo",
+               "pro monat", "/monat", "monatlich", "im monat", "par mois", "mensuel",
+               "per maand", "al mese", "por mes", "/mois"]),
     ("year", ["per year", "/year", "/yr", "per annum", "p.a.", "annually",
-              "annual", "a year", "per yr"]),
+              "annual", "a year", "per yr", "pro jahr", "jährlich", "par an",
+              "annuel", "per jaar", "all'anno", "al año"]),
 ]
 
 
@@ -208,7 +212,8 @@ def parse_salary_from_text(text: str):
     if not markers:
         return None
 
-    period = _detect_period(text) or "year"
+    explicit_period = _detect_period(text)
+    period = explicit_period or "year"
 
     for pos in markers:
         window = text[max(0, pos - 10): pos + 40]
@@ -223,6 +228,14 @@ def parse_salary_from_text(text: str):
             v = _num(single.group(1))
             if v:
                 candidates.append((v, v))
+
+    # No explicit period cue, but the numbers are far too small to be an annual
+    # salary (e.g. "2.000–3.500")? It's monthly — tag it so, so it's converted
+    # rather than silently dropped by the annual plausibility floor.
+    if explicit_period is None and candidates:
+        biggest = max(hi for _, hi in candidates)
+        if 0 < biggest < 10000:
+            period = "month"
 
     # Keep only plausible salaries. Hourly numbers are small; annual are large.
     plausible = []

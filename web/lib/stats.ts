@@ -18,14 +18,21 @@ export function annualMidpointEur(row: {
   if (vals.length === 0) return null;
   let mid = vals.reduce((a, b) => a + b, 0) / vals.length;
   const p = (row.salary_period || "year").toLowerCase();
-  // Reinterpret obviously-mislabeled periods: a "monthly" figure above €25k or an
-  // "hourly" figure above €400 is really an annual number the parser mis-tagged,
-  // so don't multiply it up.
-  if (p === "month") mid = mid > 25_000 ? mid : mid * 12;
-  else if (p === "hour") mid = mid > 400 ? mid : mid * 1720;
-  // Plausibility band for a full-time EMEA annual BASE salary. Below ~€20k is
-  // almost always parse noise (a repeated "€1000/mo" perk figure) or an intern
-  // stipend, not a professional base; above €500k is sales OTE / mixed units.
+  if (p === "month") {
+    if (mid > 25_000) {
+      // A "monthly" figure above €25k is really an annual number mis-tagged.
+    } else {
+      mid = mid * 12;
+      // A genuine monthly salary that annualizes below ~€35k is almost always a
+      // boilerplate perk figure repeated across every role (e.g. "€2,000/month"
+      // on a Senior Engineer). Reject rather than pollute the median.
+      if (mid < 35_000) return null;
+    }
+  } else if (p === "hour") {
+    if (mid <= 400) mid = mid * 1720;
+  }
+  // Plausibility band for a full-time EMEA annual BASE salary. Above €500k is
+  // sales OTE / mixed units; below €20k is parse noise or an intern stipend.
   if (mid < 20_000 || mid > 500_000) return null;
   return Math.round(mid);
 }

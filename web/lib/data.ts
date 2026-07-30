@@ -4,7 +4,7 @@ import { getSupabase, isConfigured } from "./supabase";
 import {
   annualMidpointEur, spread, percentileRank, median, Spread, computeTrend, Trend,
 } from "./stats";
-import { levelBucket, Level, LEVELS } from "./levels";
+import { levelBucket, isTrainee, Level, LEVELS } from "./levels";
 import { sectorOf, Sector } from "./sectors";
 import { resolvePlace, classifyRegion } from "./geo";
 import { slugify } from "./format";
@@ -69,6 +69,9 @@ const _fetch = unstable_cache(
         // currency; otherwise it reflects the non-EMEA office (e.g. USD/California).
         if (annual !== null && multiMarket && !EMEA_CURRENCIES.has((r.currency || "").toUpperCase()))
           annual = null;
+        // Intern / working-student / apprentice pay is a stipend — keep the row
+        // (still counts as disclosed) but exclude it from salary medians.
+        if (annual !== null && isTrainee(r.title)) annual = null;
 
         const place = resolvePlace(r.city || r.location, r.country);
         return {
@@ -88,7 +91,7 @@ const _fetch = unstable_cache(
       })
       .filter((p): p is Posting => p !== null);
   },
-  ["trueline-active-v4"],
+  ["trueline-active-v5"],
   { revalidate: 3600 }
 );
 
