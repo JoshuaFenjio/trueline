@@ -290,27 +290,98 @@ def normalize_period(raw: Optional[str]) -> Optional[str]:
 # ROLE FAMILY classifier
 # -----------------------------------------------------------------------------
 def classify_role(title: str) -> str:
-    t = (title or "").lower()
+    # Pad with spaces so " ml "/" pm "/" ae " word checks work at the edges.
+    t = " " + (title or "").lower().replace("/", " / ") + " "
 
     def has(*words):
         return any(w in t for w in words)
 
-    if has("machine learning", "ml engineer", "ai engineer", " ml ", "deep learning",
-           "nlp", "computer vision", "research engineer"):
-        return "ML/AI Engineer"
-    if has("data engineer", "analytics engineer"):
-        return "Data Engineer"
-    if has("data scientist", "data science"):
-        return "Data Scientist"
-    if has("devops", "sre", "site reliability", "platform engineer", "infrastructure"):
-        return "DevOps/Platform"
-    if has("product manager", "product owner", " pm ", "head of product"):
+    # --- Management / product (before IC engineering) -----------------------
+    if has("engineering manager", "eng manager", "manager, engineering",
+           "manager of engineering", "head of engineering", "director of engineering",
+           "vp of engineering", "vp engineering", "engineering director",
+           "head of platform", "director, engineering", " cto "):
+        return "Engineering Manager"
+    if has("product manager", "product owner", "head of product", "director of product",
+           "vp of product", "group product manager", "chief product", " cpo ",
+           "principal product manager", "technical product manager"):
         return "Product Manager"
-    if has("designer", "design ", "ux", "ui "):
-        return "Designer"
-    if has("software", "backend", "back-end", "frontend", "front-end", "full stack",
-           "full-stack", "swe", "developer", "engineer"):
+
+    # --- Specialised engineering (most specific first) ----------------------
+    if has("machine learning", "ml engineer", " ml ", "ml/ai", "ai engineer",
+           "a.i. engineer", "deep learning", "nlp", "natural language",
+           "computer vision", "research engineer", "llm", "genai", "gen ai",
+           "applied ai", "applied ml", " ml/"):
+        return "ML/AI Engineer"
+    if has("data engineer", "analytics engineer", "data platform", "etl ",
+           "data infrastructure", "big data"):
+        return "Data Engineer"
+    if has("data scientist", "data science", "applied scientist",
+           "research scientist", "decision scientist"):
+        return "Data Scientist"
+    if has("data analyst", "business analyst", "bi analyst", "insights analyst",
+           "reporting analyst", "business intelligence", "bi developer",
+           "analytics manager", "web analyst"):
+        return "Data Analyst"
+    if has("security engineer", "application security", "appsec", "infosec",
+           "information security", "security analyst", "security operations",
+           "soc analyst", "penetration test", "pentest", "cyber", "security architect",
+           "product security", "cloud security", "security specialist"):
+        return "Security Engineer"
+    if has("devops", "sre", "site reliability", "platform engineer", "infrastructure",
+           "cloud engineer", "reliability engineer", "systems engineer",
+           "platform team"):
+        return "DevOps/Platform"
+    if has("qa ", "quality assurance", "test engineer", "sdet", "qa engineer",
+           "test automation", "quality engineer", "tester", "in test"):
+        return "QA/Test"
+    if has(" ios ", "android", "mobile engineer", "mobile developer", "react native",
+           "flutter", "mobile app", " ios/"):
+        return "Mobile"
+    if has("frontend", "front-end", "front end", "ui engineer", "ui developer",
+           "react developer", "web developer", "javascript engineer"):
+        return "Frontend"
+    if has("backend", "back-end", "back end", "api engineer", "server engineer"):
+        return "Backend"
+
+    # --- Generic engineering / design ---------------------------------------
+    if has("software", "full stack", "fullstack", "full-stack", "swe", "developer",
+           "programmer", "engineer"):
         return "Software Engineer"
+    if has("designer", "design lead", "ux", "ui/", "user experience",
+           "product design", "graphic design", "motion design", "design system"):
+        return "Designer"
+
+    # --- Business functions -------------------------------------------------
+    if has("account executive", " ae ", " ae,", "sales", "business development",
+           "sales development", " sdr ", " bdr ", "account manager", "revenue",
+           "commercial", "commerciale", "new business", "key account", "field sales",
+           "solutions engineer", "sales engineer", "pre-sales", "presales"):
+        return "Sales/AE"
+    if has("customer success", "customer support", "customer experience",
+           "customer care", "client success", "customer service", "support specialist",
+           "support agent", "technical support", "support engineer", "onboarding"):
+        return "Customer Success"
+    if has("marketing", "growth", "seo", "content", "brand", "communications",
+           "public relations", " pr ", "demand generation", "social media",
+           "copywriter", "campaign", "community"):
+        return "Marketing"
+    if has("finance", "financial", "accountant", "accounting", "controller", "fp&a",
+           "treasury", " tax ", "tax ", "audit", "bookkeeper", "payroll",
+           "accounts payable", "accounts receivable", "procure to pay", " risk "):
+        return "Finance"
+    if has("people ", "human resources", " hr ", "recruiter", "recruiting",
+           "talent acquisition", "talent ", "people operations", "people partner",
+           "hrbp", "people & culture", "compensation & benefits"):
+        return "People/HR"
+    if has("legal", "counsel", "lawyer", "paralegal", "attorney", "privacy",
+           "compliance", "regulatory"):
+        return "Legal"
+    if has("operations", "operational", " ops ", "program manager", "project manager",
+           "supply chain", "logistics", "warehouse", "procurement", "office manager",
+           "chief of staff", "revops", "revenue operations", "fulfil", "facilities",
+           "general manager", "country manager", "workplace"):
+        return "Operations"
     return "Other"
 
 
