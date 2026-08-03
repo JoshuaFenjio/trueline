@@ -34,3 +34,39 @@ export function getServiceClient(): SupabaseClient | null {
   if (!URL || !SERVICE_KEY) return null;
   return createClient(URL, SERVICE_KEY, { auth: { persistSession: false } });
 }
+
+// ---------------------------------------------------------------------------
+// Login rate limiting — per-IP sliding window with lockout.
+// In-memory (per warm serverless instance). Enough to stop rapid password
+// guessing; paired with a strong ADMIN_PASSWORD and a delay on each attempt.
+// For hardened, cross-instance limits, back this with Upstash/a DB table.
+// ---------------------------------------------------------------------------
+const MAX_FAILS = 5;
+const WINDOW_MS = 15 * 60_000; // count failures over 15 minutes
+const LOCK_MS = 15 * 60_000; // lock for 15 minutes once tripped
+
+interface Bucket { fails: number; windowStart: number; lockedUntil: number; }
+const buckets = new Map<string, Bucket>();
+
+export function loginRate(ip: string): { locked: boolean; retryMin: number; left: number } {
+  const now = Date.now();
+  const b = buckets.get(ip);
+  if (b && b.lockedUntil > now) {
+    return { locked: true, retryMin: Math.max(1, Math.ceil((b.lockedUntil - now) / 60_000)), left: 0 };
+  }
+  if (!b || now - b.windowStart > WINDOW_MS) return { locked: false, retryMin: 0, left: MAX_FAILS };
+  return { locked: false, retryMin: 0, left: Math.max(0, MAX_FAILS - b.fails) };
+}
+
+export function recordLoginFailure(ip: string): void {
+  const now = Date.now();
+  let b = buckets.get(ip);
+  if (!b || now - b.windowStart > WINDOW_MS) b = { fails: 0, windowStart: now, lockedUntil: 0 };
+  b.fails += 1;
+  if (b.fails >= MAX_FAILS) b.lockedUntil = now + LOCK_MS;
+  buckets.set(ip, b);
+}
+
+export function clearLoginFailures(ip: string): void {
+  buckets.delete(ip);
+}

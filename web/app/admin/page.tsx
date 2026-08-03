@@ -6,7 +6,7 @@ import { eur } from "@/lib/format";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin", robots: { index: false } };
 
-export default async function Admin({ searchParams }: { searchParams: { error?: string } }) {
+export default async function Admin({ searchParams }: { searchParams: { error?: string; left?: string; m?: string } }) {
   if (!adminConfigured) {
     return (
       <div className="mx-auto max-w-md py-24 text-center text-ink-muted">
@@ -21,9 +21,15 @@ export default async function Admin({ searchParams }: { searchParams: { error?: 
       <div className="mx-auto max-w-sm py-24">
         <h1 className="text-2xl font-extrabold tracking-tight">Admin</h1>
         <p className="mt-2 text-sm text-ink-muted">Review submitted salaries.</p>
-        {searchParams.error && (
-          <p className="mt-4 text-sm" style={{ color: "var(--ember)" }}>Wrong password.</p>
-        )}
+        {searchParams.error === "locked" ? (
+          <p className="mt-4 text-sm" style={{ color: "var(--ember)" }}>
+            Too many attempts. Try again in about {searchParams.m || "15"} minute{searchParams.m === "1" ? "" : "s"}.
+          </p>
+        ) : searchParams.error === "1" ? (
+          <p className="mt-4 text-sm" style={{ color: "var(--ember)" }}>
+            Wrong password.{searchParams.left ? ` ${searchParams.left} attempt${searchParams.left === "1" ? "" : "s"} left.` : ""}
+          </p>
+        ) : null}
         <form action={login} className="mt-6 space-y-3">
           <input
             name="password" type="password" placeholder="Admin password" autoFocus
