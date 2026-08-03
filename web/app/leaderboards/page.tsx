@@ -1,20 +1,31 @@
 import type { Metadata } from "next";
 import { getLeaderboards, countriesForRole, isConfigured } from "@/lib/data";
 import { SectionHeader, RankTable, toPayVMs, Chip, RankVM } from "@/components/blocks";
+import { ShareButton } from "@/components/ShareButton";
 import { scoreColor } from "@/components/ui";
 import { slugify, pct } from "@/lib/format";
 
 export const revalidate = 3600;
 
-export const metadata: Metadata = {
-  title: "Salary leaderboards — who pays most in EMEA (2026)",
-  description:
-    "Live leaderboards of the top-paying tech companies in Europe, the Middle East and Africa — overall, by sector, by role, by country, and the most transparent employers. From real job-board data.",
-  openGraph: {
-    title: "EMEA salary leaderboards — who pays most",
-    images: ["/og?kicker=Leaderboards&title=Who%20pays%20most%20in%20EMEA&value=Live%20from%20job%20boards"],
-  },
-};
+// Dynamic OG so a shared leaderboard section (?sector= / ?role= / ?crole=)
+// previews the right headline on LinkedIn.
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: { sector?: string; role?: string; crole?: string };
+}): Promise<Metadata> {
+  let kicker = "Leaderboards", title = "Who pays most", value = "Live from company job boards";
+  if (searchParams.sector) { kicker = "Top payers · by sector"; title = searchParams.sector; value = "Highest-paying companies"; }
+  else if (searchParams.role) { kicker = "Top payers · by role"; title = searchParams.role; value = "Who pays this role most"; }
+  else if (searchParams.crole) { kicker = "By country · " + searchParams.crole; title = "Which countries pay most"; value = searchParams.crole; }
+  const og = `/og?kicker=${encodeURIComponent(kicker)}&title=${encodeURIComponent(title)}&value=${encodeURIComponent(value)}`;
+  return {
+    title: `${title} · EMEA salary leaderboards · Trueline`,
+    description: "Live leaderboards of the top-paying tech companies in EMEA, by sector, role and country, plus the most transparent employers.",
+    openGraph: { title, images: [og] },
+    twitter: { card: "summary_large_image", images: [og] },
+  };
+}
 
 function href(base: string, patch: Record<string, string>, current: Record<string, string | undefined>, anchor: string) {
   const p = new URLSearchParams();
@@ -55,7 +66,10 @@ export default async function Leaderboards({
 
       {/* 1. Overall */}
       <section className="mt-16" id="overall">
-        <SectionHeader kicker="01 · Overall" title="Top-paying companies" id="overall" />
+        <div className="flex items-start justify-between gap-3">
+          <SectionHeader kicker="01 · Overall" title="Top-paying companies" />
+          <ShareButton path="/leaderboards#overall" />
+        </div>
         <div className="mt-6">
           <RankTable rows={toPayVMs(lb.topCompanies, (s) => `/companies/${s}`)} />
         </div>
@@ -63,7 +77,10 @@ export default async function Leaderboards({
 
       {/* 2. By sector */}
       <section className="mt-24" id="by-sector">
-        <SectionHeader kicker="02 · By sector" title="Top payers by sector" />
+        <div className="flex items-start justify-between gap-3">
+          <SectionHeader kicker="02 · By sector" title="Top payers by sector" />
+          <ShareButton path={`/leaderboards?sector=${encodeURIComponent(sector)}#by-sector`} />
+        </div>
         <div className="mt-5 flex flex-wrap gap-2">
           {lb.bySector.map((s) => (
             <Chip key={s.sector} href={href("/leaderboards", { sector: s.sector }, cur, "by-sector")} active={s.sector === sector}>
@@ -78,7 +95,10 @@ export default async function Leaderboards({
 
       {/* 3. By role */}
       <section className="mt-24" id="by-role">
-        <SectionHeader kicker="03 · By role" title="Who pays this role most" />
+        <div className="flex items-start justify-between gap-3">
+          <SectionHeader kicker="03 · By role" title="Who pays this role most" />
+          {role && <ShareButton path={`/leaderboards?role=${encodeURIComponent(role)}#by-role`} />}
+        </div>
         <div className="mt-5 flex flex-wrap gap-2">
           {lb.byRole.map((r) => (
             <Chip key={r.role} href={href("/leaderboards", { role: r.role }, cur, "by-role")} active={r.role === role}>
@@ -98,7 +118,10 @@ export default async function Leaderboards({
 
       {/* 4. Countries by role */}
       <section className="mt-24" id="countries">
-        <SectionHeader kicker="04 · By country" title="Which countries pay most" accent="— by role." />
+        <div className="flex items-start justify-between gap-3">
+          <SectionHeader kicker="04 · By country" title="Which countries pay most" />
+          {crole && <ShareButton path={`/leaderboards?crole=${encodeURIComponent(crole)}#countries`} />}
+        </div>
         <div className="mt-5 flex flex-wrap gap-2">
           {lb.roles.map((r) => (
             <Chip key={r} href={href("/leaderboards", { crole: r }, cur, "countries")} active={r === crole}>
@@ -117,7 +140,10 @@ export default async function Leaderboards({
 
       {/* 5. Best disclosure */}
       <section className="mt-24" id="transparent">
-        <SectionHeader kicker="05 · Transparency" title="Most transparent employers" sub="Share of active ads that state a salary. Companies with 10+ live postings." />
+        <div className="flex items-start justify-between gap-3">
+          <SectionHeader kicker="05 · Transparency" title="Most transparent employers" sub="Share of active ads that state a salary. Companies with 10+ live postings." />
+          <ShareButton path="/leaderboards#transparent" />
+        </div>
         <div className="mt-6">
           <RankTable rows={disclosureVMs} valueHead="% ads w/ pay" />
         </div>

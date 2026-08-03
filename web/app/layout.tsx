@@ -9,7 +9,11 @@ const instrument = Instrument_Serif({
   subsets: ["latin"], weight: "400", style: "italic", variable: "--font-instrument", display: "swap",
 });
 
-const SITE = "https://trueline.vercel.app";
+// Prefer an explicit site URL, else the Vercel deployment URL, else a placeholder.
+// This makes OG image URLs absolute against the real host so LinkedIn can fetch them.
+const SITE =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://trueline.vercel.app");
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),

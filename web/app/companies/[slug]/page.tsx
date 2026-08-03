@@ -1,10 +1,10 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCompanyBySlug } from "@/lib/data";
+import { getCompanyBySlug, getLastRefreshed } from "@/lib/data";
 import { ScoreBadge, scoreColor, Stat, Card } from "@/components/ui";
 import { SectionHeader, TrendBadge } from "@/components/blocks";
-import { eur, pct } from "@/lib/format";
+import { eur, pct, timeAgo } from "@/lib/format";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -32,6 +32,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
   const c = await getCompanyBySlug(params.slug);
   if (!c) notFound();
   const color = scoreColor(c.payScore);
+  const refreshed = await getLastRefreshed();
 
   return (
     <div className="py-14">
@@ -57,6 +58,11 @@ export default async function CompanyPage({ params }: { params: { slug: string }
             <div className="max-w-[9rem] text-xs text-ink-faint">percentile vs {c.sector} peers</div>
           </div>
         </div>
+      </div>
+
+      {/* Alive signal — heartbeat, not a banner */}
+      <div className="tnum mt-4 text-[11px] text-ink-faint">
+        {c.activeN} active postings · data refreshed {timeAgo(refreshed)}
       </div>
 
       <Card className="mt-8">

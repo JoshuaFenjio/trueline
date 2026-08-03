@@ -122,6 +122,24 @@ export function sliceOf(rows: Posting[], pred: (p: Posting) => boolean): Slice {
 }
 
 // ---------------------------------------------------------------------------
+// Latest refresh timestamp (alive signal) — max(last_seen) across postings.
+// ---------------------------------------------------------------------------
+export const getLastRefreshed = unstable_cache(
+  async (): Promise<string | null> => {
+    const sb = getSupabase();
+    if (!sb) return null;
+    const { data } = await sb
+      .from("job_postings")
+      .select("last_seen")
+      .order("last_seen", { ascending: false })
+      .limit(1);
+    return (data?.[0] as any)?.last_seen ?? null;
+  },
+  ["trueline-last-refreshed"],
+  { revalidate: 600 }
+);
+
+// ---------------------------------------------------------------------------
 // Live stats (home pill)
 // ---------------------------------------------------------------------------
 export const getLiveStats = async () => {
@@ -494,10 +512,13 @@ export const getFilterOptions = async () => {
 export interface SearchResult {
   enough: boolean; n: number; role: string; level: string; city: string;
   spread: Spread | null; advertisedN: number; verifiedN: number;
+  verifiedMedian: number | null; // median of approved submissions, only when n >= 3
   base: number | null; basePercentile: number | null; baseDelta: number | null;
   topPayers: { company: string; slug: string; midpoint: number; n: number }[];
   acrossCities: { city: string; cityKey: string; median: number; n: number }[];
 }
+
+const N_VERIFIED = 3;
 
 export async function searchSalaries(p: {
   role?: string; level?: string; city?: string; base?: number;
@@ -517,18 +538,24 @@ export async function searchSalaries(p: {
   const base = p.base && p.base > 0 ? p.base : null;
 
   const subs = await fetchApprovedSubmissions();
-  const verifiedN = subs.filter(
+  const matchingSubs = subs.filter(
     (s: any) => (role === "Any" || s.role_family === role) &&
       (level === "Any" || s.level === level) &&
       (city === "Any" || (s.city || "").toLowerCase() === cityL)
-  ).length;
+  );
+  const verifiedN = matchingSubs.length;
+  const verifiedVals = matchingSubs
+    .map((s: any) => Number(s.base_eur))
+    .filter((v: number) => Number.isFinite(v) && v > 0);
+  // Verified salaries only surface at 3+ per slice (same honesty as advertised gates).
+  const verifiedMedian = verifiedVals.length >= N_VERIFIED ? Math.round(median(verifiedVals)) : null;
 
   const cityLabel = city === "Any" ? "Europe" : usable(rows).find(mainPred)?.city || city;
 
   if (!sp || sp.n < N_MEDIAN) {
     return {
       enough: false, n: sp?.n ?? 0, role, level, city: cityLabel, spread: null,
-      advertisedN: sp?.n ?? 0, verifiedN, base, basePercentile: null, baseDelta: null,
+      advertisedN: sp?.n ?? 0, verifiedN, verifiedMedian, base, basePercentile: null, baseDelta: null,
       topPayers: [], acrossCities: [],
     };
   }
@@ -539,7 +566,7 @@ export async function searchSalaries(p: {
 
   return {
     enough: true, n: sp.n, role, level, city: cityLabel, spread: sp,
-    advertisedN: sp.n, verifiedN, base,
+    advertisedN: sp.n, verifiedN, verifiedMedian, base,
     basePercentile: base ? percentileRank(values, base) : null,
     baseDelta: base ? Math.round(base - sp.median) : null,
     topPayers, acrossCities,

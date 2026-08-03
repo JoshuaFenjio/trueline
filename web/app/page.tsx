@@ -2,13 +2,46 @@ import Link from "next/link";
 import {
   getLiveStats, getFilterOptions, getSectors, getLeaderboards, searchSalaries, isConfigured,
 } from "@/lib/data";
+import type { Metadata } from "next";
 import { SearchForm } from "@/components/SearchForm";
 import { MeasureBar } from "@/components/MeasureBar";
+import { ShareButton } from "@/components/ShareButton";
 import { Card, Stat, GhostLink } from "@/components/ui";
 import { SectionHeader, Chip, ArrowLink } from "@/components/blocks";
 import { eur, eurK, slugify, pct } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
+
+function sliceLabel(role: string, level: string, city: string): string {
+  const parts = [role === "Any" ? "All roles" : role];
+  if (level !== "Any") parts.push(level);
+  parts.push(city);
+  return parts.join(" · ");
+}
+
+// Per-query OG so a shared search URL previews the headline stat on LinkedIn.
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: { role?: string; level?: string; city?: string; base?: string };
+}): Promise<Metadata> {
+  const hasQuery = Boolean(searchParams.role || searchParams.city || searchParams.level);
+  if (!isConfigured || !hasQuery) return {};
+  const r = await searchSalaries({ role: searchParams.role, level: searchParams.level, city: searchParams.city });
+  const slice = sliceLabel(r.role, r.level, r.city);
+  if (!r.enough || !r.spread) {
+    return { title: `${slice} salary · Trueline` };
+  }
+  const figure = `${eurK(r.spread.median)} median`;
+  const title = `${slice}: ${figure} · Trueline`;
+  const og = `/og?kicker=${encodeURIComponent(slice)}&title=${encodeURIComponent(figure)}&value=${encodeURIComponent(`${r.n} salaried postings`)}`;
+  return {
+    title,
+    description: `${slice}: ${figure} base, from ${r.n} live job postings. Real EMEA salary benchmarks.`,
+    openGraph: { title, images: [og] },
+    twitter: { card: "summary_large_image", title, images: [og] },
+  };
+}
 
 // Left-notch colour per sector for the browse chips.
 const SECTOR_COLOR: Record<string, string> = {
@@ -178,13 +211,16 @@ function Results({ result }: { result: Awaited<ReturnType<typeof searchSalaries>
   return (
     <div className="space-y-5">
       <Card>
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-medium">
             {result.role === "Any" ? "All roles" : result.role}
             {result.level !== "Any" && <span className="text-ink-muted"> · {result.level}</span>}
             <span className="text-ink-muted"> · {result.city}</span>
           </h2>
-          <div className="tnum text-sm text-ink-faint">n = {result.n}</div>
+          <div className="flex items-center gap-3">
+            <span className="tnum text-sm text-ink-faint">n = {result.n}</span>
+            <ShareButton />
+          </div>
         </div>
         <div className="mt-2 flex items-end gap-3">
           <div className="tnum text-4xl font-semibold md:text-5xl">{eur(sp.median)}</div>
@@ -200,6 +236,12 @@ function Results({ result }: { result: Awaited<ReturnType<typeof searchSalaries>
         ) : (
           <p className="text-center text-ink-muted">
             Half of these roles advertise between <span className="tnum text-ink">{eurK(sp.p25)}</span> and <span className="tnum text-ink">{eurK(sp.p75)}</span>.
+          </p>
+        )}
+        {result.verifiedMedian && (
+          <p className="mt-3 text-center text-sm" style={{ color: "var(--mint)" }}>
+            Verified <span className="tnum font-semibold">{eur(result.verifiedMedian)}</span> median from{" "}
+            <span className="tnum">{result.verifiedN}</span> submitted salaries
           </p>
         )}
       </Card>

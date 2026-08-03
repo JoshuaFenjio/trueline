@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { getLastRefreshed } from "@/lib/data";
+import { timeAgo } from "@/lib/format";
 
 export function Logo({ className = "" }: { className?: string }) {
   return (
@@ -40,7 +42,8 @@ export function NavBar() {
   );
 }
 
-export function Footer() {
+export async function Footer() {
+  const refreshed = await getLastRefreshed();
   return (
     <footer className="mt-20 border-t">
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-10 text-sm text-ink-faint md:flex-row md:items-center md:justify-between">
@@ -53,8 +56,9 @@ export function Footer() {
           <Link href="/add" className="hover:text-ink">Add salary</Link>
           <Link href="/methodology" className="hover:text-ink">Methodology</Link>
         </div>
-        <div className="text-xs">
-          Advertised base salaries from public job postings. Approximate EUR. Not financial advice.
+        <div className="flex flex-col gap-1 text-xs md:items-end">
+          <span className="tnum text-[11px] text-ink-faint">Data refreshed {timeAgo(refreshed)}</span>
+          <span>Advertised base salaries from public job postings. Approximate EUR.</span>
         </div>
       </div>
     </footer>
