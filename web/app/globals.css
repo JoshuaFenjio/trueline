@@ -96,6 +96,30 @@ body::after {
   font-feature-settings: "tnum";
 }
 
+/* Arrow links — shared affordance: mono, gradient text on hover, arrow +2px --- */
+.arrow-link,
+.arrow-cue {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  color: var(--ink-muted);
+  transition: color 0.15s ease;
+}
+.arrow-link:hover,
+.group:hover .arrow-cue {
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.arrow-link .arw,
+.arrow-cue .arw {
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+.arrow-link:hover .arw,
+.group:hover .arrow-cue .arw {
+  transform: translateX(2px);
+}
+
 /* Focus rings --------------------------------------------------------------- */
 :focus-visible {
   outline: 2px solid var(--brand-ring);

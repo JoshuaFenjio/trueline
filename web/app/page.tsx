@@ -4,11 +4,18 @@ import {
 } from "@/lib/data";
 import { SearchForm } from "@/components/SearchForm";
 import { MeasureBar } from "@/components/MeasureBar";
-import { Card, Pill, LiveDot, Stat, GhostLink } from "@/components/ui";
-import { SectionHeader, Chip } from "@/components/blocks";
+import { Card, Stat, GhostLink } from "@/components/ui";
+import { SectionHeader, Chip, ArrowLink } from "@/components/blocks";
 import { eur, eurK, slugify, pct } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
+
+// Left-notch colour per sector for the browse chips.
+const SECTOR_COLOR: Record<string, string> = {
+  AI: "#8F7BFF", Fintech: "#4EC9FF", Devtools: "#5E8BFF", SaaS: "#A78BFA",
+  Consumer: "#FF6A45", Health: "#4ADE9C", Mobility: "#F5B84B",
+  Security: "#FF8FA3", Other: "#6E7480",
+};
 
 export default async function Home({
   searchParams,
@@ -32,18 +39,17 @@ export default async function Home({
     <div className="pb-10">
       {/* Hero */}
       <section className="pt-14 text-center md:pt-20">
-        <Pill className="mx-auto">
-          <LiveDot />
-          <span className="tnum text-ink-muted">
-            {stats.salaried.toLocaleString()} salaried roles · {stats.companies} companies · {stats.cities} cities
-          </span>
-        </Pill>
+        <p className="text-[13px] tracking-tight text-ink-faint">
+          <Count n={stats.salaried} /> salaried roles
+          <Dot /> <Count n={stats.companies} /> companies
+          <Dot /> <Count n={stats.cities} /> cities
+        </p>
         <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-extrabold leading-[1.06] tracking-tight md:text-6xl">
           Know what Europe actually pays <span className="serif-accent gradient-text font-normal">you.</span>
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-base text-ink-muted md:text-lg">
-          Real base-salary benchmarks from live job postings across EMEA — by role, level and city.
-          No surveys, no guesses, honest sample sizes.
+          Base-salary benchmarks from live job postings across Europe. If we don&apos;t have
+          enough data for a query, we tell you.
         </p>
       </section>
 
@@ -59,16 +65,16 @@ export default async function Home({
 
       {/* Browse tiles */}
       <section className="mt-24">
-        <SectionHeader kicker="Browse" title="Explore the whole" accent="market." />
+        <SectionHeader title="Browse" />
         <div className="mt-7 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <BrowseTile title="Sectors" href="/leaderboards#by-sector">
             {sectors.slice(0, 6).map((s) => (
-              <Chip key={s} href={`/leaderboards?sector=${encodeURIComponent(s)}#by-sector`}>{s}</Chip>
+              <SectorChip key={s} sector={s} />
             ))}
           </BrowseTile>
           <BrowseTile title="Roles" href={options.roles[0] ? `/roles/${slugify(options.roles[0])}` : "/leaderboards#by-role"}>
             {options.roles.slice(0, 6).map((r) => (
-              <Chip key={r} href={`/roles/${slugify(r)}`}>{r}</Chip>
+              <RoleChip key={r} role={r} />
             ))}
           </BrowseTile>
           <BrowseTile title="Cities" href="/leaderboards#countries">
@@ -80,10 +86,12 @@ export default async function Home({
             <Card className="surface-hover flex h-full flex-col justify-between transition-colors">
               <div>
                 <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">Leaderboards</div>
-                <div className="mt-2 text-2xl font-extrabold tracking-tight">Who pays <span className="serif-accent gradient-text font-normal">most.</span></div>
-                <p className="mt-2 text-sm text-ink-muted">Top payers overall, by sector, role and country — plus the most transparent employers.</p>
+                <div className="mt-2 text-2xl font-extrabold tracking-tight">Who pays most</div>
+                <p className="mt-2 text-sm text-ink-muted">The top-paying companies by sector and country, and the most transparent employers.</p>
               </div>
-              <div className="mt-4 text-sm text-brand-2">Open leaderboards →</div>
+              <span className="arrow-cue mt-4 inline-flex items-center gap-1 text-[11px] uppercase tracking-wider">
+                Open leaderboards <span className="arw">→</span>
+              </span>
             </Card>
           </Link>
         </div>
@@ -94,14 +102,25 @@ export default async function Home({
         <section className="mt-20">
           <div className="flex items-center justify-between">
             <SectionHeader kicker="Transparency" title="Most transparent companies" />
-            <Link href="/leaderboards#transparent" className="hidden text-sm text-ink-muted hover:text-ink md:block">See all →</Link>
+            <span className="hidden md:block"><ArrowLink href="/leaderboards#transparent">See all</ArrowLink></span>
           </div>
           <div className="mt-6 flex gap-3 overflow-x-auto pb-2">
             {lb.bestDisclosure.slice(0, 10).map((d) => (
               <Link key={d.slug} href={`/companies/${d.slug}`} className="shrink-0">
                 <div className="surface surface-hover flex items-center gap-3 rounded-2xl px-4 py-3 transition-colors">
-                  <span className="tnum text-lg font-semibold" style={{ color: "var(--mint)" }}>{pct(d.pct)}</span>
+                  <span
+                    className="flex h-6 w-6 items-center justify-center rounded-md text-xs font-semibold"
+                    style={{ background: "var(--surface-3)", color: "var(--ink-muted)" }}
+                  >
+                    {d.company.charAt(0)}
+                  </span>
                   <span className="whitespace-nowrap text-sm">{d.company}</span>
+                  <span
+                    className="tnum text-lg font-semibold"
+                    style={{ color: d.pct >= 90 ? "var(--mint)" : "var(--ink-muted)" }}
+                  >
+                    {pct(d.pct)}
+                  </span>
                 </div>
               </Link>
             ))}
@@ -117,10 +136,36 @@ function BrowseTile({ title, href, children }: { title: string; href: string; ch
     <Card className="flex h-full flex-col">
       <div className="flex items-center justify-between">
         <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">{title}</div>
-        <Link href={href} className="text-xs text-ink-muted hover:text-ink">all →</Link>
+        <ArrowLink href={href}>all</ArrowLink>
       </div>
       <div className="mt-4 flex flex-wrap gap-2">{children}</div>
     </Card>
+  );
+}
+
+// Sector chip: 3px colored left notch by sector.
+function SectorChip({ sector }: { sector: string }) {
+  return (
+    <Link
+      href={`/leaderboards?sector=${encodeURIComponent(sector)}#by-sector`}
+      className="rounded-full border py-1.5 pl-3 pr-3.5 text-sm text-ink-muted transition-colors hover:text-ink"
+      style={{ background: "var(--surface-1)", borderLeft: `3px solid ${SECTOR_COLOR[sector] || "#6E7480"}` }}
+    >
+      {sector}
+    </Link>
+  );
+}
+
+// Role chip: Geist Mono, to read as a distinct family from sector/city chips.
+function RoleChip({ role }: { role: string }) {
+  return (
+    <Link
+      href={`/roles/${slugify(role)}`}
+      className="tnum rounded-full border px-3 py-1.5 text-[12px] text-ink-muted transition-colors hover:text-ink"
+      style={{ background: "var(--surface-1)" }}
+    >
+      {role}
+    </Link>
   );
 }
 
@@ -150,7 +195,7 @@ function Results({ result }: { result: Awaited<ReturnType<typeof searchSalaries>
           <p className="text-center text-base">
             You&apos;re{" "}
             <span className="tnum font-semibold" style={{ color: tone }}>{eur(Math.abs(result.baseDelta))} {below ? "below" : "above"}</span>{" "}
-            the median — around the <span className="tnum font-semibold">{ordinal(result.basePercentile!)}</span> percentile.
+            the median, around the <span className="tnum font-semibold">{ordinal(result.basePercentile!)}</span> percentile.
           </p>
         ) : (
           <p className="text-center text-ink-muted">
@@ -205,7 +250,7 @@ function NotEnough({ result }: { result: Awaited<ReturnType<typeof searchSalarie
   return (
     <Card className="text-center">
       <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">Gated · sample too small</div>
-      <h2 className="mt-2 text-2xl font-extrabold tracking-tight">Not enough recent data <span className="serif-accent gradient-text font-normal">yet.</span></h2>
+      <h2 className="mt-2 text-2xl font-extrabold tracking-tight">Not enough recent data yet</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-ink-muted">
         We track <span className="tnum text-ink">{result.n}</span> salaried posting{result.n === 1 ? "" : "s"} for{" "}
         {result.role === "Any" ? "this search" : result.role}{result.city !== "Europe" ? ` in ${result.city}` : ""}. The median unlocks at <span className="tnum text-ink">8</span>.
@@ -230,6 +275,13 @@ function NotConfigured() {
       </p>
     </div>
   );
+}
+
+function Count({ n }: { n: number }) {
+  return <span className="tnum gradient-text font-medium">{n.toLocaleString()}</span>;
+}
+function Dot() {
+  return <span className="mx-1.5 text-ink-faint/60">·</span>;
 }
 
 function ordinal(n: number): string {

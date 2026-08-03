@@ -6,15 +6,25 @@ import { Trend } from "@/lib/stats";
 // -- Section header: mono kicker + tight Geist 800 headline + 1 serif word ----
 export function SectionHeader({
   kicker, title, accent, sub, id,
-}: { kicker: string; title: ReactNode; accent?: string; sub?: ReactNode; id?: string }) {
+}: { kicker?: string; title: ReactNode; accent?: string; sub?: ReactNode; id?: string }) {
   return (
     <div id={id} className="scroll-mt-24">
-      <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">{kicker}</div>
+      {kicker && <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">{kicker}</div>}
       <h2 className="mt-2 text-3xl font-extrabold leading-[1.04] tracking-tight md:text-4xl">
         {title} {accent && <span className="serif-accent gradient-text font-normal">{accent}</span>}
       </h2>
       {sub && <p className="mt-3 max-w-2xl text-ink-muted">{sub}</p>}
     </div>
+  );
+}
+
+// -- Arrow link: mono 11px uppercase, gradient text + arrow +2px on hover -----
+export function ArrowLink({ href, children, className = "" }: { href: string; children: ReactNode; className?: string }) {
+  return (
+    <Link href={href} className={`arrow-link inline-flex items-center gap-1 text-[11px] uppercase tracking-wider ${className}`}>
+      <span>{children}</span>
+      <span className="arw">→</span>
+    </Link>
   );
 }
 
