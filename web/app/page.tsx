@@ -1,9 +1,11 @@
 import Link from "next/link";
 import {
-  getLiveStats, getFilterOptions, getSectors, getLeaderboards, searchSalaries, isConfigured,
+  getLiveStats, getFilterOptions, getSectors, getLeaderboards, getCompaniesBoard,
+  searchSalaries, isConfigured,
 } from "@/lib/data";
 import type { Metadata } from "next";
 import { SearchForm } from "@/components/SearchForm";
+import { SmartSearch } from "@/components/SmartSearch";
 import { MeasureBar } from "@/components/MeasureBar";
 import { ShareButton } from "@/components/ShareButton";
 import { Card, Stat, GhostLink } from "@/components/ui";
@@ -57,9 +59,10 @@ export default async function Home({
 }) {
   if (!isConfigured) return <NotConfigured />;
 
-  const [stats, options, sectors, lb] = await Promise.all([
-    getLiveStats(), getFilterOptions(), getSectors(), getLeaderboards(),
+  const [stats, options, sectors, lb, board] = await Promise.all([
+    getLiveStats(), getFilterOptions(), getSectors(), getLeaderboards(), getCompaniesBoard(),
   ]);
+  const companyList = board.map((c) => ({ name: c.company, slug: c.slug }));
   const hasQuery = Boolean(searchParams.role || searchParams.city || searchParams.level || searchParams.base);
   const result = hasQuery
     ? await searchSalaries({
@@ -87,8 +90,12 @@ export default async function Home({
       </section>
 
       {/* Search */}
-      <section className="mx-auto mt-9 max-w-4xl">
-        <SearchForm roles={options.roles} cities={options.cities} current={searchParams} />
+      <section className="mx-auto mt-9 max-w-3xl">
+        <SmartSearch roles={options.roles} cities={options.cities} companies={companyList} />
+        <div className="mt-4">
+          <div className="tnum mb-2 text-[11px] uppercase tracking-[0.22em] text-ink-faint">Refine</div>
+          <SearchForm roles={options.roles} cities={options.cities} current={searchParams} compact />
+        </div>
       </section>
 
       {/* Results */}
