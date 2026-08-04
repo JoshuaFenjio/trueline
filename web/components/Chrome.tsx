@@ -17,8 +17,8 @@ export function Logo({ className = "" }: { className?: string }) {
 const links = [
   { href: "/leaderboards", label: "Leaderboards" },
   { href: "/companies", label: "Companies" },
+  { href: "/compare", label: "Compare" },
   { href: "/add", label: "Add salary" },
-  { href: "/methodology", label: "Methodology" },
 ];
 
 export function NavBar() {

@@ -513,6 +513,37 @@ export async function getAllCompanySlugs(): Promise<string[]> {
 }
 
 // ---------------------------------------------------------------------------
+// Compare — side-by-side company stats + median by role.
+// ---------------------------------------------------------------------------
+export interface CompareCompany {
+  company: string; slug: string; sector: Sector; payScore: number;
+  disclosurePct: number; midpoint: number; sectorRank: number; sectorTotal: number;
+  roleMedians: Record<string, number>;
+}
+export async function getCompare(slugs: string[]): Promise<CompareCompany[]> {
+  const board = await getCompaniesBoard();
+  const rows = usable(await getData());
+  const out: CompareCompany[] = [];
+  for (const slug of slugs.slice(0, 3)) {
+    const stat = board.find((c) => c.slug === slug);
+    if (!stat || out.some((o) => o.slug === slug)) continue;
+    const byRole = new Map<string, number[]>();
+    for (const r of rows) {
+      if (r.company !== stat.company) continue;
+      const a = byRole.get(r.roleFamily) || []; a.push(r.annual); byRole.set(r.roleFamily, a);
+    }
+    const roleMedians: Record<string, number> = {};
+    for (const [role, v] of byRole.entries()) if (v.length >= N_COMPANY) roleMedians[role] = Math.round(median(v));
+    out.push({
+      company: stat.company, slug: stat.slug, sector: stat.sector, payScore: stat.payScore,
+      disclosurePct: stat.disclosurePct, midpoint: stat.midpoint,
+      sectorRank: stat.sectorRank, sectorTotal: stat.sectorTotal, roleMedians,
+    });
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
 // City map data — salaried count + median per city (for the EMEA bubble map).
 // ---------------------------------------------------------------------------
 export interface MapCity { city: string; slug: string; n: number; median: number; lat: number; lon: number; }
