@@ -32,20 +32,20 @@ export async function GET(req: Request) {
       <div
         style={{
           width: "100%", height: "100%", display: "flex", flexDirection: "column",
-          justifyContent: "space-between", padding: "76px", backgroundColor: "#07080B",
-          backgroundImage: "linear-gradient(150deg, rgba(124,108,255,0.20), rgba(7,8,11,0) 48%)",
+          justifyContent: "space-between", padding: "76px", backgroundColor: "#FFFFFF",
+          backgroundImage: "linear-gradient(150deg, rgba(94,139,255,0.10), rgba(255,255,255,0) 46%)",
           fontFamily: ff,
         }}
       >
         {/* Wordmark */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ width: 30, height: 30, borderRadius: 9, backgroundImage: "linear-gradient(92deg,#8F7BFF,#5E8BFF,#4EC9FF)" }} />
-          <div style={{ color: "#F4F5F7", fontSize: 32, fontWeight: 700, letterSpacing: -1 }}>Trueline</div>
+          <div style={{ color: "#16181D", fontSize: 32, fontWeight: 700, letterSpacing: -1 }}>Trueline</div>
         </div>
 
         {/* Headline stat */}
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          <div style={{ color: "#A3A9B5", fontSize: 30, letterSpacing: 3, textTransform: "uppercase" }}>{kicker}</div>
+          <div style={{ color: "#5B6472", fontSize: 30, letterSpacing: 3, textTransform: "uppercase" }}>{kicker}</div>
           <div
             style={{
               maxWidth: 1040, fontSize: title.length <= 16 ? 112 : 66, fontWeight: 700,
@@ -56,11 +56,11 @@ export async function GET(req: Request) {
           >
             {title}
           </div>
-          <div style={{ color: "#F4F5F7", fontSize: 34 }}>{value}</div>
+          <div style={{ color: "#16181D", fontSize: 34 }}>{value}</div>
         </div>
 
         {/* Footer */}
-        <div style={{ display: "flex", color: "#6E7480", fontSize: 24 }}>
+        <div style={{ display: "flex", color: "#98A1AD", fontSize: 24 }}>
           Advertised base salaries · live from company job boards · trueline
         </div>
       </div>
