@@ -411,10 +411,23 @@ export const getCountryHub = (name: string) => locationHub(name, "country");
 // ---------------------------------------------------------------------------
 // Company detail (upgraded)
 // ---------------------------------------------------------------------------
+export interface LatestPosting {
+  title: string; city: string; lo: number; hi: number; postedAt: string | null; url: string | null;
+}
 export interface CompanyDetail extends CompanyStat {
   roles: { role: string; slug: string; companyMedian: number | null; companyN: number; sectorMedian: number | null }[];
   similar: { company: string; slug: string; midpoint: number; sector: Sector }[];
+  latest: LatestPosting[];
   careersUrl: string | null;
+}
+
+// Annualize a bound (mirrors the median logic) for showing an advertised range.
+function annualizeBound(v: number | null, period: string | null): number | null {
+  if (!v || v <= 0) return null;
+  const p = (period || "year").toLowerCase();
+  if (p === "month") return v > 25_000 ? v : v * 12;
+  if (p === "hour") return v <= 400 ? v * 1720 : v;
+  return v;
 }
 
 function careersUrl(ats: string, token: string): string {
@@ -463,16 +476,36 @@ export async function getCompanyBySlug(slug: string): Promise<CompanyDetail | nu
     .slice(0, 4)
     .map(({ d, ...c }) => c);
 
-  // Careers link from companies table.
+  // Careers link + latest salaried postings from Supabase.
   let careers: string | null = null;
+  const latest: LatestPosting[] = [];
   const sb = getSupabase();
   if (sb) {
-    const { data } = await sb.from("companies").select("ats,token").eq("name", stat.company).limit(1);
-    const m = data?.[0] as any;
+    const [meta, posts] = await Promise.all([
+      sb.from("companies").select("ats,token").eq("name", stat.company).limit(1),
+      sb.from("job_postings")
+        .select("title,city,location,salary_eur_min,salary_eur_max,salary_period,posted_at,url,multi_market,currency,region")
+        .eq("company", stat.company).eq("status", "active").neq("salary_source", "none")
+        .order("posted_at", { ascending: false }).limit(30),
+    ]);
+    const m = meta.data?.[0] as any;
     if (m?.ats && m?.token) careers = careersUrl(m.ats, m.token) || null;
+
+    for (const r of (posts.data as any[]) || []) {
+      if (r.region === "NONEMEA") continue;
+      const lo = annualizeBound(r.salary_eur_min, r.salary_period);
+      const hi = annualizeBound(r.salary_eur_max, r.salary_period) || lo;
+      if (!lo || lo < 20_000 || lo > 500_000) continue; // same plausibility gate
+      const place = resolvePlace(r.city || r.location, null);
+      latest.push({
+        title: r.title || "Role", city: place.city || place.country || "—",
+        lo: Math.round(lo), hi: Math.round(hi || lo), postedAt: r.posted_at || null, url: r.url || null,
+      });
+      if (latest.length >= 6) break;
+    }
   }
 
-  return { ...stat, roles, similar, careersUrl: careers };
+  return { ...stat, roles, similar, latest, careersUrl: careers };
 }
 
 export async function getAllCompanySlugs(): Promise<string[]> {

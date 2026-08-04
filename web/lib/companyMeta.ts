@@ -1,0 +1,84 @@
+// Hand-maintained public facts for the best-known companies. Anything unknown is
+// left out and hidden gracefully on the page. Keyed by the stored company name.
+export interface CompanyMeta {
+  hqCity?: string;
+  website?: string; // bare domain
+  founded?: number;
+  stage?: string; // "Series A/B/C…", "Public", "Private"
+}
+
+export const COMPANY_META: Record<string, CompanyMeta> = {
+  Adyen: { hqCity: "Amsterdam", website: "adyen.com", founded: 2006, stage: "Public" },
+  Monzo: { hqCity: "London", website: "monzo.com", founded: 2015, stage: "Private" },
+  Wise: { hqCity: "London", website: "wise.com", founded: 2011, stage: "Public" },
+  N26: { hqCity: "Berlin", website: "n26.com", founded: 2013, stage: "Private" },
+  GoCardless: { hqCity: "London", website: "gocardless.com", founded: 2011, stage: "Private" },
+  Qonto: { hqCity: "Paris", website: "qonto.com", founded: 2016, stage: "Private" },
+  Pleo: { hqCity: "Copenhagen", website: "pleo.io", founded: 2015, stage: "Private" },
+  SumUp: { hqCity: "London", website: "sumup.com", founded: 2012, stage: "Private" },
+  Mollie: { hqCity: "Amsterdam", website: "mollie.com", founded: 2004, stage: "Private" },
+  "Trade Republic": { hqCity: "Berlin", website: "traderepublic.com", founded: 2015, stage: "Private" },
+  Pennylane: { hqCity: "Paris", website: "pennylane.com", founded: 2020, stage: "Private" },
+  Tide: { hqCity: "London", website: "tide.co", founded: 2015, stage: "Private" },
+  Form3: { hqCity: "London", website: "form3.tech", founded: 2016, stage: "Private" },
+  Griffin: { hqCity: "London", website: "griffin.com", founded: 2017, stage: "Private" },
+  Zopa: { hqCity: "London", website: "zopa.com", founded: 2005, stage: "Private" },
+  Marshmallow: { hqCity: "London", website: "marshmallow.com", founded: 2017, stage: "Private" },
+  ComplyAdvantage: { hqCity: "London", website: "complyadvantage.com", founded: 2014, stage: "Private" },
+  Bunq: { hqCity: "Amsterdam", website: "bunq.com", founded: 2012, stage: "Private" },
+  Raisin: { hqCity: "Berlin", website: "raisin.com", founded: 2012, stage: "Private" },
+  Payhawk: { hqCity: "London", website: "payhawk.com", founded: 2018, stage: "Private" },
+  Zilch: { hqCity: "London", website: "zilch.com", founded: 2018, stage: "Private" },
+  Ledger: { hqCity: "Paris", website: "ledger.com", founded: 2014, stage: "Private" },
+  PayFit: { hqCity: "Paris", website: "payfit.com", founded: 2015, stage: "Private" },
+  Swile: { hqCity: "Paris", website: "swile.co", founded: 2018, stage: "Private" },
+
+  "Mistral AI": { hqCity: "Paris", website: "mistral.ai", founded: 2023, stage: "Private" },
+  ElevenLabs: { hqCity: "London", website: "elevenlabs.io", founded: 2022, stage: "Private" },
+  Synthesia: { hqCity: "London", website: "synthesia.io", founded: 2017, stage: "Private" },
+  Wayve: { hqCity: "London", website: "wayve.ai", founded: 2017, stage: "Private" },
+  DeepL: { hqCity: "Cologne", website: "deepl.com", founded: 2017, stage: "Private" },
+  Helsing: { hqCity: "Munich", website: "helsing.ai", founded: 2021, stage: "Private" },
+  Graphcore: { hqCity: "Bristol", website: "graphcore.ai", founded: 2016, stage: "Private" },
+
+  GitLab: { website: "gitlab.com", founded: 2014, stage: "Public" },
+  "Grafana Labs": { website: "grafana.com", founded: 2014, stage: "Private" },
+  PostHog: { website: "posthog.com", founded: 2020, stage: "Private" },
+  n8n: { hqCity: "Berlin", website: "n8n.io", founded: 2019, stage: "Private" },
+  Tinybird: { hqCity: "Madrid", website: "tinybird.co", founded: 2019, stage: "Private" },
+  Algolia: { hqCity: "Paris", website: "algolia.com", founded: 2012, stage: "Private" },
+  Celonis: { hqCity: "Munich", website: "celonis.com", founded: 2011, stage: "Private" },
+  Dataiku: { hqCity: "Paris", website: "dataiku.com", founded: 2013, stage: "Private" },
+  Aircall: { hqCity: "Paris", website: "aircall.io", founded: 2014, stage: "Private" },
+  Camunda: { hqCity: "Berlin", website: "camunda.com", founded: 2013, stage: "Private" },
+  Contentful: { hqCity: "Berlin", website: "contentful.com", founded: 2013, stage: "Private" },
+  Typeform: { hqCity: "Barcelona", website: "typeform.com", founded: 2012, stage: "Private" },
+  Pipedrive: { hqCity: "Tallinn", website: "pipedrive.com", founded: 2010, stage: "Private" },
+  Leapsome: { hqCity: "Berlin", website: "leapsome.com", founded: 2016, stage: "Private" },
+
+  Doctolib: { hqCity: "Paris", website: "doctolib.fr", founded: 2013, stage: "Private" },
+  Alan: { hqCity: "Paris", website: "alan.com", founded: 2016, stage: "Private" },
+  "Flo Health": { hqCity: "London", website: "flo.health", founded: 2015, stage: "Private" },
+  Oura: { hqCity: "Oulu", website: "ouraring.com", founded: 2013, stage: "Private" },
+  Personio: { hqCity: "Munich", website: "personio.com", founded: 2015, stage: "Private" },
+  HiBob: { hqCity: "London", website: "hibob.com", founded: 2015, stage: "Private" },
+
+  Deliveroo: { hqCity: "London", website: "deliveroo.co.uk", founded: 2013, stage: "Public" },
+  HelloFresh: { hqCity: "Berlin", website: "hellofresh.com", founded: 2011, stage: "Public" },
+  "Delivery Hero": { hqCity: "Berlin", website: "deliveryhero.com", founded: 2011, stage: "Public" },
+  Wolt: { hqCity: "Helsinki", website: "wolt.com", founded: 2014, stage: "Public" },
+  GetYourGuide: { hqCity: "Berlin", website: "getyourguide.com", founded: 2009, stage: "Private" },
+  "Back Market": { hqCity: "Paris", website: "backmarket.com", founded: 2014, stage: "Private" },
+  "Vestiaire Collective": { hqCity: "Paris", website: "vestiairecollective.com", founded: 2009, stage: "Private" },
+  Farfetch: { hqCity: "London", website: "farfetch.com", founded: 2007, stage: "Public" },
+  Trustpilot: { hqCity: "Copenhagen", website: "trustpilot.com", founded: 2007, stage: "Public" },
+  Skyscanner: { hqCity: "Edinburgh", website: "skyscanner.net", founded: 2003, stage: "Public" },
+  Sorare: { hqCity: "Paris", website: "sorare.com", founded: 2018, stage: "Private" },
+  Spotify: { hqCity: "Stockholm", website: "spotify.com", founded: 2006, stage: "Public" },
+  Truecaller: { hqCity: "Stockholm", website: "truecaller.com", founded: 2009, stage: "Public" },
+  Cognite: { hqCity: "Oslo", website: "cognite.com", founded: 2016, stage: "Private" },
+};
+
+export function companyMeta(name: string): CompanyMeta {
+  return COMPANY_META[name] || {};
+}
