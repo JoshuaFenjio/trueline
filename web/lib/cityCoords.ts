@@ -1,0 +1,30 @@
+// Approx [lat, lon] for EMEA cities we plot. Used with a simple equirectangular
+// projection — no map library, no landmass asset. Cities without coords are
+// simply not plotted (they still appear in the top-cities list).
+export const CITY_COORDS: Record<string, [number, number]> = {
+  London: [51.5, -0.13], Manchester: [53.48, -2.24], Leeds: [53.8, -1.55],
+  Edinburgh: [55.95, -3.19], Cardiff: [51.48, -3.18], Bristol: [51.45, -2.59],
+  Dublin: [53.35, -6.26],
+  Paris: [48.86, 2.35], Lyon: [45.76, 4.84], Marseille: [43.30, 5.37], Toulouse: [43.6, 1.44],
+  Berlin: [52.52, 13.40], Munich: [48.14, 11.58], Hamburg: [53.55, 9.99],
+  Frankfurt: [50.11, 8.68], Cologne: [50.94, 6.96], Stuttgart: [48.78, 9.18],
+  "Düsseldorf": [51.23, 6.78], Leipzig: [51.34, 12.37],
+  Madrid: [40.42, -3.70], Barcelona: [41.39, 2.17], Valencia: [39.47, -0.38], Seville: [37.39, -5.98],
+  Lisbon: [38.72, -9.14], Porto: [41.15, -8.61],
+  Milan: [45.46, 9.19], Rome: [41.90, 12.50], Turin: [45.07, 7.69], Naples: [40.85, 14.27],
+  Amsterdam: [52.37, 4.90], Rotterdam: [51.92, 4.48], Utrecht: [52.09, 5.12],
+  Brussels: [50.85, 4.35], Antwerp: [51.22, 4.40],
+  Zurich: [47.37, 8.54], Geneva: [46.20, 6.14], Basel: [47.56, 7.59],
+  Vienna: [48.21, 16.37],
+  Copenhagen: [55.68, 12.57], Stockholm: [59.33, 18.07], Gothenburg: [57.71, 11.97],
+  Oslo: [59.91, 10.75], Helsinki: [60.17, 24.94],
+  Warsaw: [52.23, 21.01], Krakow: [50.06, 19.94], Wroclaw: [51.11, 17.04],
+  "Gdańsk": [54.35, 18.65], Gdansk: [54.35, 18.65],
+  Prague: [50.08, 14.44], Bratislava: [48.15, 17.11], Budapest: [47.50, 19.04],
+  Bucharest: [44.43, 26.10], Sofia: [42.70, 23.32], Athens: [37.98, 23.73],
+  Belgrade: [44.79, 20.45], Zagreb: [45.81, 15.98], Ljubljana: [46.05, 14.51],
+  Tallinn: [59.44, 24.75], Riga: [56.95, 24.11], Vilnius: [54.69, 25.28],
+  Luxembourg: [49.61, 6.13], Tbilisi: [41.72, 44.79],
+  Dubai: [25.20, 55.27], "Abu Dhabi": [24.45, 54.38], "Tel Aviv": [32.08, 34.78],
+  Istanbul: [41.01, 28.98], Cairo: [30.04, 31.24], Casablanca: [33.57, -7.59],
+};

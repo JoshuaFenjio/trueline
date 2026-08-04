@@ -1,11 +1,12 @@
 import Link from "next/link";
 import {
   getLiveStats, getFilterOptions, getSectors, getLeaderboards, getCompaniesBoard,
-  searchSalaries, isConfigured,
+  getCityMapData, searchSalaries, isConfigured,
 } from "@/lib/data";
 import type { Metadata } from "next";
 import { SearchForm } from "@/components/SearchForm";
 import { SmartSearch } from "@/components/SmartSearch";
+import { EmeaMap } from "@/components/EmeaMap";
 import { MeasureBar } from "@/components/MeasureBar";
 import { ShareButton } from "@/components/ShareButton";
 import { Card, Stat, GhostLink } from "@/components/ui";
@@ -59,8 +60,9 @@ export default async function Home({
 }) {
   if (!isConfigured) return <NotConfigured />;
 
-  const [stats, options, sectors, lb, board] = await Promise.all([
+  const [stats, options, sectors, lb, board, mapData] = await Promise.all([
     getLiveStats(), getFilterOptions(), getSectors(), getLeaderboards(), getCompaniesBoard(),
+    getCityMapData(),
   ]);
   const companyList = board.map((c) => ({ name: c.company, slug: c.slug }));
   const hasQuery = Boolean(searchParams.role || searchParams.city || searchParams.level || searchParams.base);
@@ -102,6 +104,16 @@ export default async function Home({
       <section id="results" className="mx-auto mt-8 max-w-4xl scroll-mt-20">
         {result === null ? null : !result.enough ? <NotEnough result={result} /> : <Results result={result} />}
       </section>
+
+      {/* EMEA map */}
+      {mapData.cities.length > 0 && (
+        <section className="mt-24">
+          <SectionHeader kicker="Geography" title="Where Europe pays" />
+          <div className="mt-6">
+            <EmeaMap cities={mapData.cities} emeaMedian={mapData.emeaMedian} />
+          </div>
+        </section>
+      )}
 
       {/* Browse tiles */}
       <section className="mt-24">

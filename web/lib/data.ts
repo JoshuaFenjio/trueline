@@ -513,6 +513,29 @@ export async function getAllCompanySlugs(): Promise<string[]> {
 }
 
 // ---------------------------------------------------------------------------
+// City map data — salaried count + median per city (for the EMEA bubble map).
+// ---------------------------------------------------------------------------
+export interface MapCity { city: string; slug: string; n: number; median: number; lat: number; lon: number; }
+export const getCityMapData = async (): Promise<{ cities: MapCity[]; emeaMedian: number }> => {
+  const { CITY_COORDS } = await import("./cityCoords");
+  const rows = usable(await getData());
+  const byCity = new Map<string, number[]>();
+  for (const r of rows) {
+    if (!r.city) continue;
+    const a = byCity.get(r.city) || []; a.push(r.annual); byCity.set(r.city, a);
+  }
+  const emeaMedian = rows.length ? median(rows.map((r) => r.annual)) : 0;
+  const cities: MapCity[] = [];
+  for (const [city, vals] of byCity.entries()) {
+    const coords = CITY_COORDS[city];
+    if (!coords || vals.length < 5) continue; // need coords + a real sample
+    cities.push({ city, slug: slugify(city), n: vals.length, median: Math.round(median(vals)), lat: coords[0], lon: coords[1] });
+  }
+  cities.sort((a, b) => b.n - a.n);
+  return { cities, emeaMedian: Math.round(emeaMedian) };
+};
+
+// ---------------------------------------------------------------------------
 // Sectors present (for the board chips)
 // ---------------------------------------------------------------------------
 export const getSectors = async (): Promise<Sector[]> => {
