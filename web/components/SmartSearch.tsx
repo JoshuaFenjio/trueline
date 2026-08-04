@@ -60,8 +60,7 @@ export function SmartSearch({ roles, cities, companies }: Props) {
 
   return (
     <div ref={boxRef} className="relative">
-      <div className="surface flex items-center gap-2 rounded-2xl p-2 pl-4" style={{ borderColor: "var(--border-strong)" }}>
-        <span className="text-ink-faint">⌕</span>
+      <div className="surface flex items-center gap-2 rounded-xl p-2 pl-4" style={{ borderColor: "var(--border-strong)" }}>
         <input
           value={q}
           onChange={(e) => { setQ(e.target.value); setOpen(true); setActive(-1); }}
@@ -69,10 +68,10 @@ export function SmartSearch({ roles, cities, companies }: Props) {
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           placeholder="Try “software engineer berlin”, “sales london”, “ml zurich”…"
-          className="w-full bg-transparent py-2.5 text-base outline-none placeholder:text-ink-faint"
+          className="w-full bg-transparent py-3 text-[17px] outline-none placeholder:text-ink-faint"
           aria-label="Search roles, cities, or companies"
         />
-        <button onClick={() => submit(q)} className="btn-primary shrink-0 rounded-xl px-5 py-2.5 text-sm">
+        <button onClick={() => submit(q)} className="btn-primary shrink-0 rounded-lg px-6 py-3 text-sm font-semibold">
           Search
         </button>
       </div>

@@ -77,28 +77,31 @@ export default async function Home({
   return (
     <div className="pb-10">
       {/* Hero */}
-      <section className="pt-14 text-center md:pt-20">
-        <p className="text-[13px] tracking-tight text-ink-faint">
+      <section className="pt-16 text-center md:pt-24">
+        <h1 className="mx-auto max-w-3xl text-5xl font-extrabold leading-[1.03] tracking-[-0.04em] md:text-[64px]">
+          Know what Europe actually pays.
+        </h1>
+        <p className="mx-auto mt-5 max-w-xl text-lg text-ink-muted">
+          Real base salaries from live job postings across Europe, the Middle East and Africa.
+        </p>
+      </section>
+
+      {/* Search — dominant */}
+      <section className="mx-auto mt-8 max-w-2xl">
+        <SmartSearch roles={options.roles} cities={options.cities} companies={companyList} />
+        <p className="tnum mt-3 text-center text-[13px] text-ink-faint">
           <Count n={stats.salaried} /> salaried roles
           <Dot /> <Count n={stats.companies} /> companies
           <Dot /> <Count n={stats.cities} /> cities
         </p>
-        <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-extrabold leading-[1.06] tracking-tight md:text-6xl">
-          Know what Europe actually pays <span>you.</span>
-        </h1>
-        <p className="mx-auto mt-5 max-w-xl text-base text-ink-muted md:text-lg">
-          Base-salary benchmarks from live job postings across Europe. If we don&apos;t have
-          enough data for a query, we tell you.
-        </p>
-      </section>
-
-      {/* Search */}
-      <section className="mx-auto mt-9 max-w-3xl">
-        <SmartSearch roles={options.roles} cities={options.cities} companies={companyList} />
-        <div className="mt-4">
-          <div className="tnum mb-2 text-[11px] uppercase tracking-[0.22em] text-ink-faint">Refine</div>
-          <SearchForm roles={options.roles} cities={options.cities} current={searchParams} compact />
-        </div>
+        <details className="group mt-4">
+          <summary className="tnum mx-auto flex w-max cursor-pointer list-none items-center gap-1 text-[11px] uppercase tracking-[0.18em] text-ink-faint hover:text-ink">
+            Refine <span className="transition-transform group-open:rotate-180">▾</span>
+          </summary>
+          <div className="mt-3">
+            <SearchForm roles={options.roles} cities={options.cities} current={searchParams} compact />
+          </div>
+        </details>
       </section>
 
       {/* Results */}
@@ -350,7 +353,7 @@ function NotConfigured() {
 }
 
 function Count({ n }: { n: number }) {
-  return <span className="tnum gradient-text font-medium">{n.toLocaleString()}</span>;
+  return <span className="tnum font-semibold text-ink">{n.toLocaleString()}</span>;
 }
 function Dot() {
   return <span className="mx-1.5 text-ink-faint/60">·</span>;
