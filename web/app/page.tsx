@@ -6,7 +6,7 @@ import {
 import type { Metadata } from "next";
 import { SearchForm } from "@/components/SearchForm";
 import { SmartSearch } from "@/components/SmartSearch";
-import { EmeaMap } from "@/components/EmeaMap";
+import { TopCities } from "@/components/TopCities";
 import { MeasureBar } from "@/components/MeasureBar";
 import { ShareButton } from "@/components/ShareButton";
 import { Card, Stat, GhostLink } from "@/components/ui";
@@ -109,12 +109,12 @@ export default async function Home({
         {result === null ? null : !result.enough ? <NotEnough result={result} /> : <Results result={result} />}
       </section>
 
-      {/* EMEA map */}
+      {/* Top paying cities */}
       {mapData.cities.length > 0 && (
         <section className="mt-24">
-          <SectionHeader kicker="Geography" title="Where Europe pays" />
+          <SectionHeader kicker="Geography" title="Top-paying cities" />
           <div className="mt-6">
-            <EmeaMap cities={mapData.cities} emeaMedian={mapData.emeaMedian} />
+            <TopCities cities={mapData.cities} emeaMedian={mapData.emeaMedian} />
           </div>
         </section>
       )}
