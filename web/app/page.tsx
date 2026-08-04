@@ -11,6 +11,7 @@ import { MeasureBar } from "@/components/MeasureBar";
 import { ShareButton } from "@/components/ShareButton";
 import { Card, Stat, GhostLink } from "@/components/ui";
 import { SectionHeader, Chip, ArrowLink } from "@/components/blocks";
+import { EmailCapture } from "@/components/EmailCapture";
 import { eur, eurK, slugify, pct } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -302,6 +303,16 @@ function Results({ result }: { result: Awaited<ReturnType<typeof searchSalaries>
           </ul>
         </Card>
       </div>
+
+      <Card>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="text-sm font-medium">Get notified when this benchmark updates</div>
+            <div className="text-xs text-ink-faint">We refresh from live job boards. One email when this role and city moves.</div>
+          </div>
+          <div className="md:w-80"><EmailCapture source="candidate" cta="Notify me" placeholder="you@email.com" /></div>
+        </div>
+      </Card>
     </div>
   );
 }

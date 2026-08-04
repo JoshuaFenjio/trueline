@@ -53,7 +53,9 @@ export async function Footer() {
         </div>
         <div className="flex flex-wrap gap-4">
           <Link href="/companies" className="hover:text-ink">Companies</Link>
+          <Link href="/compare" className="hover:text-ink">Compare</Link>
           <Link href="/add" className="hover:text-ink">Add salary</Link>
+          <Link href="/for-companies" className="hover:text-ink">For companies</Link>
           <Link href="/methodology" className="hover:text-ink">Methodology</Link>
         </div>
         <div className="flex flex-col gap-1 text-xs md:items-end">

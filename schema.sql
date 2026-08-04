@@ -63,6 +63,15 @@ create table if not exists submissions (
     created_at  timestamptz default now()
 );
 
+-- Waitlist / notify leads (employer waitlist + candidate benchmark-update).
+create table if not exists leads (
+    id          bigint generated always as identity primary key,
+    email       text not null,
+    company     text,
+    source      text,           -- employer | candidate
+    created_at  timestamptz default now()
+);
+
 -- =============================================================================
 -- Row Level Security
 -- The website reads with the ANON key and must ONLY see public, safe data.
@@ -71,6 +80,12 @@ create table if not exists submissions (
 alter table companies      enable row level security;
 alter table job_postings   enable row level security;
 alter table submissions    enable row level security;
+alter table leads          enable row level security;
+
+-- Anon may INSERT a lead (waitlist), but never read them.
+drop policy if exists anon_insert_leads on leads;
+create policy anon_insert_leads on leads
+    for insert to anon with check (true);
 
 -- Anon may READ companies and job postings (public benchmark data).
 drop policy if exists anon_read_companies on companies;
