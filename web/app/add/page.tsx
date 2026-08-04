@@ -24,7 +24,7 @@ export default function AddPage({ searchParams }: { searchParams: { submitted?: 
   return (
     <div className="mx-auto max-w-xl py-12">
       <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-        Add your salary <span className="serif-accent gradient-text">anonymously.</span>
+        Add your salary <span>anonymously.</span>
       </h1>
       <p className="mt-3 text-ink-muted">
         Every verified number makes the benchmarks truer. Takes 30 seconds.

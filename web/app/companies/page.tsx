@@ -33,7 +33,7 @@ export default async function CompaniesPage({
         <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">The pay board</h1>
         <p className="mt-3 text-ink-muted">
           {board.length} EMEA companies that disclose salaries, scored{" "}
-          <span className="serif-accent gradient-text">0–100</span> on how their median advertised base compares to
+          <span>0–100</span> on how their median advertised base compares to
           sector peers. Higher means better-paying for its sector.
         </p>
       </header>

@@ -43,7 +43,7 @@ export default function MethodologyPage() {
   return (
     <div className="mx-auto max-w-2xl py-12">
       <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-        How we know what&apos;s <span className="serif-accent gradient-text">true.</span>
+        How we know what&apos;s <span>true.</span>
       </h1>
       <p className="mt-3 text-ink-muted">
         Trueline is built to be honest about what it does and doesn&apos;t know. Here&apos;s exactly how the numbers are made.

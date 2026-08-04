@@ -9,32 +9,34 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bg: "#07080B",
+        bg: "#FFFFFF",
+        "bg-alt": "#F7F8F9",
         ink: {
-          DEFAULT: "#F4F5F7", // primary text
-          muted: "#A3A9B5", // secondary
-          faint: "#6E7480", // tertiary
+          DEFAULT: "#16181D", // primary text
+          muted: "#5B6472", // secondary
+          faint: "#98A1AD", // tertiary
         },
-        ember: "#FF6A45", // below market
-        mint: "#4ADE9C", // above market
+        ember: "#E5532F", // below market
+        mint: "#1E9E6A", // above market / verified
         brand: {
           1: "#8F7BFF",
           2: "#5E8BFF",
           3: "#4EC9FF",
-          ring: "#7C6CFF",
+          ring: "#5E8BFF",
         },
       },
       fontFamily: {
         sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
         mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
-        serif: ["var(--font-instrument)", "Georgia", "serif"],
       },
       borderRadius: {
-        card: "18px",
+        card: "12px",
       },
       boxShadow: {
-        glow: "0 0 0 1px rgba(124,108,255,.20), 0 8px 40px -8px rgba(124,108,255,.45)",
-        marker: "0 0 18px 2px rgba(124,108,255,.55)",
+        card: "0 1px 3px rgba(16,24,40,.06)",
+        "card-hover": "0 4px 12px rgba(16,24,40,.08)",
+        glow: "0 4px 12px rgba(16,24,40,.08)", // legacy alias -> soft shadow
+        marker: "0 1px 4px rgba(94,108,255,.5)",
       },
     },
   },

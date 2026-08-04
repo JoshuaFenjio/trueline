@@ -49,7 +49,7 @@ export function GhostLink({ href, children, className = "" }: { href: string; ch
 export function scoreColor(score: number): string {
   if (score >= 75) return "var(--mint)";
   if (score >= 50) return "#5E8BFF";
-  if (score >= 30) return "#F5B84B";
+  if (score >= 30) return "#C77A15"; // amber, darkened for legibility on white
   return "var(--ember)";
 }
 
@@ -59,7 +59,7 @@ export function ScoreBadge({ score, size = "md" }: { score: number; size?: "sm" 
   return (
     <div
       className={`tnum inline-flex items-center justify-center rounded-2xl font-semibold ${dim}`}
-      style={{ color, border: `1px solid ${color}55`, background: `${color}14`, boxShadow: `0 0 22px -6px ${color}66` }}
+      style={{ color, border: `1px solid ${color}40`, background: `${color}14` }}
     >
       {score}
     </div>

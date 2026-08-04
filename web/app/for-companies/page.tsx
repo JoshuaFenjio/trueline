@@ -24,7 +24,7 @@ export default function ForCompanies() {
       <section className="max-w-2xl">
         <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">For companies</div>
         <h1 className="mt-3 text-4xl font-extrabold leading-[1.06] tracking-tight md:text-5xl">
-          Know exactly what the market pays, before you <span className="serif-accent gradient-text font-normal">post.</span>
+          Know exactly what the market pays, before you <span>post.</span>
         </h1>
         <p className="mt-5 text-lg text-ink-muted">
           Trueline already reads the live salary market across EMEA. We&apos;re building the employer side:

@@ -11,7 +11,7 @@ export function SectionHeader({
     <div id={id} className="scroll-mt-24">
       {kicker && <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">{kicker}</div>}
       <h2 className="mt-2 text-3xl font-extrabold leading-[1.04] tracking-tight md:text-4xl">
-        {title} {accent && <span className="serif-accent gradient-text font-normal">{accent}</span>}
+        {title} {accent && <span>{accent}</span>}
       </h2>
       {sub && <p className="mt-3 max-w-2xl text-ink-muted">{sub}</p>}
     </div>
@@ -115,19 +115,14 @@ export function LevelLadder({ items }: { items: { level: string; median: number 
       {items.map((it) => (
         <div key={it.level} className="flex items-center gap-3">
           <span className="w-16 text-sm text-ink-muted">{it.level}</span>
-          <div className="relative h-8 flex-1 overflow-hidden rounded-lg" style={{ background: "var(--surface-2)" }}>
+          <div className="relative h-7 flex-1 overflow-hidden rounded-lg" style={{ background: "var(--surface-2)" }}>
             {it.median != null && (
-              <div className="absolute inset-y-0 left-0 rounded-lg gradient-bg" style={{ width: `${((it.median || 0) / max) * 100}%`, opacity: 0.9 }} />
+              <div className="absolute inset-y-0 left-0 rounded-lg gradient-bg" style={{ width: `${((it.median || 0) / max) * 100}%` }} />
             )}
-            <div className="absolute inset-0 flex items-center justify-between px-3">
-              <span className="tnum text-sm font-semibold text-[#0a0b10] mix-blend-luminosity">
-                {it.median != null ? eur(it.median) : ""}
-              </span>
-              <span className="tnum text-xs text-ink-faint">
-                {it.median != null ? `n ${it.n}` : `${it.n}/8`}
-              </span>
-            </div>
           </div>
+          <span className="tnum w-24 text-right text-sm font-semibold">
+            {it.median != null ? eur(it.median) : <span className="font-normal text-ink-faint">{it.n}/8</span>}
+          </span>
         </div>
       ))}
     </div>
@@ -141,7 +136,7 @@ export function GatedState({ n, gate = 8, what, tracked }: { n: number; gate?: n
     <div className="surface rounded-card p-8 text-center">
       <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">Gated · sample too small</div>
       <h3 className="mt-2 text-2xl font-extrabold tracking-tight">
-        Not enough reliable pay data <span className="serif-accent gradient-text font-normal">yet.</span>
+        Not enough reliable pay data <span>yet.</span>
       </h3>
       <p className="mx-auto mt-2 max-w-md text-sm text-ink-muted">
         {tracked && tracked > n ? (

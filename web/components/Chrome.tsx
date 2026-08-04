@@ -23,7 +23,7 @@ const links = [
 
 export function NavBar() {
   return (
-    <header className="sticky top-0 z-40 border-b backdrop-blur-md" style={{ background: "rgba(7,8,11,.72)" }}>
+    <header className="sticky top-0 z-40 border-b backdrop-blur-md" style={{ background: "rgba(255,255,255,.85)" }}>
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5">
         <Logo />
         <nav className="flex items-center gap-1 text-sm">

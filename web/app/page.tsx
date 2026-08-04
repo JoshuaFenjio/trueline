@@ -84,7 +84,7 @@ export default async function Home({
           <Dot /> <Count n={stats.cities} /> cities
         </p>
         <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-extrabold leading-[1.06] tracking-tight md:text-6xl">
-          Know what Europe actually pays <span className="serif-accent gradient-text font-normal">you.</span>
+          Know what Europe actually pays <span>you.</span>
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-base text-ink-muted md:text-lg">
           Base-salary benchmarks from live job postings across Europe. If we don&apos;t have

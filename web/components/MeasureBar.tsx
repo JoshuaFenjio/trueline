@@ -20,20 +20,20 @@ export function MeasureBar({
 
   return (
     <div className="pt-8 pb-7">
-      <div className="relative h-3 rounded-full" style={{ background: "var(--surface-3)", border: "1px solid var(--border)" }}>
+      <div className="relative h-2.5 rounded-full" style={{ background: "var(--surface-3)" }}>
         {/* IQR band */}
         <div
           className="absolute top-0 bottom-0 rounded-full"
-          style={{ left: `${iqrLeft}%`, right: `${100 - iqrRight}%`, background: "rgba(124,108,255,.28)" }}
+          style={{ left: `${iqrLeft}%`, right: `${100 - iqrRight}%`, background: "rgba(94,139,255,.20)" }}
         />
         {/* median marker */}
         <div className="absolute -top-1.5 -bottom-1.5" style={{ left: `calc(${medianPos}% - 2px)` }}>
-          <div className="h-full w-1 rounded-full gradient-bg" style={{ boxShadow: "var(--shadow-marker,0 0 18px 2px rgba(124,108,255,.55))" }} />
+          <div className="h-full w-1 rounded-full gradient-bg" />
         </div>
         {/* YOU marker */}
         {youPos != null && (
           <div className="absolute -top-2.5 -bottom-2.5" style={{ left: `calc(${youPos}% - 2px)` }}>
-            <div className="h-full w-1 rounded-full" style={{ background: youColor, boxShadow: `0 0 16px 2px ${youColor}` }} />
+            <div className="h-full w-1.5 rounded-full ring-2 ring-white" style={{ background: youColor }} />
           </div>
         )}
       </div>
