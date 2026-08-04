@@ -18,7 +18,7 @@ function ordinal(n: number): string {
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const c = await getCompanyBySlug(params.slug);
   if (!c) return { title: "Company not found" };
-  const title = `${c.company} salaries 2026 — Pay Score ${c.payScore}/100`;
+  const title = `${c.company} salaries 2026 · Pay Score ${c.payScore}/100`;
   return {
     title,
     description: `${c.company}: median advertised base ${eur(c.midpoint)}, ${ordinal(c.sectorRank)} of ${c.sectorTotal} in ${c.sector}, ${pct(c.disclosurePct)} of ads disclose pay.`,
@@ -46,7 +46,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
   // "What we don't know yet" — honest gaps.
   const thinRoles = c.roles.filter((r) => r.companyMedian === null).map((r) => r.role);
   const gaps: string[] = [];
-  if (c.disclosurePct < 40) gaps.push(`Most ${c.company} ads don't state pay — only ${pct(c.disclosurePct)} do, so this is a partial picture.`);
+  if (c.disclosurePct < 40) gaps.push(`Most ${c.company} ads don't state pay; only ${pct(c.disclosurePct)} do, so this is a partial picture.`);
   if (thinRoles.length) gaps.push(`Not enough salaried postings yet to publish a median for: ${thinRoles.slice(0, 6).join(", ")}.`);
   if (c.latest.length === 0) gaps.push("No advertised salary ranges we could verify right now.");
 

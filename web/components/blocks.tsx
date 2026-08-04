@@ -149,7 +149,7 @@ export function GatedState({ n, gate = 8, what, tracked }: { n: number; gate?: n
         ) : (
           <>We have <span className="tnum text-ink">{n}</span> reliable salaried posting{n === 1 ? "" : "s"} for {what}. </>
         )}
-        The median unlocks at <span className="tnum text-ink">{gate}</span> — we won&apos;t invent one.
+        The median unlocks at <span className="tnum text-ink">{gate}</span>. We won&apos;t invent one.
       </p>
       <div className="mx-auto mt-5 h-2 max-w-xs overflow-hidden rounded-full" style={{ background: "var(--surface-3)" }}>
         <div className="h-full rounded-full gradient-bg" style={{ width: `${pct}%` }} />

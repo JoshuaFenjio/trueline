@@ -49,7 +49,7 @@ export function EmailCapture({ source, withCompany = false, cta = "Notify me", p
       <button type="submit" className="btn-primary shrink-0 rounded-xl px-4 py-2.5 text-sm">
         {state === "loading" ? "…" : cta}
       </button>
-      {state === "error" && <span className="text-xs" style={{ color: "var(--ember)" }}>Something went wrong — try again.</span>}
+      {state === "error" && <span className="text-xs" style={{ color: "var(--ember)" }}>Something went wrong. Try again.</span>}
     </form>
   );
 }

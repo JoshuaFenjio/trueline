@@ -66,6 +66,11 @@ export default function MethodologyPage() {
           </section>
         ))}
       </div>
+
+      <div className="mt-12 flex flex-wrap gap-3">
+        <a href="/" className="btn-primary rounded-xl px-5 py-3 text-sm">Search the data</a>
+        <a href="/leaderboards" className="btn-ghost rounded-xl px-4 py-2.5 text-sm">See the leaderboards</a>
+      </div>
     </div>
   );
 }

@@ -20,7 +20,7 @@ export async function generateMetadata({ searchParams }: { searchParams: { compa
   }
   const cos = await getCompare(slugs);
   const names = cos.map((c) => c.company);
-  const title = `${names.join(" vs ")} — who pays more?`;
+  const title = `${names.join(" vs ")}: who pays more?`;
   const og = `/og?kicker=${encodeURIComponent("Compare · EMEA")}&title=${encodeURIComponent(names.join(" vs "))}&value=${encodeURIComponent("Pay, transparency and role medians")}`;
   return {
     title, // layout template appends " · Trueline"

@@ -33,8 +33,12 @@ export default function AddPage({ searchParams }: { searchParams: { submitted?: 
       {submitted && (
         <div className="mt-6 rounded-card border p-4" style={{ background: "rgba(74,222,156,.08)", borderColor: "rgba(74,222,156,.35)" }}>
           <p className="text-sm" style={{ color: "var(--mint)" }}>
-            Thank you — your salary is in the review queue. A human checks each one before it&apos;s ever used.
+            Thank you. Your salary is in the review queue. A human checks each one before it&apos;s ever used.
           </p>
+          <div className="mt-3 flex gap-4 text-sm">
+            <a href="/" className="text-brand-2 hover:underline">Search the data →</a>
+            <a href="/leaderboards" className="text-brand-2 hover:underline">See who pays most →</a>
+          </div>
         </div>
       )}
       {error && (

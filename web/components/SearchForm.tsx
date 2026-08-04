@@ -56,7 +56,7 @@ export function SearchForm({ roles, cities, current, compact }: Props) {
       </div>
       {!compact && (
         <p className="mt-3 text-xs text-ink-faint">
-          Real advertised base salaries. If a query has fewer than 8 recent postings, we say so — we never invent a number.
+          Real advertised base salaries. If a query has fewer than 8 recent postings, we say so. We never invent a number.
         </p>
       )}
     </form>

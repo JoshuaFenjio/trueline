@@ -18,7 +18,7 @@ const SITE =
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
   title: {
-    default: "Trueline — Know what Europe actually pays you",
+    default: "Trueline: know what Europe actually pays you",
     template: "%s · Trueline",
   },
   description:
@@ -26,13 +26,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Trueline",
-    title: "Trueline — Know what Europe actually pays you",
+    title: "Trueline: know what Europe actually pays you",
     description: "Real EMEA salary benchmarks from live job postings. Base pay, by role, level and city.",
     url: SITE,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Trueline — Know what Europe actually pays you",
+    title: "Trueline: know what Europe actually pays you",
     description: "Real EMEA salary benchmarks from live job postings.",
   },
 };

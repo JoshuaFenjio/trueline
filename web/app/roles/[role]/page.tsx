@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: { role: string } })
   if (!role) return { title: "Role not found" };
   const hub = await getRoleHub(role);
   const med = hub.overall.spread ? eur(hub.overall.spread.median) : "live data";
-  const title = `${role} salary in Europe 2026 — live from company job boards`;
+  const title = `${role} salary in Europe 2026, live from company job boards`;
   return {
     title,
     description: `What ${role}s earn across EMEA: median ${med} base, by level, city, country and company. Real advertised salaries from live job boards.`,

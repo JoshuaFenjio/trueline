@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: { city: string } })
   if (!city) return { title: "City not found" };
   const hub = await getCityHub(city);
   const med = hub.overall.spread ? eur(hub.overall.spread.median) : "live data";
-  const title = `Tech salaries in ${city} 2026 — live from company job boards`;
+  const title = `Tech salaries in ${city} 2026, live from company job boards`;
   return {
     title,
     description: `What tech roles pay in ${city}: median ${med} base, by role, and the top local payers. Real advertised salaries from live job boards.`,
