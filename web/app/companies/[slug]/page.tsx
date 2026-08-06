@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getCompanyBySlug, getLastRefreshed } from "@/lib/data";
 import { companyMeta } from "@/lib/companyMeta";
 import { ScoreBadge, scoreColor, Stat, Card } from "@/components/ui";
-import { SectionHeader, TrendBadge } from "@/components/blocks";
+import { SectionHeader, TrendBadge, Breadcrumbs } from "@/components/blocks";
 import { eur, eurK, pct, timeAgo } from "@/lib/format";
 
 export const revalidate = 3600;
@@ -52,10 +52,11 @@ export default async function CompanyPage({ params }: { params: { slug: string }
 
   return (
     <div className="py-14">
-      <div className="tnum text-xs text-ink-faint">
-        <Link href="/companies" className="hover:text-ink">Companies</Link> /{" "}
-        <Link href={`/leaderboards?sector=${encodeURIComponent(c.sector)}#by-sector`} className="hover:text-ink">{c.sector}</Link>
-      </div>
+      <Breadcrumbs items={[
+        { label: "Companies", href: "/companies" },
+        { label: c.sector, href: `/leaderboards?sector=${encodeURIComponent(c.sector)}#by-sector` },
+        { label: c.company },
+      ]} />
 
       {/* Hero */}
       <div className="mt-5 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">

@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { getCompare, getCompaniesBoard, isConfigured } from "@/lib/data";
 import { CompareBuilder } from "@/components/CompareBuilder";
 import { ShareButton } from "@/components/ShareButton";
-import { SectionHeader } from "@/components/blocks";
+import { SectionHeader, Breadcrumbs } from "@/components/blocks";
+import { SubNav } from "@/components/SubNav";
 import { Card, ScoreBadge, scoreColor } from "@/components/ui";
 import { eur, pct } from "@/lib/format";
 
@@ -45,6 +46,14 @@ export default async function ComparePage({ searchParams }: { searchParams: { co
 
   return (
     <div className="py-14">
+      <Breadcrumbs items={[{ label: "Companies", href: "/companies" }, { label: "Compare" }]} />
+      <div className="mt-4">
+        <SubNav items={[
+          { label: "Index", href: "/companies" },
+          { label: "Compare", href: "/compare" },
+          { label: "Transparency", href: "/leaderboards#transparent" },
+        ]} />
+      </div>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <SectionHeader kicker="Compare" title="Who pays more" />
         {cos.length >= 2 && <ShareButton path={`/compare?companies=${cos.map((c) => c.slug).join(",")}`} />}

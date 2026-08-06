@@ -18,6 +18,65 @@ export function SectionHeader({
   );
 }
 
+// -- Breadcrumbs: mono trail, last crumb is the current page ------------------
+export function Breadcrumbs({ items }: { items: { label: string; href?: string }[] }) {
+  return (
+    <nav aria-label="Breadcrumb" className="tnum flex flex-wrap items-center gap-1.5 text-xs text-ink-faint">
+      {items.map((it, i) => (
+        <span key={i} className="flex items-center gap-1.5">
+          {i > 0 && <span className="text-ink-faint/50">/</span>}
+          {it.href ? <Link href={it.href} className="hover:text-ink">{it.label}</Link> : <span className="text-ink-muted">{it.label}</span>}
+        </span>
+      ))}
+    </nav>
+  );
+}
+
+// -- Stat strip: big mono figures + small-caps labels, hairline dividers ------
+// 2-up on mobile, N-up from sm; internal hairlines only (no stray edges).
+export function StatStrip({ items, className = "" }: { items: { value: ReactNode; label: string }[]; className?: string }) {
+  const cols = items.length >= 4 ? "sm:grid-cols-4" : items.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2";
+  return (
+    <div className={`surface grid grid-cols-2 overflow-hidden rounded-card ${cols} ${className}`}>
+      {items.map((it, i) => (
+        <div
+          key={i}
+          className="border-l border-t px-4 py-3.5 [&:nth-child(-n+2)]:border-t-0 [&:nth-child(2n+1)]:border-l-0 sm:border-t-0 sm:[&:nth-child(2n+1)]:border-l sm:first:border-l-0"
+          style={{ borderColor: "var(--border)" }}
+        >
+          <div className="tnum truncate text-2xl font-semibold leading-none md:text-3xl">{it.value}</div>
+          <div className="mt-1.5 text-[10px] uppercase tracking-[0.14em] text-ink-faint">{it.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// -- Lens card: kicker + title + one line + arrow. First is accent-filled -----
+export function LensCard({
+  href, kicker, title, line, accent = false,
+}: { href: string; kicker: string; title: string; line: string; accent?: boolean }) {
+  return (
+    <Link href={href} className="group block h-full">
+      <div
+        className={`flex h-full flex-col justify-between rounded-card border p-5 transition-colors ${accent ? "" : "surface-hover"}`}
+        style={accent
+          ? { background: "linear-gradient(150deg, rgba(124,108,255,.10), rgba(78,201,255,.05))", borderColor: "var(--border-strong)" }
+          : { background: "var(--surface-1)", borderColor: "var(--border)" }}
+      >
+        <div>
+          <div className="tnum text-[10px] uppercase tracking-[0.18em] text-ink-faint">{kicker}</div>
+          <div className="mt-2 text-lg font-semibold tracking-tight">{title}</div>
+          <p className="mt-1.5 text-sm text-ink-muted">{line}</p>
+        </div>
+        <span className="arrow-cue mt-5 inline-flex items-center gap-1 text-[11px] uppercase tracking-wider">
+          Open <span className="arw">→</span>
+        </span>
+      </div>
+    </Link>
+  );
+}
+
 // -- Arrow link: mono 11px uppercase, gradient text + arrow +2px on hover -----
 export function ArrowLink({ href, children, className = "" }: { href: string; children: ReactNode; className?: string }) {
   return (
@@ -87,6 +146,21 @@ export function toPayVMs(
     sub: `${r.n}`,
     valueLabel: eur(r.value),
     barPct: r.value / max,
+  }));
+}
+
+// Build RankVMs sized by posting volume (count), not €. For "most in demand".
+export function toVolumeVMs(
+  rows: { name?: string; label?: string; slug: string; n: number }[],
+  hrefBase: (slug: string) => string,
+  unit = "ads"
+): RankVM[] {
+  const max = Math.max(1, ...rows.map((r) => r.n));
+  return rows.map((r) => ({
+    label: (r.label ?? r.name)!,
+    href: hrefBase(r.slug),
+    valueLabel: `${r.n} ${unit}`,
+    barPct: r.n / max,
   }));
 }
 

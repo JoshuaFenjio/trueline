@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { getLeaderboards, countriesForRole, isConfigured, RankRow } from "@/lib/data";
-import { SectionHeader, RankTable, toPayVMs, Chip, RankVM } from "@/components/blocks";
+import { SectionHeader, RankTable, toPayVMs, Chip, RankVM, Breadcrumbs } from "@/components/blocks";
 import { PayIndexTable, IndexRow } from "@/components/PayIndex";
+import { SubNav } from "@/components/SubNav";
 import { ShareButton } from "@/components/ShareButton";
 import { slugify, pct, eurK } from "@/lib/format";
 
@@ -67,6 +68,16 @@ export default async function Leaderboards({
 
   return (
     <div className="py-14">
+      <Breadcrumbs items={[{ label: "Leaderboards" }]} />
+      <div className="mt-4">
+        <SubNav items={[
+          { label: "Overall", href: "/leaderboards#overall" },
+          { label: "By sector", href: "/leaderboards#by-sector" },
+          { label: "By role", href: "/leaderboards#by-role" },
+          { label: "By country", href: "/leaderboards#countries" },
+          { label: "Transparent", href: "/leaderboards#transparent" },
+        ]} />
+      </div>
       <SectionHeader
         kicker="Leaderboards"
         title="Who actually pays"

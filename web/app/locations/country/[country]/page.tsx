@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCountryHub, countryFromSlug } from "@/lib/data";
+import { getCountryHub, countryFromSlug, getCountryIndex } from "@/lib/data";
 import { LocationView } from "@/components/LocationView";
-import { eur } from "@/lib/format";
+import { eur, slugify } from "@/lib/format";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -26,6 +26,10 @@ export async function generateMetadata({ params }: { params: { country: string }
 export default async function CountryPage({ params }: { params: { country: string } }) {
   const country = await countryFromSlug(params.country);
   if (!country) notFound();
-  const hub = await getCountryHub(country);
-  return <LocationView hub={hub} />;
+  const [hub, index] = await Promise.all([getCountryHub(country), getCountryIndex()]);
+  const related = index
+    .filter((c) => c.name !== country)
+    .slice(0, 10)
+    .map((c) => ({ label: c.name, href: `/locations/country/${slugify(c.name)}` }));
+  return <LocationView hub={hub} related={related} />;
 }

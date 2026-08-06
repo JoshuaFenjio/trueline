@@ -235,6 +235,23 @@ export const getCountryList = async (): Promise<{ country: string; n: number }[]
   for (const r of usable(rows)) if (r.country) c.set(r.country, (c.get(r.country) || 0) + 1);
   return [...c.entries()].map(([country, n]) => ({ country, n })).sort((a, b) => b.n - a.n);
 };
+
+// Index rows for the hub pages: every entity with its posting count and a
+// gated median (null under N_MEDIAN, so we never invent a number).
+export interface IndexEntity { name: string; slug: string; n: number; median: number | null; }
+function indexBy(rows: Posting[], key: (p: Posting) => string | null): IndexEntity[] {
+  const m = new Map<string, number[]>();
+  for (const r of usable(rows)) {
+    const k = key(r); if (!k) continue;
+    const a = m.get(k) || []; a.push(r.annual); m.set(k, a);
+  }
+  return [...m.entries()]
+    .map(([name, v]) => ({ name, slug: slugify(name), n: v.length, median: v.length >= N_MEDIAN ? Math.round(median(v)) : null }))
+    .sort((a, b) => (b.median ?? 0) - (a.median ?? 0) || b.n - a.n);
+}
+export const getRoleIndex = async (): Promise<IndexEntity[]> => indexBy(await getData(), (p) => p.roleFamily);
+export const getCountryIndex = async (): Promise<IndexEntity[]> => indexBy(await getData(), (p) => p.country);
+export const getCityIndex = async (): Promise<IndexEntity[]> => indexBy(await getData(), (p) => p.city);
 // Entities that exist in the data at all (>= threshold ACTIVE postings), even
 // if their salary data is currently gated. Used so legit markets resolve to a
 // designed empty state instead of a hard 404.

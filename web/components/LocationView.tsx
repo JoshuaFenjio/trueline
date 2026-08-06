@@ -1,17 +1,20 @@
 import Link from "next/link";
 import { LocationHub } from "@/lib/data";
-import { SectionHeader, RankTable, toPayVMs, TrendBadge, GatedState } from "@/components/blocks";
+import { SectionHeader, RankTable, toPayVMs, TrendBadge, GatedState, Breadcrumbs } from "@/components/blocks";
 import { MeasureBar } from "@/components/MeasureBar";
 import { Card } from "@/components/ui";
 import { eur } from "@/lib/format";
 
-export function LocationView({ hub }: { hub: LocationHub }) {
+export function LocationView({ hub, related = [] }: { hub: LocationHub; related?: { label: string; href: string }[] }) {
   const kindLabel = hub.kind === "city" ? "City" : "Country";
+  const indexHref = hub.kind === "city" ? "/locations" : "/locations/countries";
   return (
     <div className="py-14">
-      <div className="tnum text-xs text-ink-faint">
-        <Link href="/leaderboards" className="hover:text-ink">Leaderboards</Link> / {kindLabel}
-      </div>
+      <Breadcrumbs items={[
+        { label: "Salaries", href: "/roles" },
+        { label: hub.kind === "city" ? "Cities" : "Countries", href: indexHref },
+        { label: hub.name },
+      ]} />
       <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
         <SectionHeader
           kicker={`${kindLabel} · ${hub.overall.n} salaried ads`}
@@ -63,6 +66,20 @@ export function LocationView({ hub }: { hub: LocationHub }) {
           </div>
         </section>
       </div>
+
+      {/* Related markets */}
+      {related.length > 0 && (
+        <section className="mt-16">
+          <SectionHeader kicker="Related" title={hub.kind === "city" ? "Other cities" : "Other countries"} />
+          <div className="mt-5 flex flex-wrap gap-2">
+            {related.map((r) => (
+              <Link key={r.href} href={r.href} className="rounded-full border px-3 py-1.5 text-sm text-ink-muted transition-colors hover:text-ink" style={{ background: "var(--surface-1)" }}>
+                {r.label}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

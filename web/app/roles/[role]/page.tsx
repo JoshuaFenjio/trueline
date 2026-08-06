@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getRoleHub, roleFromSlug } from "@/lib/data";
-import { SectionHeader, RankTable, toPayVMs, LevelLadder, TrendBadge, GatedState } from "@/components/blocks";
+import { getRoleHub, roleFromSlug, getRoleFamilies } from "@/lib/data";
+import { SectionHeader, RankTable, toPayVMs, LevelLadder, TrendBadge, GatedState, Breadcrumbs } from "@/components/blocks";
 import { MeasureBar } from "@/components/MeasureBar";
 import { Card } from "@/components/ui";
 import { eur, slugify } from "@/lib/format";
@@ -29,13 +29,16 @@ export async function generateMetadata({ params }: { params: { role: string } })
 export default async function RolePage({ params }: { params: { role: string } }) {
   const role = await roleFromSlug(params.role);
   if (!role) notFound();
-  const hub = await getRoleHub(role);
+  const [hub, allRoles] = await Promise.all([getRoleHub(role), getRoleFamilies()]);
+  const adjacent = allRoles.filter((r) => r !== role).slice(0, 12);
 
   return (
     <div className="py-14">
-      <div className="tnum text-xs text-ink-faint">
-        <Link href="/leaderboards" className="hover:text-ink">Leaderboards</Link> / Role
-      </div>
+      <Breadcrumbs items={[
+        { label: "Salaries", href: "/roles" },
+        { label: "Roles", href: "/roles" },
+        { label: role },
+      ]} />
       <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
         <SectionHeader kicker={`Role · EMEA · ${hub.overall.n} salaried ads`} title={role} accent="pay." />
         <div className="flex items-center gap-3">
@@ -88,6 +91,18 @@ export default async function RolePage({ params }: { params: { role: string } })
         <div className="mt-5">
           {hub.topCompanies.length ? <RankTable rows={toPayVMs(hub.topCompanies, (s) => `/companies/${s}`)} />
             : <p className="text-sm text-ink-faint">Not enough per-company data yet (3+ postings needed).</p>}
+        </div>
+      </section>
+
+      {/* Adjacent roles */}
+      <section className="mt-16">
+        <SectionHeader kicker="Related" title="Other roles" />
+        <div className="mt-5 flex flex-wrap gap-2">
+          {adjacent.map((r) => (
+            <Link key={r} href={`/roles/${slugify(r)}`} className="tnum rounded-full border px-3 py-1.5 text-[13px] text-ink-muted transition-colors hover:text-ink" style={{ background: "var(--surface-1)" }}>
+              {r}
+            </Link>
+          ))}
         </div>
       </section>
     </div>

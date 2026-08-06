@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
-  getLiveStats, getFilterOptions, getSectors, getCompaniesBoard,
-  getCityMapData, searchSalaries, isConfigured,
+  getLiveStats, getFilterOptions, getSectors, getCompaniesBoard, getLeaderboards,
+  getCityMapData, getLastRefreshed, searchSalaries, isConfigured,
 } from "@/lib/data";
 import type { Metadata } from "next";
 import { SearchForm } from "@/components/SearchForm";
@@ -11,9 +11,10 @@ import { MeasureBar } from "@/components/MeasureBar";
 import { ShareButton } from "@/components/ShareButton";
 import { Card, Stat, GhostLink } from "@/components/ui";
 import { PayIndexTable, PayScaleLegend } from "@/components/PayIndex";
-import { SectionHeader, Chip, ArrowLink } from "@/components/blocks";
+import { SectionHeader, ArrowLink, StatStrip, LensCard } from "@/components/blocks";
 import { EmailCapture } from "@/components/EmailCapture";
-import { eur, eurK, slugify } from "@/lib/format";
+import { parseQuery } from "@/lib/parseQuery";
+import { eur, eurK, slugify, pct, timeAgo } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -48,39 +49,56 @@ export async function generateMetadata({
   };
 }
 
-// Left-notch colour per sector for the browse chips.
-const SECTOR_COLOR: Record<string, string> = {
-  AI: "#8F7BFF", Fintech: "#4EC9FF", Devtools: "#5E8BFF", SaaS: "#A78BFA",
-  Consumer: "#FF6A45", Health: "#4ADE9C", Mobility: "#F5B84B",
-  Security: "#FF8FA3", Other: "#6E7480",
-};
+const LENSES = [
+  { href: "/roles", kicker: "By role", title: "Salaries by role", line: "Medians by role and seniority, EMEA-wide." },
+  { href: "/locations", kicker: "By city", title: "Salaries by city", line: "What each tech hub actually pays." },
+  { href: "/locations/countries", kicker: "By country", title: "Salaries by country", line: "Compare national markets side by side." },
+  { href: "/companies", kicker: "By company", title: "The Pay Index", line: "Every employer, ranked on pay." },
+  { href: "/compare", kicker: "Compare", title: "Company vs company", line: "Two or three, role by role." },
+  { href: "/leaderboards", kicker: "Leaderboards", title: "Who pays most", line: "Top payers by sector, role and country." },
+];
+
+const RULES = [
+  { k: "Source", t: "Live job boards", d: "Every figure is scraped from companies' own public job postings." },
+  { k: "Scope", t: "Base pay, not TC", d: "Advertised base salary only. No guessed bonus or equity." },
+  { k: "Geography", t: "City-level, never national", d: "Anchored to the city on the posting, not a country average." },
+  { k: "Honesty", t: "Gated at n = 8", d: "No median from a thin sample. Below the gate we say so." },
+];
 
 export default async function Home({
   searchParams,
 }: {
-  searchParams: { role?: string; level?: string; city?: string; base?: string };
+  searchParams: { role?: string; level?: string; city?: string; base?: string; q?: string };
 }) {
   if (!isConfigured) return <NotConfigured />;
 
-  const [stats, options, sectors, board, mapData] = await Promise.all([
-    getLiveStats(), getFilterOptions(), getSectors(), getCompaniesBoard(),
-    getCityMapData(),
+  const [stats, options, sectors, board, lb, mapData, refreshed] = await Promise.all([
+    getLiveStats(), getFilterOptions(), getSectors(), getCompaniesBoard(), getLeaderboards(),
+    getCityMapData(), getLastRefreshed(),
   ]);
   const companyList = board.map((c) => ({ name: c.company, slug: c.slug }));
   const topCompanies = [...board].sort((a, b) => b.payScore - a.payScore).slice(0, 10);
-  const hasQuery = Boolean(searchParams.role || searchParams.city || searchParams.level || searchParams.base);
+
+  // Free-text nav search (?q=) → parse to role/city, else fall through.
+  const parsed = searchParams.q ? parseQuery(searchParams.q, { roles: options.roles, cities: options.cities, companies: companyList }) : null;
+  const role = searchParams.role ?? parsed?.role;
+  const city = searchParams.city ?? parsed?.city;
+  const hasQuery = Boolean(role || city || searchParams.level || searchParams.base);
   const result = hasQuery
     ? await searchSalaries({
-        role: searchParams.role, level: searchParams.level, city: searchParams.city,
+        role, level: searchParams.level, city,
         base: searchParams.base ? Number(searchParams.base) : undefined,
       })
     : null;
 
   return (
-    <div className="pb-10">
+    <div className="pb-4">
       {/* Hero */}
-      <section className="pt-16 text-center md:pt-24">
-        <h1 className="mx-auto max-w-3xl text-5xl font-extrabold leading-[1.03] tracking-[-0.04em] md:text-[64px]">
+      <section className="pt-14 text-center md:pt-20">
+        <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">
+          Trueline · European Pay Index · 2026
+        </div>
+        <h1 className="mx-auto mt-4 max-w-3xl text-5xl font-extrabold leading-[1.03] tracking-[-0.04em] md:text-[64px]">
           Know what Europe actually pays.
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-lg text-ink-muted">
@@ -91,19 +109,26 @@ export default async function Home({
       {/* Search — dominant */}
       <section className="mx-auto mt-8 max-w-2xl">
         <SmartSearch roles={options.roles} cities={options.cities} companies={companyList} />
-        <p className="tnum mt-3 text-center text-[13px] text-ink-faint">
-          <Count n={stats.salaried} /> salaried roles
-          <Dot /> <Count n={stats.companies} /> companies
-          <Dot /> <Count n={stats.cities} /> cities
-        </p>
         <details className="group mt-4">
           <summary className="tnum mx-auto flex w-max cursor-pointer list-none items-center gap-1 text-[11px] uppercase tracking-[0.18em] text-ink-faint hover:text-ink">
             Refine <span className="transition-transform group-open:rotate-180">▾</span>
           </summary>
           <div className="mt-3">
-            <SearchForm roles={options.roles} cities={options.cities} current={searchParams} compact />
+            <SearchForm roles={options.roles} cities={options.cities} current={{ role, city, level: searchParams.level, base: searchParams.base }} compact />
           </div>
         </details>
+      </section>
+
+      {/* Stat strip */}
+      <section className="mx-auto mt-8 max-w-3xl">
+        <StatStrip
+          items={[
+            { value: stats.salaried.toLocaleString(), label: "Salaried roles" },
+            { value: stats.companies.toLocaleString(), label: "Companies" },
+            { value: stats.cities.toLocaleString(), label: "Cities" },
+            { value: timeAgo(refreshed).replace(" ago", ""), label: "Last refreshed" },
+          ]}
+        />
       </section>
 
       {/* Results */}
@@ -111,11 +136,21 @@ export default async function Home({
         {result === null ? null : !result.enough ? <NotEnough result={result} /> : <Results result={result} />}
       </section>
 
-      {/* The Pay Index — two-column preview: companies ranked | cities ranked */}
+      {/* One dataset, six ways in */}
+      <section className="mt-24">
+        <SectionHeader kicker="Start here" title="One dataset, six ways in" />
+        <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {LENSES.map((l, i) => (
+            <LensCard key={l.href} {...l} accent={i === 0} />
+          ))}
+        </div>
+      </section>
+
+      {/* Top 10 — two-column preview */}
       {board.length > 0 && (
         <section className="mt-24">
           <div className="flex items-end justify-between gap-4">
-            <SectionHeader kicker="The Pay Index" title="Who pays the most" />
+            <SectionHeader kicker="A first look" title="Who pays the most" />
             <span className="hidden md:block"><ArrowLink href="/companies">View full ranking</ArrowLink></span>
           </div>
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
@@ -138,79 +173,47 @@ export default async function Home({
         </section>
       )}
 
-      {/* Browse tiles */}
+      {/* Four rules — methodology preview */}
       <section className="mt-24">
-        <SectionHeader title="Browse" />
-        <div className="mt-7 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <BrowseTile title="Sectors" href="/leaderboards#by-sector">
-            {sectors.slice(0, 6).map((s) => (
-              <SectorChip key={s} sector={s} />
-            ))}
-          </BrowseTile>
-          <BrowseTile title="Roles" href={options.roles[0] ? `/roles/${slugify(options.roles[0])}` : "/leaderboards#by-role"}>
-            {options.roles.slice(0, 6).map((r) => (
-              <RoleChip key={r} role={r} />
-            ))}
-          </BrowseTile>
-          <BrowseTile title="Cities" href="/leaderboards#countries">
-            {options.cities.slice(0, 6).map((c) => (
-              <Chip key={c.key} href={`/locations/${slugify(c.label)}`}>{c.label}</Chip>
-            ))}
-          </BrowseTile>
-          <Link href="/leaderboards" className="group">
-            <Card className="surface-hover flex h-full flex-col justify-between transition-colors">
-              <div>
-                <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">Leaderboards</div>
-                <div className="mt-2 text-2xl font-extrabold tracking-tight">Who pays most</div>
-                <p className="mt-2 text-sm text-ink-muted">The top-paying companies by sector and country, and the most transparent employers.</p>
-              </div>
-              <span className="arrow-cue mt-4 inline-flex items-center gap-1 text-[11px] uppercase tracking-wider">
-                Open leaderboards <span className="arw">→</span>
-              </span>
-            </Card>
-          </Link>
+        <div className="flex items-end justify-between gap-4">
+          <SectionHeader kicker="Method" title="Four rules. One honest number." />
+          <span className="hidden md:block"><ArrowLink href="/methodology">Read the full methodology</ArrowLink></span>
         </div>
+        <div className="mt-7 grid gap-3 sm:grid-cols-2">
+          {RULES.map((r) => (
+            <div key={r.k} className="surface rounded-card p-5">
+              <div className="tnum text-[10px] uppercase tracking-[0.18em] text-ink-faint">{r.k}</div>
+              <div className="mt-1.5 text-lg font-semibold tracking-tight">{r.t}</div>
+              <p className="mt-1 text-sm text-ink-muted">{r.d}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-6 md:hidden"><ArrowLink href="/methodology">Read the full methodology</ArrowLink></div>
       </section>
 
+      {/* Most transparent companies */}
+      {lb.bestDisclosure.length > 0 && (
+        <section className="mt-24">
+          <div className="flex items-center justify-between">
+            <SectionHeader kicker="Transparency" title="Most transparent companies" />
+            <span className="hidden md:block"><ArrowLink href="/leaderboards#transparent">See all</ArrowLink></span>
+          </div>
+          <div className="mt-6 flex gap-3 overflow-x-auto pb-2">
+            {lb.bestDisclosure.slice(0, 10).map((d) => (
+              <Link key={d.slug} href={`/companies/${d.slug}`} className="shrink-0">
+                <div className="surface surface-hover flex items-center gap-3 rounded-2xl px-4 py-3 transition-colors">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-md text-xs font-semibold" style={{ background: "var(--surface-3)", color: "var(--ink-muted)" }}>
+                    {d.company.charAt(0)}
+                  </span>
+                  <span className="whitespace-nowrap text-sm">{d.company}</span>
+                  <span className="tnum text-lg font-semibold text-ink-muted">{pct(d.pct)}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
-  );
-}
-
-function BrowseTile({ title, href, children }: { title: string; href: string; children: React.ReactNode }) {
-  return (
-    <Card className="flex h-full flex-col">
-      <div className="flex items-center justify-between">
-        <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">{title}</div>
-        <ArrowLink href={href}>all</ArrowLink>
-      </div>
-      <div className="mt-4 flex flex-wrap gap-2">{children}</div>
-    </Card>
-  );
-}
-
-// Sector chip: 3px colored left notch by sector.
-function SectorChip({ sector }: { sector: string }) {
-  return (
-    <Link
-      href={`/leaderboards?sector=${encodeURIComponent(sector)}#by-sector`}
-      className="rounded-full border py-1.5 pl-3 pr-3.5 text-sm text-ink-muted transition-colors hover:text-ink"
-      style={{ background: "var(--surface-1)", borderLeft: `3px solid ${SECTOR_COLOR[sector] || "#6E7480"}` }}
-    >
-      {sector}
-    </Link>
-  );
-}
-
-// Role chip: Geist Mono, to read as a distinct family from sector/city chips.
-function RoleChip({ role }: { role: string }) {
-  return (
-    <Link
-      href={`/roles/${slugify(role)}`}
-      className="tnum rounded-full border px-3 py-1.5 text-[12px] text-ink-muted transition-colors hover:text-ink"
-      style={{ background: "var(--surface-1)" }}
-    >
-      {role}
-    </Link>
   );
 }
 
@@ -339,13 +342,6 @@ function NotConfigured() {
       </p>
     </div>
   );
-}
-
-function Count({ n }: { n: number }) {
-  return <span className="tnum font-semibold text-ink">{n.toLocaleString()}</span>;
-}
-function Dot() {
-  return <span className="mx-1.5 text-ink-faint/60">·</span>;
 }
 
 function ordinal(n: number): string {

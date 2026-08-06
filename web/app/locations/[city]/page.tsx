@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCityHub, cityFromSlug } from "@/lib/data";
+import { getCityHub, cityFromSlug, getCityIndex } from "@/lib/data";
 import { LocationView } from "@/components/LocationView";
-import { eur } from "@/lib/format";
+import { eur, slugify } from "@/lib/format";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -26,6 +26,10 @@ export async function generateMetadata({ params }: { params: { city: string } })
 export default async function CityPage({ params }: { params: { city: string } }) {
   const city = await cityFromSlug(params.city);
   if (!city) notFound();
-  const hub = await getCityHub(city);
-  return <LocationView hub={hub} />;
+  const [hub, index] = await Promise.all([getCityHub(city), getCityIndex()]);
+  const related = index
+    .filter((c) => c.name !== city)
+    .slice(0, 10)
+    .map((c) => ({ label: c.name, href: `/locations/${slugify(c.name)}` }));
+  return <LocationView hub={hub} related={related} />;
 }

@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getCompaniesBoard, getSectors, isConfigured } from "@/lib/data";
 import { PayIndexTable, PayScaleLegend, IndexRow } from "@/components/PayIndex";
+import { Breadcrumbs } from "@/components/blocks";
+import { SubNav } from "@/components/SubNav";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +47,14 @@ export default async function CompaniesPage({
 
   return (
     <div className="py-12">
+      <Breadcrumbs items={[{ label: "Companies", href: "/companies" }, { label: "Pay Index" }]} />
+      <div className="mt-4">
+        <SubNav items={[
+          { label: "Index", href: "/companies" },
+          { label: "Compare", href: "/compare" },
+          { label: "Transparency", href: "/leaderboards#transparent" },
+        ]} />
+      </div>
       <header className="max-w-3xl">
         <div className="tnum text-[11px] uppercase tracking-[0.2em] text-ink-faint">The Pay Index</div>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">
