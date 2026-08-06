@@ -9,22 +9,22 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bg: "#FFFFFF",
-        "bg-alt": "#F7F8F9",
+        bg: "#FAFAF7",
+        "bg-alt": "#F3F2EE",
         ink: {
-          DEFAULT: "#0F1729", // ink navy — primary text
-          muted: "#5B6472", // secondary
-          faint: "#98A1AD", // tertiary
+          DEFAULT: "#171614", // warm near-black — primary text
+          muted: "#6B6660", // secondary
+          faint: "#9C968C", // tertiary
         },
-        accent: "#2E5BFF", // single cobalt accent
-        ember: "#E5532F", // below market
-        mint: "#1E9E6A", // above market / verified
+        accent: "#0F766E", // deep teal — structural
+        ember: "#E5532F", // below market (semantic)
+        mint: "#1E9E6A", // above market / verified (semantic, data only)
         brand: {
-          // legacy brand aliases now resolve to the single accent
-          1: "#2E5BFF",
-          2: "#2E5BFF",
-          3: "#2E5BFF",
-          ring: "#2E5BFF",
+          // legacy brand aliases now resolve to the single teal accent
+          1: "#0F766E",
+          2: "#0F766E",
+          3: "#0F766E",
+          ring: "#0F766E",
         },
       },
       fontFamily: {

@@ -32,15 +32,17 @@ export async function GET(req: Request) {
       <div
         style={{
           width: "100%", height: "100%", display: "flex", flexDirection: "column",
-          justifyContent: "space-between", padding: "76px", backgroundColor: "#FFFFFF",
-          backgroundImage: "linear-gradient(150deg, rgba(46,91,255,0.08), rgba(255,255,255,0) 46%)",
+          justifyContent: "space-between", padding: "76px", backgroundColor: "#FAFAF7",
+          backgroundImage: "linear-gradient(150deg, rgba(15,118,110,0.08), rgba(250,250,247,0) 46%)",
           fontFamily: ff,
         }}
       >
         {/* Wordmark */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 9, backgroundImage: "linear-gradient(92deg,#8F7BFF,#5E8BFF,#4EC9FF)" }} />
-          <div style={{ color: "#0F1729", fontSize: 32, fontWeight: 700, letterSpacing: -1 }}>Trueline</div>
+          <div style={{ width: 30, height: 30, borderRadius: 9, backgroundColor: "#171614", display: "flex" }}>
+            <div style={{ width: 30, height: 30, backgroundColor: "#0F766E", clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
+          </div>
+          <div style={{ color: "#171614", fontSize: 32, fontWeight: 700, letterSpacing: -1 }}>Trueline</div>
         </div>
 
         {/* Headline stat */}
@@ -49,12 +51,12 @@ export async function GET(req: Request) {
           <div
             style={{
               maxWidth: 1040, fontSize: title.length <= 16 ? 112 : 66, fontWeight: 800,
-              lineHeight: 1.05, letterSpacing: -2, color: "#0F1729",
+              lineHeight: 1.05, letterSpacing: -2, color: "#171614",
             }}
           >
             {title}
           </div>
-          <div style={{ color: "#2E5BFF", fontSize: 34, fontWeight: 700 }}>{value}</div>
+          <div style={{ color: "#0F766E", fontSize: 34, fontWeight: 700 }}>{value}</div>
         </div>
 
         {/* Footer */}

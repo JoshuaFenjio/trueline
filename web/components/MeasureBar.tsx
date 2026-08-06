@@ -24,7 +24,7 @@ export function MeasureBar({
         {/* IQR band */}
         <div
           className="absolute top-0 bottom-0 rounded-full"
-          style={{ left: `${iqrLeft}%`, right: `${100 - iqrRight}%`, background: "rgba(94,139,255,.20)" }}
+          style={{ left: `${iqrLeft}%`, right: `${100 - iqrRight}%`, background: "var(--accent-soft)" }}
         />
         {/* median marker */}
         <div className="absolute -top-1.5 -bottom-1.5" style={{ left: `calc(${medianPos}% - 2px)` }}>

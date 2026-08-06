@@ -3,25 +3,23 @@
 @tailwind utilities;
 
 :root {
-  --bg: #ffffff;
-  --bg-alt: #f7f8f9;
-  --surface-1: #f7f8f9; /* subtle fill: chips, fields */
-  --surface-2: #f1f3f5; /* hover fill */
-  --surface-3: #e9ecef; /* active / track fill */
-  --border: #e6e8eb;
-  --border-strong: #d8dce0;
-  --ink: #0f1729; /* ink navy — primary text */
-  --ink-muted: #5b6472;
-  --ink-faint: #98a1ad;
-  --accent: #2e5bff; /* single cobalt accent — buttons, links, key figures */
-  --accent-soft: rgba(46, 91, 255, 0.1); /* tint fills */
-  --ember: #e5532f; /* below market */
-  --mint: #1e9e6a; /* above market / verified (green) */
-  --brand-ring: #2e5bff;
-  /* 3-stop gradient — retained ONLY for the logo mark. */
-  --gradient: linear-gradient(92deg, #8f7bff, #5e8bff 55%, #4ec9ff);
-  --card-shadow: 0 1px 3px rgba(15, 23, 41, 0.06);
-  --card-shadow-hover: 0 4px 12px rgba(15, 23, 41, 0.08);
+  --bg: #fafaf7; /* warm paper canvas */
+  --bg-alt: #f3f2ee; /* warm section fill */
+  --surface-1: #f3f2ee; /* subtle fill: chips, fields */
+  --surface-2: #eceae4; /* hover fill */
+  --surface-3: #e3e1db; /* active / track fill */
+  --border: #e3e1db;
+  --border-strong: #d5d2ca;
+  --ink: #171614; /* warm near-black — primary text */
+  --ink-muted: #6b6660;
+  --ink-faint: #9c968c;
+  --accent: #0f766e; /* deep teal — structural: buttons, links, key figures */
+  --accent-soft: rgba(15, 118, 110, 0.1); /* tint fills */
+  --ember: #e5532f; /* below market (semantic, data only) */
+  --mint: #1e9e6a; /* above market / verified — green, data only */
+  --brand-ring: #0f766e;
+  --card-shadow: 0 1px 3px rgba(23, 22, 20, 0.05);
+  --card-shadow-hover: 0 4px 12px rgba(23, 22, 20, 0.08);
 }
 
 * {
@@ -45,9 +43,18 @@ h1,
 h2 {
   letter-spacing: -0.03em;
 }
-/* Logo mark keeps the one permitted gradient. */
+/* Logo mark: ink + teal two-tone, no gradient. */
 .logo-mark {
-  background: var(--gradient);
+  background: var(--ink);
+  position: relative;
+  overflow: hidden;
+}
+.logo-mark::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
 }
 /* Formerly a gradient — now the single solid accent (bars, fills). */
 .gradient-text {

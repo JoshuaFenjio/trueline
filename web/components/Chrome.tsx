@@ -7,7 +7,7 @@ export function Logo({ className = "" }: { className?: string }) {
     <Link href="/" className={`inline-flex items-center gap-2 font-semibold tracking-tight ${className}`}>
       <span
         className="logo-mark inline-block h-5 w-5 rounded-md"
-        style={{ boxShadow: "0 0 16px -2px rgba(124,108,255,.7)" }}
+        style={{ boxShadow: "0 0 14px -3px rgba(15,118,110,.5)" }}
       />
       <span className="text-[17px]">Trueline</span>
     </Link>
