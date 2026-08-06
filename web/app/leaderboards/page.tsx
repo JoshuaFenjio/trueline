@@ -3,7 +3,6 @@ import { getLeaderboards, countriesForRole, isConfigured, RankRow } from "@/lib/
 import { SectionHeader, RankTable, toPayVMs, Chip, RankVM } from "@/components/blocks";
 import { PayIndexTable, IndexRow } from "@/components/PayIndex";
 import { ShareButton } from "@/components/ShareButton";
-import { scoreColor } from "@/components/ui";
 import { slugify, pct, eurK } from "@/lib/format";
 
 export const revalidate = 3600;
@@ -61,7 +60,7 @@ export default async function Leaderboards({
 
   const disclosureVMs: RankVM[] = lb.bestDisclosure.map((d) => ({
     label: d.company, href: `/companies/${d.slug}`, sub: `${d.activeN} ads`,
-    valueLabel: pct(d.pct), barPct: d.pct / 100, tone: scoreColor(d.pct),
+    valueLabel: pct(d.pct), barPct: d.pct / 100,
   }));
 
   const cur = { sector: searchParams.sector, role: searchParams.role, crole: searchParams.crole };
