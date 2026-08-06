@@ -35,8 +35,15 @@ function parseDate(s: string | null): number {
   return Number.isNaN(t) ? 0 : t;
 }
 
-// Currencies whose salary we trust as EMEA base pay on a multi-market posting.
-const EMEA_CURRENCIES = new Set(["EUR", "GBP", "CHF", "SEK", "DKK", "NOK", "PLN"]);
+// Currencies we trust as genuine EMEA base pay. A salary quoted in any other
+// currency on an (already EMEA-only) posting is US/global-band leakage — e.g.
+// Wolt publishing USD bands on Athens roles, ElevenLabs global USD across the
+// EU — not the local market, so we don't count it in medians or Pay Scores.
+const EMEA_CURRENCIES = new Set([
+  "EUR", "GBP", "CHF", "SEK", "DKK", "NOK", "PLN", "CZK", "HUF", "RON", "BGN",
+  "HRK", "ISK", "ILS", "AED", "SAR", "QAR", "KWD", "BHD", "OMR", "EGP", "ZAR",
+  "NGN", "KES", "MAD", "TND", "TRY", "UAH", "GEL", "RSD",
+]);
 
 const _fetch = unstable_cache(
   async (): Promise<Posting[]> => {
@@ -66,9 +73,11 @@ const _fetch = unstable_cache(
 
         const disclosed = r.salary_source && r.salary_source !== "none";
         let annual = disclosed ? annualMidpointEur(r) : null;
-        // On a multi-market posting, only trust the salary if it's in an EMEA
-        // currency; otherwise it reflects the non-EMEA office (e.g. USD/California).
-        if (annual !== null && multiMarket && !EMEA_CURRENCIES.has((r.currency || "").toUpperCase()))
+        // Reject non-EMEA-currency salaries as EMEA base pay. Applies to every
+        // posting, not just multi-market ones: a single-location Athens role
+        // priced in USD is a US band leaking onto a European posting, so it must
+        // not enter medians/Pay Scores. Null currency defaults to EUR (kept).
+        if (annual !== null && !EMEA_CURRENCIES.has((r.currency || "EUR").toUpperCase()))
           annual = null;
         // Intern / working-student / apprentice pay is a stipend — keep the row
         // (still counts as disclosed) but exclude it from salary medians.
@@ -92,7 +101,7 @@ const _fetch = unstable_cache(
       })
       .filter((p): p is Posting => p !== null);
   },
-  ["trueline-active-v8"],
+  ["trueline-active-v9"],
   { revalidate: 3600 }
 );
 
@@ -603,6 +612,7 @@ export async function getCompanyBySlug(slug: string): Promise<CompanyDetail | nu
 
     for (const r of (posts.data as any[]) || []) {
       if (r.region === "NONEMEA") continue;
+      if (!EMEA_CURRENCIES.has((r.currency || "EUR").toUpperCase())) continue; // no USD-band leakage
       const lo = annualizeBound(r.salary_eur_min, r.salary_period);
       const hi = annualizeBound(r.salary_eur_max, r.salary_period) || lo;
       if (!lo || lo < 20_000 || lo > 500_000) continue; // same plausibility gate
