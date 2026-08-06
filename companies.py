@@ -159,6 +159,70 @@ COMPANIES = [
     {"name": 'Mentimeter'            , "ats": 'greenhouse'      , "token": 'mentimeter'},
     {"name": 'Voyado'                , "ats": 'teamtailor'      , "token": 'voyado'},
     {"name": 'Templafy'              , "ats": 'teamtailor'      , "token": 'templafy'},
+    {"name": 'Trustly'               , "ats": 'lever'           , "token": 'trustly'},
+    {"name": 'Reaktor'               , "ats": 'ashby'           , "token": 'reaktor'},
+    {"name": 'Corti'                 , "ats": 'ashby'           , "token": 'corti'},
+    {"name": 'Podimo'                , "ats": 'teamtailor'      , "token": 'podimo'},
+    {"name": 'Anyfin'                , "ats": 'teamtailor'      , "token": 'anyfin'},
+    {"name": 'Quinyx'                , "ats": 'teamtailor'      , "token": 'quinyx'},
+    {"name": 'Planhat'               , "ats": 'ashby'           , "token": 'planhat'},
+    {"name": 'Tibber'                , "ats": 'teamtailor'      , "token": 'tibber'},
+    {"name": 'Gelato'                , "ats": 'ashby'           , "token": 'gelato'},
+    {"name": 'Ardoq'                 , "ats": 'teamtailor'      , "token": 'ardoq'},
+    {"name": 'Fishbrain'             , "ats": 'teamtailor'      , "token": 'fishbrain'},
+    {"name": 'Jobandtalent'          , "ats": 'lever'           , "token": 'jobandtalent'},
+    {"name": 'Seedtag'               , "ats": 'teamtailor'      , "token": 'seedtag'},
+    {"name": 'Satispay'              , "ats": 'ashby'           , "token": 'satispay'},
+    {"name": 'Docebo'                , "ats": 'ashby'           , "token": 'docebo'},
+    {"name": 'Musixmatch'            , "ats": 'lever'           , "token": 'musixmatch'},
+    {"name": 'Feedzai'               , "ats": 'greenhouse'      , "token": 'feedzai'},
+    {"name": 'Sword Health'          , "ats": 'greenhouse'      , "token": 'swordhealth'},
+    {"name": 'Coverflex'             , "ats": 'teamtailor'      , "token": 'coverflex'},
+    {"name": 'Infraspeak'            , "ats": 'teamtailor'      , "token": 'infraspeak'},
+    {"name": 'DocPlanner'            , "ats": 'ashby'           , "token": 'docplanner'},
+    {"name": 'Brainly'               , "ats": 'ashby'           , "token": 'brainly'},
+    {"name": 'Nomagic'               , "ats": 'lever'           , "token": 'Nomagic'},
+    {"name": 'Tylko'                 , "ats": 'recruitee'       , "token": 'tylko'},
+    {"name": 'Zowie'                 , "ats": 'ashby'           , "token": 'zowie'},
+    {"name": 'Apify'                 , "ats": 'ashby'           , "token": 'apify'},
+    {"name": 'Twisto'                , "ats": 'recruitee'       , "token": 'twisto'},
+    {"name": 'Ataccama'              , "ats": 'lever'           , "token": 'ataccama'},
+    {"name": 'UiPath'                , "ats": 'ashby'           , "token": 'uipath'},
+    {"name": 'Veriff'                , "ats": 'greenhouse'      , "token": 'veriff'},
+    {"name": 'Nord Security'         , "ats": 'ashby'           , "token": 'nord-security'},
+    {"name": 'Glia'                  , "ats": 'ashby'           , "token": 'glia'},
+    {"name": 'PVcase'                , "ats": 'recruitee'       , "token": 'pvcase'},
+    {"name": 'Bird'                  , "ats": 'greenhouse'      , "token": 'bird'},
+    {"name": 'Sendcloud'             , "ats": 'teamtailor'      , "token": 'sendcloud'},
+    {"name": 'Channable'             , "ats": 'recruitee'       , "token": 'channable'},
+    {"name": 'Fourthline'            , "ats": 'greenhouse'      , "token": 'fourthline'},
+    {"name": 'Deliverect'            , "ats": 'lever'           , "token": 'deliverect'},
+    {"name": 'Showpad'               , "ats": 'greenhouse'      , "token": 'showpad'},
+    {"name": 'Lighthouse'            , "ats": 'greenhouse'      , "token": 'lighthouse'},
+    {"name": 'Aikido Security'       , "ats": 'recruitee'       , "token": 'aikidosecurity'},
+    {"name": 'Guardsquare'           , "ats": 'greenhouse'      , "token": 'guardsquare'},
+    {"name": 'Scandit'               , "ats": 'greenhouse'      , "token": 'scandit'},
+    {"name": 'Frontify'              , "ats": 'lever'           , "token": 'frontify'},
+    {"name": 'Ledgy'                 , "ats": 'greenhouse'      , "token": 'ledgy'},
+    {"name": 'Nexthink'              , "ats": 'smartrecruiters' , "token": 'Nexthink'},
+    {"name": 'Proton'                , "ats": 'greenhouse'      , "token": 'proton'},
+    {"name": 'GoStudent'             , "ats": 'greenhouse'      , "token": 'gostudent'},
+    {"name": 'Refurbed'              , "ats": 'greenhouse'      , "token": 'refurbed'},
+    {"name": 'PlanRadar'             , "ats": 'greenhouse'      , "token": 'planradar'},
+    {"name": 'LetsGetChecked'        , "ats": 'smartrecruiters' , "token": 'LetsGetChecked'},
+    {"name": 'Flipdish'              , "ats": 'greenhouse'      , "token": 'flipdish'},
+    {"name": 'Wayflyer'              , "ats": 'ashby'           , "token": 'wayflyer'},
+    {"name": 'Evervault'             , "ats": 'ashby'           , "token": 'evervault'},
+    {"name": 'Nory'                  , "ats": 'ashby'           , "token": 'nory'},
+    {"name": 'Careem'                , "ats": 'greenhouse'      , "token": 'careem'},
+    {"name": 'Property Finder'       , "ats": 'teamtailor'      , "token": 'propertyfinder'},
+    {"name": 'Fresha'                , "ats": 'lever'           , "token": 'fresha'},
+    {"name": 'Gong'                  , "ats": 'smartrecruiters' , "token": 'Gong'},
+    {"name": 'Fireblocks'            , "ats": 'greenhouse'      , "token": 'fireblocks'},
+    {"name": 'Melio'                 , "ats": 'greenhouse'      , "token": 'melio'},
+    {"name": 'JFrog'                 , "ats": 'greenhouse'      , "token": 'jfrog'},
+    {"name": 'Similarweb'            , "ats": 'greenhouse'      , "token": 'similarweb'},
+    {"name": 'Riskified'             , "ats": 'greenhouse'      , "token": 'riskified'},
 
     # ---- Unresolved (no ATS returned jobs) ----
     # {"name": 'Revolut'               , "ats": None, "token": None},  # resolver: not found
@@ -252,4 +316,109 @@ COMPANIES = [
     # {"name": 'Smartly'               , "ats": None, "token": None},  # resolver: not found
     # {"name": 'Swappie'               , "ats": None, "token": None},  # resolver: not found
     # {"name": 'Silo AI'               , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Northvolt'             , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Einride'               , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Tink'                  , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Relex Solutions'       , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'GoMore'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Zettle'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Juni'                  , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Normative'             , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Sana Labs'             , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Budbee'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Sinch'                 , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Oda'                   , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Xeneta'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Forsta'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Doktor24'              , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Billogram'             , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Mynewsdesk'            , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Karma'                 , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Debricked'             , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Fever'                 , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Wallbox'               , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Landbot'               , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Cobee'                 , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Exoticca'              , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Domestika'             , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Freepik'               , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Genially'              , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Voicemod'              , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Devo'                  , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Red Points'            , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Bending Spoons'        , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Scalapay'              , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Casavo'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Moneyfarm'             , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Soldo'                 , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Prima Assicurazioni'   , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Everli'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Talkdesk'              , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Codacy'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Booksy'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Packhelp'              , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Symmetrical'           , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Nethone'               , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Vue Storefront'        , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Productboard'          , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Rossum'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Kiwi.com'              , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'CloudTalk'             , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Recombee'              , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Notino'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Druid AI'              , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'FintechOS'             , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Bitdefender'           , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'TypingDNA'             , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Salv'                  , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Montonio'              , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Framer'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Backbase'              , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Bux'                   , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Dott'                  , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Otrium'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'StuDocu'               , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'WeTransfer'            , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Silverflow'            , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Zivver'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Silverfin'             , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Henchman'              , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Intigriti'             , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Cowboy'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Sortlist'              , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Materialise'           , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Unifly'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'On'                    , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Beekeeper'             , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Yokoy'                 , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Sophia Genetics'       , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Prewave'               , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Adverity'              , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Anyline'               , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Blockpit'              , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Hokify'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Byrd'                  , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'LatticeFlow'           , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Planted'               , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Workhuman'             , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Nuritas'               , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Manna'                 , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'TransferMate'          , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Fenergo'               , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'CurrencyFair'          , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Cubic Telecom'         , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Protex AI'             , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Continuum Industries'  , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Ocuco'                 , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Tabby'                 , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Kitopi'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Huspy'                 , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Alaan'                 , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Cafu'                  , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Bayzat'                , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Sarwa'                 , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Lean Technologies'     , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Monday.com'            , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Rapyd'                 , "ats": None, "token": None},  # resolver: not found
+    # {"name": 'Papaya Global'         , "ats": None, "token": None},  # resolver: not found
 ]

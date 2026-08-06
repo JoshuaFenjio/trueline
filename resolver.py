@@ -97,6 +97,43 @@ COMPANY_NAMES = [
     # Nordics
     "Spotify", "Epidemic Sound", "Kognity", "Mentimeter", "Voyado", "Dixa",
     "Templafy", "Supermetrics", "Smartly", "Swappie", "Silo AI",
+    # --- FINAL PRE-LAUNCH EXPANSION (regional depth) ------------------------
+    # Nordics (SE/DK/FI/NO)
+    "Northvolt", "Einride", "Tink", "Trustly", "Relex Solutions", "Reaktor",
+    "Corti", "Podimo", "GoMore", "Zettle", "Anyfin", "Juni", "Quinyx", "Planhat",
+    "Normative", "Sana Labs", "Budbee", "Sinch", "Tibber", "Oda", "Gelato",
+    "Ardoq", "Xeneta", "Forsta", "Doktor24", "Billogram", "Mynewsdesk", "Karma",
+    "Debricked", "Fishbrain",
+    # Southern Europe (ES/IT/PT)
+    "Jobandtalent", "Fever", "Wallbox", "Landbot", "Seedtag", "Cobee", "Exoticca",
+    "Domestika", "Freepik", "Genially", "Voicemod", "Devo", "Red Points",
+    "Bending Spoons", "Satispay", "Scalapay", "Casavo", "Docebo", "Musixmatch",
+    "Moneyfarm", "Soldo", "Prima Assicurazioni", "Everli", "Feedzai", "Talkdesk",
+    "Sword Health", "Coverflex", "Codacy", "Infraspeak",
+    # Eastern Europe (PL/CZ/RO/Baltics)
+    "DocPlanner", "Booksy", "Brainly", "Packhelp", "Nomagic", "Tylko", "Zowie",
+    "Symmetrical", "Nethone", "Vue Storefront", "Productboard", "Rossum", "Apify",
+    "Kiwi.com", "Twisto", "Ataccama", "CloudTalk", "Recombee", "Notino", "UiPath",
+    "Druid AI", "FintechOS", "Bitdefender", "TypingDNA", "Veriff", "Nord Security",
+    "Glia", "Salv", "Montonio", "PVcase",
+    # Netherlands / Belgium
+    "Bird", "Framer", "Backbase", "Bux", "Dott", "Otrium", "StuDocu", "Sendcloud",
+    "Channable", "WeTransfer", "Silverflow", "Fourthline", "Zivver", "Deliverect",
+    "Showpad", "Lighthouse", "Silverfin", "Henchman", "Aikido Security",
+    "Intigriti", "Cowboy", "Sortlist", "Guardsquare", "Materialise", "Unifly",
+    # Switzerland / Austria
+    "On", "Scandit", "Frontify", "Beekeeper", "Ledgy", "Nexthink", "Yokoy",
+    "Proton", "Sophia Genetics", "GoStudent", "Prewave", "Adverity", "Refurbed",
+    "Anyline", "PlanRadar", "Blockpit", "Hokify", "Byrd", "LatticeFlow", "Planted",
+    # Ireland
+    "Workhuman", "LetsGetChecked", "Flipdish", "Wayflyer", "Nuritas", "Manna",
+    "TransferMate", "Fenergo", "CurrencyFair", "Evervault", "Cubic Telecom",
+    "Protex AI", "Nory", "Continuum Industries", "Ocuco",
+    # Middle East (UAE / Israel)
+    "Careem", "Property Finder", "Tabby", "Kitopi", "Huspy", "Alaan", "Cafu",
+    "Fresha", "Bayzat", "Sarwa", "Lean Technologies", "Monday.com", "Gong",
+    "Fireblocks", "Melio", "Rapyd", "JFrog", "Similarweb", "Riskified",
+    "Papaya Global",
 ]
 
 

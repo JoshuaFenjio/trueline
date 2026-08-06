@@ -311,17 +311,19 @@ def classify_role(title: str) -> str:
     if has("machine learning", "ml engineer", " ml ", "ml/ai", "ai engineer",
            "a.i. engineer", "deep learning", "nlp", "natural language",
            "computer vision", "research engineer", "llm", "genai", "gen ai",
-           "applied ai", "applied ml", " ml/"):
+           "applied ai", "applied ml", " ml/", "mlops", "ml ops", "ml platform",
+           "prompt engineer"):
         return "ML/AI Engineer"
     if has("data engineer", "analytics engineer", "data platform", "etl ",
-           "data infrastructure", "big data"):
+           "data infrastructure", "big data", "data warehouse", "data governance"):
         return "Data Engineer"
     if has("data scientist", "data science", "applied scientist",
-           "research scientist", "decision scientist"):
+           "research scientist", "decision scientist", "quantitative", " quant ",
+           "quant researcher"):
         return "Data Scientist"
     if has("data analyst", "business analyst", "bi analyst", "insights analyst",
            "reporting analyst", "business intelligence", "bi developer",
-           "analytics manager", "web analyst"):
+           "analytics manager", "web analyst", "product analyst", "growth analyst"):
         return "Data Analyst"
     if has("security engineer", "application security", "appsec", "infosec",
            "information security", "security analyst", "security operations",
@@ -330,7 +332,8 @@ def classify_role(title: str) -> str:
         return "Security Engineer"
     if has("devops", "sre", "site reliability", "platform engineer", "infrastructure",
            "cloud engineer", "reliability engineer", "systems engineer",
-           "platform team"):
+           "platform team", "solutions architect", "cloud architect",
+           "kubernetes", "observability"):
         return "DevOps/Platform"
     if has("qa ", "quality assurance", "test engineer", "sdet", "qa engineer",
            "test automation", "quality engineer", "tester", "in test"):
@@ -356,23 +359,29 @@ def classify_role(title: str) -> str:
     if has("account executive", " ae ", " ae,", "sales", "business development",
            "sales development", " sdr ", " bdr ", "account manager", "revenue",
            "commercial", "commerciale", "new business", "key account", "field sales",
-           "solutions engineer", "sales engineer", "pre-sales", "presales"):
+           "solutions engineer", "sales engineer", "pre-sales", "presales",
+           "partnerships", "partner manager", "channel sales", "go-to-market",
+           " gtm ", "inside sales"):
         return "Sales/AE"
     if has("customer success", "customer support", "customer experience",
            "customer care", "client success", "customer service", "support specialist",
-           "support agent", "technical support", "support engineer", "onboarding"):
+           "support agent", "technical support", "support engineer", "onboarding",
+           "implementation", "solutions consultant"):
         return "Customer Success"
     if has("marketing", "growth", "seo", "content", "brand", "communications",
            "public relations", " pr ", "demand generation", "social media",
-           "copywriter", "campaign", "community"):
+           "copywriter", "campaign", "community", "developer advocate",
+           "developer relations", "devrel", "product marketing", "lifecycle"):
         return "Marketing"
     if has("finance", "financial", "accountant", "accounting", "controller", "fp&a",
            "treasury", " tax ", "tax ", "audit", "bookkeeper", "payroll",
-           "accounts payable", "accounts receivable", "procure to pay", " risk "):
+           "accounts payable", "accounts receivable", "procure to pay", " risk ",
+           "actuary", "actuarial", "underwrit", "financial analyst"):
         return "Finance"
     if has("people ", "human resources", " hr ", "recruiter", "recruiting",
            "talent acquisition", "talent ", "people operations", "people partner",
-           "hrbp", "people & culture", "compensation & benefits"):
+           "hrbp", "people & culture", "compensation & benefits",
+           "learning & development", " l&d ", "hr business partner"):
         return "People/HR"
     if has("legal", "counsel", "lawyer", "paralegal", "attorney", "privacy",
            "compliance", "regulatory"):
@@ -380,7 +389,9 @@ def classify_role(title: str) -> str:
     if has("operations", "operational", " ops ", "program manager", "project manager",
            "supply chain", "logistics", "warehouse", "procurement", "office manager",
            "chief of staff", "revops", "revenue operations", "fulfil", "facilities",
-           "general manager", "country manager", "workplace"):
+           "general manager", "country manager", "workplace", "scrum master",
+           "agile coach", "delivery manager", "business operations", "biz ops",
+           "strategy & operations"):
         return "Operations"
     return "Other"
 

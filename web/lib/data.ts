@@ -92,7 +92,7 @@ const _fetch = unstable_cache(
       })
       .filter((p): p is Posting => p !== null);
   },
-  ["trueline-active-v7"],
+  ["trueline-active-v8"],
   { revalidate: 3600 }
 );
 
