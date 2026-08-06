@@ -19,3 +19,13 @@ export function payColor(score: number): string {
 export function payLabel(score: number): string {
   return payBand(score).label;
 }
+
+// Map a country median vs the EMEA median onto the 0-100 band scale so the
+// choropleth speaks the same 5-step language: parity = 50 (At market),
+// ~1.6x = 80 (Top payer), ~0.7x = 35 (Below).
+export function scoreFromRatio(value: number, base: number): number {
+  if (!base) return 50;
+  // parity = 50; each 15% above/below EMEA median moves ~one band.
+  return Math.max(0, Math.min(100, Math.round(50 + (value / base - 1) * 100)));
+}
+export const NO_DATA_FILL = "#D5D2CB"; // gated / no data yet

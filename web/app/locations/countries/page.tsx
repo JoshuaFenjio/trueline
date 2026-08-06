@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { getCountryIndex, getLiveStats, isConfigured } from "@/lib/data";
+import { getCountryIndex, getLiveStats, getEuropePayData, isConfigured } from "@/lib/data";
 import { SectionHeader, RankTable, toPayVMs, toVolumeVMs, Breadcrumbs, StatStrip } from "@/components/blocks";
 import { SubNav } from "@/components/SubNav";
+import { EuropePayMap } from "@/components/EuropePayMap";
 import { eur } from "@/lib/format";
 
 export const revalidate = 3600;
@@ -19,7 +20,7 @@ const SALARIES_NAV = [
 
 export default async function CountriesIndex() {
   if (!isConfigured) return <p className="py-24 text-center text-ink-muted">Supabase not configured.</p>;
-  const [countries, stats] = await Promise.all([getCountryIndex(), getLiveStats()]);
+  const [countries, stats, europe] = await Promise.all([getCountryIndex(), getLiveStats(), getEuropePayData()]);
 
   const ranked = countries.filter((c) => c.median != null);
   const byVolume = [...countries].sort((a, b) => b.n - a.n).slice(0, 15);
@@ -44,6 +45,18 @@ export default async function CountriesIndex() {
       </div>
 
       <section className="mt-14">
+        <SectionHeader kicker="Map" title="The Europe pay map" sub="Fill by median vs the EMEA median, by role. Hover a country for its median and top payers; click through to the country." />
+        <div className="surface mt-6 hidden rounded-card p-5 md:block">
+          <EuropePayMap data={europe} />
+        </div>
+        <div className="mt-6 md:hidden">
+          {ranked.length
+            ? <RankTable rows={toPayVMs(ranked.map((c) => ({ label: c.name, slug: c.slug, value: c.median!, n: c.n })), (s) => `/locations/country/${s}`)} />
+            : <p className="text-sm text-ink-faint">No country clears the 8-posting gate yet.</p>}
+        </div>
+      </section>
+
+      <section className="mt-16">
         <SectionHeader kicker="Ranked" title="Highest-paying countries" />
         <div className="mt-5">
           {ranked.length

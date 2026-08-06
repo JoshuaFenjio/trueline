@@ -253,6 +253,39 @@ export const getRoleIndex = async (): Promise<IndexEntity[]> => indexBy(await ge
 export const getCountryIndex = async (): Promise<IndexEntity[]> => indexBy(await getData(), (p) => p.country);
 export const getCityIndex = async (): Promise<IndexEntity[]> => indexBy(await getData(), (p) => p.city);
 
+// Europe pay map — per-role country medians + top payers, for the choropleth.
+export interface CountryPay { country: string; median: number | null; n: number; topPayers: { company: string; median: number }[]; }
+export interface RolePay { emeaMedian: number; countries: CountryPay[]; }
+export interface EuropePayData { roles: string[]; data: Record<string, RolePay>; }
+
+function rolePay(rows: (Posting & { annual: number })[]): RolePay {
+  const emeaMedian = rows.length ? Math.round(median(rows.map((r) => r.annual))) : 0;
+  const byCountry = new Map<string, (Posting & { annual: number })[]>();
+  for (const r of rows) {
+    if (!r.country) continue;
+    const a = byCountry.get(r.country) || []; a.push(r); byCountry.set(r.country, a);
+  }
+  const countries: CountryPay[] = [];
+  for (const [country, ps] of byCountry) {
+    const byCo = new Map<string, number[]>();
+    for (const p of ps) { const a = byCo.get(p.company) || []; a.push(p.annual); byCo.set(p.company, a); }
+    const topPayers = [...byCo.entries()]
+      .filter(([, v]) => v.length >= N_COMPANY)
+      .map(([company, v]) => ({ company, median: Math.round(median(v)) }))
+      .sort((a, b) => b.median - a.median).slice(0, 3);
+    countries.push({ country, n: ps.length, median: ps.length >= N_MEDIAN ? Math.round(median(ps.map((p) => p.annual))) : null, topPayers });
+  }
+  return { emeaMedian, countries };
+}
+
+export const getEuropePayData = async (): Promise<EuropePayData> => {
+  const all = usable(await getData());
+  const roles = await getRoleFamilies();
+  const data: Record<string, RolePay> = { "All roles": rolePay(all) };
+  for (const role of roles) data[role] = rolePay(all.filter((r) => r.roleFamily === role));
+  return { roles, data };
+};
+
 // Salaried postings per sector — for the homepage sector chip row.
 export const getSectorCounts = async (): Promise<{ sector: Sector; n: number }[]> => {
   const rows = await getData();

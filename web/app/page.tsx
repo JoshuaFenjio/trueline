@@ -2,7 +2,7 @@ import Link from "next/link";
 import {
   getLiveStats, getFilterOptions, getSectors, getCompaniesBoard, getLeaderboards,
   getCityMapData, getLastRefreshed, getSectorCounts, getRecentSalaried, getRoleIndex,
-  searchSalaries, isConfigured,
+  getEuropePayData, searchSalaries, isConfigured,
 } from "@/lib/data";
 import type { Metadata } from "next";
 import { SearchForm } from "@/components/SearchForm";
@@ -13,7 +13,8 @@ import { MeasureBar } from "@/components/MeasureBar";
 import { ShareButton } from "@/components/ShareButton";
 import { Card, Stat, GhostLink } from "@/components/ui";
 import { PayIndexTable, PayScaleLegend } from "@/components/PayIndex";
-import { SectionHeader, ArrowLink, LensCard } from "@/components/blocks";
+import { EuropePayMap } from "@/components/EuropePayMap";
+import { SectionHeader, ArrowLink, LensCard, RankTable, toPayVMs } from "@/components/blocks";
 import { EmailCapture } from "@/components/EmailCapture";
 import { parseQuery } from "@/lib/parseQuery";
 import { eur, eurK, slugify, pct, timeAgo } from "@/lib/format";
@@ -74,10 +75,15 @@ export default async function Home({
 }) {
   if (!isConfigured) return <NotConfigured />;
 
-  const [stats, options, sectors, board, lb, mapData, refreshed, sectorCounts, recent, roleIdx] = await Promise.all([
+  const [stats, options, sectors, board, lb, mapData, refreshed, sectorCounts, recent, roleIdx, europe] = await Promise.all([
     getLiveStats(), getFilterOptions(), getSectors(), getCompaniesBoard(), getLeaderboards(),
     getCityMapData(), getLastRefreshed(), getSectorCounts(), getRecentSalaried(), getRoleIndex(),
+    getEuropePayData(),
   ]);
+  const euroCountryRows = europe.data["All roles"].countries
+    .filter((c) => c.median != null)
+    .sort((a, b) => (b.median! - a.median!))
+    .map((c) => ({ label: c.country, slug: slugify(c.country), value: c.median!, n: c.n }));
   const companyList = board.map((c) => ({ name: c.company, slug: c.slug }));
   const topCompanies = [...board].sort((a, b) => b.payScore - a.payScore).slice(0, 10);
   const topSectors = sectorCounts.filter((s) => s.sector !== "Other").slice(0, 6);
@@ -197,6 +203,22 @@ export default async function Home({
           <div className="mt-6 md:hidden"><ArrowLink href="/companies">View full ranking</ArrowLink></div>
         </section>
       )}
+
+      {/* Europe pay map */}
+      <section className="mt-24">
+        <div className="flex items-end justify-between gap-4">
+          <SectionHeader kicker="Geography" title="The Europe pay map" />
+          <span className="hidden md:block"><ArrowLink href="/locations/countries">Explore countries</ArrowLink></span>
+        </div>
+        <div className="surface mt-6 hidden rounded-card p-5 md:block">
+          <EuropePayMap data={europe} />
+        </div>
+        <div className="mt-6 md:hidden">
+          {euroCountryRows.length
+            ? <RankTable rows={toPayVMs(euroCountryRows, (s) => `/locations/country/${s}`)} />
+            : <p className="text-sm text-ink-faint">Not enough country data yet.</p>}
+        </div>
+      </section>
 
       {/* Four rules — methodology preview */}
       <section className="mt-24">
