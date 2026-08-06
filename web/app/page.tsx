@@ -14,7 +14,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { Card, Stat, GhostLink } from "@/components/ui";
 import { PayIndexTable, PayScaleLegend } from "@/components/PayIndex";
 import { EuropePayMap } from "@/components/EuropePayMap";
-import { SectionHeader, ArrowLink, LensCard, RankTable, toPayVMs } from "@/components/blocks";
+import { SectionHeader, ArrowLink, RankTable, toPayVMs } from "@/components/blocks";
 import { EmailCapture } from "@/components/EmailCapture";
 import { parseQuery } from "@/lib/parseQuery";
 import { eur, eurK, slugify, pct, timeAgo } from "@/lib/format";
@@ -167,19 +167,39 @@ export default async function Home({
         </section>
       )}
 
-      {/* One dataset, six ways in */}
-      <section className="mt-24">
+      {/* One dataset, six ways in — lead card + compact list (not an even grid) */}
+      <section className="mt-20">
         <SectionHeader kicker="Start here" title="One dataset, six ways in" />
-        <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {LENSES.map((l, i) => (
-            <LensCard key={l.href} {...l} accent={i === 0} />
-          ))}
+        <div className="mt-7 grid gap-5 lg:grid-cols-3">
+          <Link href="/companies" className="group lg:col-span-2">
+            <div className="flex h-full flex-col justify-between rounded-card border p-6 transition-colors md:p-8" style={{ background: "var(--accent-soft)", borderColor: "var(--accent)" }}>
+              <div>
+                <div className="tnum text-[10px] uppercase tracking-[0.18em] text-ink-faint">The Pay Index</div>
+                <div className="mt-2 max-w-md text-2xl font-semibold tracking-tight md:text-3xl">Every employer, ranked on pay</div>
+                <p className="mt-2 max-w-md text-ink-muted">A 0–100 Pay Score for {board.length} EMEA companies, each scored against its sector peers.</p>
+              </div>
+              <span className="arrow-cue mt-6 inline-flex items-center gap-1 text-[11px] uppercase tracking-wider">
+                Open the index <span className="arw">→</span>
+              </span>
+            </div>
+          </Link>
+          <div className="surface divide-y overflow-hidden rounded-card" style={{ borderColor: "var(--border)" }}>
+            {LENSES.filter((l) => l.href !== "/companies").map((l) => (
+              <Link key={l.href} href={l.href} className="group flex items-center justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-[var(--surface-1)]" style={{ borderColor: "var(--border)" }}>
+                <span className="min-w-0">
+                  <span className="tnum block text-[10px] uppercase tracking-[0.18em] text-ink-faint">{l.kicker}</span>
+                  <span className="block truncate font-medium">{l.title}</span>
+                </span>
+                <span className="arrow-cue shrink-0 text-[11px]"><span className="arw">→</span></span>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Top 10 — two-column preview */}
       {board.length > 0 && (
-        <section className="mt-24">
+        <section className="mt-16">
           <div className="flex items-end justify-between gap-4">
             <SectionHeader kicker="A first look" title="Who pays the most" />
             <span className="hidden md:block"><ArrowLink href="/companies">View full ranking</ArrowLink></span>
@@ -205,7 +225,7 @@ export default async function Home({
       )}
 
       {/* Europe pay map */}
-      <section className="mt-24">
+      <section className="mt-16">
         <div className="flex items-end justify-between gap-4">
           <SectionHeader kicker="Geography" title="The Europe pay map" />
           <span className="hidden md:block"><ArrowLink href="/locations/countries">Explore countries</ArrowLink></span>
@@ -220,27 +240,27 @@ export default async function Home({
         </div>
       </section>
 
-      {/* Four rules — methodology preview */}
-      <section className="mt-24">
+      {/* Four rules — methodology preview, as an editorial list (airy rhythm) */}
+      <section className="mt-28">
         <div className="flex items-end justify-between gap-4">
           <SectionHeader kicker="Method" title="Four rules. One honest number." />
           <span className="hidden md:block"><ArrowLink href="/methodology">Read the full methodology</ArrowLink></span>
         </div>
-        <div className="mt-7 grid gap-3 sm:grid-cols-2">
-          {RULES.map((r) => (
-            <div key={r.k} className="surface rounded-card p-5">
-              <div className="tnum text-[10px] uppercase tracking-[0.18em] text-ink-faint">{r.k}</div>
-              <div className="mt-1.5 text-lg font-semibold tracking-tight">{r.t}</div>
-              <p className="mt-1 text-sm text-ink-muted">{r.d}</p>
-            </div>
+        <ol className="mt-8 border-t" style={{ borderColor: "var(--border)" }}>
+          {RULES.map((r, i) => (
+            <li key={r.k} className="grid gap-1 border-b py-6 md:grid-cols-[3.5rem_13rem_1fr] md:items-baseline md:gap-6 md:py-7" style={{ borderColor: "var(--border)" }}>
+              <span className="tnum text-2xl font-semibold text-ink-faint">0{i + 1}</span>
+              <span className="text-lg font-semibold tracking-tight">{r.t}</span>
+              <p className="text-ink-muted">{r.d}</p>
+            </li>
           ))}
-        </div>
+        </ol>
         <div className="mt-6 md:hidden"><ArrowLink href="/methodology">Read the full methodology</ArrowLink></div>
       </section>
 
       {/* Most transparent companies */}
       {lb.bestDisclosure.length > 0 && (
-        <section className="mt-24">
+        <section className="mt-20">
           <div className="flex items-center justify-between">
             <SectionHeader kicker="Transparency" title="Most transparent companies" />
             <span className="hidden md:block"><ArrowLink href="/leaderboards#transparent">See all</ArrowLink></span>
@@ -290,18 +310,18 @@ function Results({ result }: { result: Awaited<ReturnType<typeof searchSalaries>
         </div>
         <MeasureBar spread={sp} you={you} />
         {you != null && result.baseDelta != null ? (
-          <p className="text-center text-base">
-            You&apos;re{" "}
+          <p className="text-base">
+            You&rsquo;re{" "}
             <span className="tnum font-semibold" style={{ color: tone }}>{eur(Math.abs(result.baseDelta))} {below ? "below" : "above"}</span>{" "}
             the median, around the <span className="tnum font-semibold">{ordinal(result.basePercentile!)}</span> percentile.
           </p>
         ) : (
-          <p className="text-center text-ink-muted">
+          <p className="text-ink-muted">
             Half of these roles advertise between <span className="tnum text-ink">{eurK(sp.p25)}</span> and <span className="tnum text-ink">{eurK(sp.p75)}</span>.
           </p>
         )}
         {result.verifiedMedian && (
-          <p className="mt-3 text-center text-sm" style={{ color: "var(--mint)" }}>
+          <p className="mt-3 text-sm" style={{ color: "var(--mint)" }}>
             Verified <span className="tnum font-semibold">{eur(result.verifiedMedian)}</span> median from{" "}
             <span className="tnum">{result.verifiedN}</span> submitted salaries
           </p>
@@ -367,7 +387,7 @@ function NotEnough({ result }: { result: Awaited<ReturnType<typeof searchSalarie
       <h2 className="mt-2 text-2xl font-extrabold tracking-tight">Not enough recent data yet</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-ink-muted">
         We track <span className="tnum text-ink">{result.n}</span> salaried posting{result.n === 1 ? "" : "s"} for{" "}
-        {result.role === "Any" ? "this search" : result.role}{result.city !== "Europe" ? ` in ${result.city}` : ""}. The median unlocks at <span className="tnum text-ink">8</span>.
+        {result.role === "Any" ? "this search" : result.role}{result.city !== "Europe" ? ` in ${result.city}` : ""}. We show a median at <span className="tnum text-ink">8</span>.
       </p>
       <div className="mx-auto mt-5 h-2 max-w-xs overflow-hidden rounded-full" style={{ background: "var(--surface-3)" }}>
         <div className="h-full rounded-full gradient-bg" style={{ width: `${pctv}%` }} />
@@ -385,7 +405,7 @@ function NotConfigured() {
     <div className="py-24 text-center">
       <h1 className="text-2xl font-semibold">Trueline</h1>
       <p className="mx-auto mt-3 max-w-md text-ink-muted">
-        Supabase isn&apos;t configured. Set <code className="tnum">SUPABASE_URL</code> and <code className="tnum">SUPABASE_ANON_KEY</code> in <code className="tnum">web/.env.local</code>.
+        Supabase isn&rsquo;t configured. Set <code className="tnum">SUPABASE_URL</code> and <code className="tnum">SUPABASE_ANON_KEY</code> in <code className="tnum">web/.env.local</code>.
       </p>
     </div>
   );

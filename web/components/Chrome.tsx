@@ -74,7 +74,13 @@ export function NavBar() {
 
         <div className="hidden items-center gap-3 md:flex">
           <SearchBox />
-          <Link href="/add" className="btn-primary px-4 py-2 text-sm font-semibold">Add salary</Link>
+          <Link
+            href="/add"
+            className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
+            style={{ borderColor: "var(--accent)", color: "var(--accent)" }}
+          >
+            Add salary
+          </Link>
         </div>
 
         {/* Mobile menu */}

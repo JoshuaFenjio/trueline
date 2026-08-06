@@ -30,7 +30,7 @@ export default async function CitiesIndex() {
       <Breadcrumbs items={[{ label: "Salaries", href: "/roles" }, { label: "Cities" }]} />
       <div className="mt-4"><SubNav items={SALARIES_NAV} /></div>
 
-      <SectionHeader kicker="Salaries · by city" title="What each city pays" sub="Median advertised base by tech hub, live from company job boards. City medians unlock at 8 postings." />
+      <SectionHeader kicker="Salaries · by city" title="What each city pays" sub="Median advertised base by tech hub, live from company job boards. A city median needs 8 postings before we show it." />
 
       <div className="mt-7">
         <StatStrip

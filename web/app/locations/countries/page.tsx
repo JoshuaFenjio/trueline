@@ -31,7 +31,7 @@ export default async function CountriesIndex() {
       <Breadcrumbs items={[{ label: "Salaries", href: "/roles" }, { label: "Countries" }]} />
       <div className="mt-4"><SubNav items={SALARIES_NAV} /></div>
 
-      <SectionHeader kicker="Salaries · by country" title="How markets compare" sub="Median advertised base by country across EMEA, live from company job boards. Country medians unlock at 8 postings." />
+      <SectionHeader kicker="Salaries · by country" title="How markets compare" sub="Median advertised base by country across EMEA, live from company job boards. A country median needs 8 postings before we show it." />
 
       <div className="mt-7">
         <StatStrip

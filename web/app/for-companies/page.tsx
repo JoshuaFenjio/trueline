@@ -27,8 +27,8 @@ export default function ForCompanies() {
           Know exactly what the market pays, before you <span>post.</span>
         </h1>
         <p className="mt-5 text-lg text-ink-muted">
-          Trueline already reads the live salary market across EMEA. We&apos;re building the employer side:
-          benchmark your bands against your real competitors and price roles with confidence.
+          Trueline already reads the live salary market across EMEA. We&rsquo;re building the employer side:
+          benchmark your bands against your real competitors and price roles on live data.
         </p>
         <div className="mt-6 max-w-lg">
           <EmailCapture source="employer" withCompany cta="Join the waitlist" />
@@ -37,7 +37,7 @@ export default function ForCompanies() {
       </section>
 
       <section className="mt-20">
-        <SectionHeader kicker="What you'll get" title="Priced on live data" />
+        <SectionHeader kicker="What you get" title="Priced on live data" />
         <div className="mt-7 grid gap-4 md:grid-cols-3">
           {FEATURES.map((f) => (
             <Card key={f.k} className="h-full">
@@ -51,8 +51,8 @@ export default function ForCompanies() {
 
       <section className="mt-20 max-w-2xl">
         <Card>
-          <h2 className="text-lg font-medium">Want your company benchmarked first?</h2>
-          <p className="mt-2 text-sm text-ink-muted">Leave your work email and we&apos;ll start with your sector.</p>
+          <h2 className="text-lg font-medium">Get your company benchmarked first</h2>
+          <p className="mt-2 text-sm text-ink-muted">Leave your work email and we&rsquo;ll start with your sector.</p>
           <div className="mt-4"><EmailCapture source="employer" withCompany cta="Join the waitlist" /></div>
         </Card>
       </section>

@@ -30,7 +30,7 @@ export default async function RolesIndex() {
       <Breadcrumbs items={[{ label: "Salaries", href: "/roles" }, { label: "Roles" }]} />
       <div className="mt-4"><SubNav items={SALARIES_NAV} /></div>
 
-      <SectionHeader kicker="Salaries · by role" title="What each role pays" sub="Median advertised base across EMEA, live from company job boards. Medians unlock at 8 postings." />
+      <SectionHeader kicker="Salaries · by role" title="What each role pays" sub="Median advertised base across EMEA, live from company job boards. A median needs 8 postings before we show it." />
 
       <div className="mt-7">
         <StatStrip

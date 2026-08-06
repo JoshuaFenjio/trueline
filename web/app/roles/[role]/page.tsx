@@ -61,7 +61,7 @@ export default async function RolePage({ params }: { params: { role: string } })
 
       {/* Ladder by level */}
       <section className="mt-16">
-        <SectionHeader kicker="By level" title="The pay ladder" sub="Median base by seniority. Bars unlock at 8 postings." />
+        <SectionHeader kicker="By level" title="The pay ladder" sub="Median base by seniority. Each bar needs 8 postings before it shows." />
         <div className="mt-6 max-w-2xl">
           <LevelLadder items={hub.byLevel.map((b) => ({ level: b.level, median: b.slice.spread?.median ?? null, n: b.slice.n }))} />
         </div>

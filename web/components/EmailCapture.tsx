@@ -30,7 +30,7 @@ export function EmailCapture({ source, withCompany = false, cta = "Notify me", p
   }
 
   if (state === "done") {
-    return <p className="text-sm" style={{ color: "var(--mint)" }}>You&apos;re on the list. We&apos;ll email you.</p>;
+    return <p className="text-sm" style={{ color: "var(--mint)" }}>You&rsquo;re on the list. We&rsquo;ll email you.</p>;
   }
 
   return (

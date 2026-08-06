@@ -10,32 +10,32 @@ const SECTIONS = [
   {
     id: "source",
     title: "Where the numbers come from",
-    body: "Every figure is scraped from public job postings on companies' own applicant tracking systems (Greenhouse, Lever, Ashby, SmartRecruiters, Recruitee, Teamtailor). We read the salary a company itself published — structured pay fields where they exist, otherwise conservatively parsed from the job description. [Full copy to follow.]",
+    body: "Every figure is scraped from public job postings on companies’ own applicant tracking systems: Greenhouse, Lever, Ashby, SmartRecruiters, Recruitee and Teamtailor. We read the salary a company published itself. Where a posting exposes structured pay fields we use those; otherwise we parse the range conservatively from the job description and drop anything ambiguous.",
   },
   {
     id: "base-not-tc",
     title: "Base salary, not total comp",
-    body: "We report advertised base salary only. Bonuses, equity, and benefits vary too much to compare honestly from a job ad, so we leave them out rather than guess. [Full copy to follow.]",
+    body: "We report advertised base salary only. Bonuses, equity and benefits vary too much to compare honestly from a job ad, so we leave them out rather than guess. A base figure you can trust beats a total-comp number we invented.",
   },
   {
     id: "city-level",
     title: "Why city, not country",
-    body: "Pay in London, Paris, Berlin and Warsaw differs enormously within the same country's borders once you leave the capital. We anchor benchmarks to the city on the posting wherever possible. [Full copy to follow.]",
+    body: "Pay in London, Paris, Berlin and Warsaw differs enormously within one country once you leave the capital. We anchor every benchmark to the city on the posting where we can, and only fall back to the country when no city is given.",
   },
   {
     id: "sample-gates",
-    title: "Sample gates — when we stay quiet",
-    body: "We never show a median from a handful of postings. A role-and-city query needs at least 8 recent salaried postings before we show a number; per-company medians need 3, per-city breakdowns need 5. Below that, we say 'not enough data yet'. [Full copy to follow.]",
+    title: "Sample gates: when we stay quiet",
+    body: "We never show a median from a handful of postings. A role-and-city query needs at least 8 recent salaried postings before we publish a number. Per-company medians need 3, per-city breakdowns need 5. Below the gate we say ‘not enough data yet’ instead of inventing a figure.",
   },
   {
     id: "advertised-vs-offered",
-    title: "Advertised ≠ offered",
-    body: "An advertised range is what a company is willing to say publicly — the offer you receive can land anywhere inside (or occasionally outside) it. Treat these as market signal, not a promise. Verified user submissions help close that gap. [Full copy to follow.]",
+    title: "Advertised is not offered",
+    body: "An advertised range is what a company is willing to state publicly. The offer you receive can land anywhere inside it, and occasionally outside. Treat these as market signal, not a promise. Verified salary submissions help close the gap between the two.",
   },
   {
     id: "who-pays",
     title: "How Pay Score works",
-    body: "A company's Pay Score is the percentile of its median advertised base against peers in the same sector — 0 to 100. It's relative, not absolute: an 80 means 'pays well for its sector', not 'pays the most in Europe'. [Full copy to follow.]",
+    body: "A company’s Pay Score is the percentile of its median advertised base against peers in the same sector, from 0 to 100. It is relative, not absolute: an 80 means ‘pays well for its sector’, not ‘pays the most in Europe’.",
   },
 ];
 
@@ -43,10 +43,10 @@ export default function MethodologyPage() {
   return (
     <div className="mx-auto max-w-2xl py-12">
       <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-        How we know what&apos;s <span>true.</span>
+        How we know what&rsquo;s true.
       </h1>
       <p className="mt-3 text-ink-muted">
-        Trueline is built to be honest about what it does and doesn&apos;t know. Here&apos;s exactly how the numbers are made.
+        Trueline is built to be honest about what it does and doesn&rsquo;t know. Here is exactly how the numbers are made.
       </p>
 
       <nav className="mt-8 flex flex-wrap gap-2">
