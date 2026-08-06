@@ -1,0 +1,82 @@
+import Link from "next/link";
+import { PAY_BANDS, payColor } from "@/lib/payScale";
+
+export interface IndexRow {
+  company: string;
+  slug: string;
+  sector: string;
+  score: number; // Pay Score 0-100 (drives bar width + color)
+  value?: string; // optional right-hand figure (e.g. "€99k"); else the score
+}
+
+function LetterMark({ name }: { name: string }) {
+  return (
+    <span
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-xs font-semibold"
+      style={{ background: "var(--surface-3)", color: "var(--ink-muted)" }}
+    >
+      {name.charAt(0)}
+    </span>
+  );
+}
+
+// Numbeo/index-style ranked table: # | company (mark + name + sector) | score
+// bar (5-step semantic) | figure. Collapses to #+name+score under sm.
+export function PayIndexTable({
+  rows, valueHead = "Pay Score", compact = false,
+}: { rows: IndexRow[]; valueHead?: string; compact?: boolean }) {
+  const pad = compact ? "px-3 py-2" : "px-4 py-2.5";
+  return (
+    <div className="surface overflow-hidden rounded-card">
+      <div className={`tnum flex items-center gap-3 border-b ${pad} text-[11px] uppercase tracking-wider text-ink-faint`} style={{ borderColor: "var(--border)" }}>
+        <span className="w-6 text-right">#</span>
+        <span className="flex-1">Company</span>
+        <span className="hidden w-28 md:block lg:w-44">Score</span>
+        <span className="w-16 text-right">{valueHead}</span>
+      </div>
+      <ol>
+        {rows.map((r, i) => {
+          const col = payColor(r.score);
+          return (
+            <li key={r.slug} className="border-t" style={{ borderColor: "var(--border)" }}>
+              <Link href={`/companies/${r.slug}`} className={`flex items-center gap-3 ${pad} transition-colors hover:bg-[var(--surface-1)]`}>
+                <span className="tnum w-6 shrink-0 text-right text-sm text-ink-faint">{i + 1}</span>
+                <LetterMark name={r.company} />
+                <span className="flex min-w-0 flex-1 items-center gap-2">
+                  <span className="truncate font-medium">{r.company}</span>
+                  {!compact && (
+                    <span className="hidden shrink-0 rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-ink-faint sm:inline" style={{ background: "var(--surface-1)" }}>
+                      {r.sector}
+                    </span>
+                  )}
+                </span>
+                <span className="hidden w-28 md:block lg:w-44">
+                  <span className="relative block h-2 overflow-hidden rounded-full" style={{ background: "var(--surface-3)" }}>
+                    <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${Math.max(3, r.score)}%`, background: col }} />
+                  </span>
+                </span>
+                <span className="tnum w-16 shrink-0 text-right font-semibold" style={{ color: col }}>
+                  {r.value ?? r.score}
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+export function PayScaleLegend({ className = "" }: { className?: string }) {
+  return (
+    <div className={`flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] ${className}`}>
+      {PAY_BANDS.map((b) => (
+        <span key={b.label} className="flex items-center gap-1.5">
+          <i className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ background: b.color }} />
+          <span className="text-ink">{b.label}</span>
+          <span className="tnum text-ink-faint">{b.range}</span>
+        </span>
+      ))}
+    </div>
+  );
+}

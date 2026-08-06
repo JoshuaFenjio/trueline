@@ -1,6 +1,6 @@
 import Link from "next/link";
 import {
-  getLiveStats, getFilterOptions, getSectors, getLeaderboards, getCompaniesBoard,
+  getLiveStats, getFilterOptions, getSectors, getCompaniesBoard,
   getCityMapData, searchSalaries, isConfigured,
 } from "@/lib/data";
 import type { Metadata } from "next";
@@ -10,9 +10,10 @@ import { TopCities } from "@/components/TopCities";
 import { MeasureBar } from "@/components/MeasureBar";
 import { ShareButton } from "@/components/ShareButton";
 import { Card, Stat, GhostLink } from "@/components/ui";
+import { PayIndexTable, PayScaleLegend } from "@/components/PayIndex";
 import { SectionHeader, Chip, ArrowLink } from "@/components/blocks";
 import { EmailCapture } from "@/components/EmailCapture";
-import { eur, eurK, slugify, pct } from "@/lib/format";
+import { eur, eurK, slugify } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -61,11 +62,12 @@ export default async function Home({
 }) {
   if (!isConfigured) return <NotConfigured />;
 
-  const [stats, options, sectors, lb, board, mapData] = await Promise.all([
-    getLiveStats(), getFilterOptions(), getSectors(), getLeaderboards(), getCompaniesBoard(),
+  const [stats, options, sectors, board, mapData] = await Promise.all([
+    getLiveStats(), getFilterOptions(), getSectors(), getCompaniesBoard(),
     getCityMapData(),
   ]);
   const companyList = board.map((c) => ({ name: c.company, slug: c.slug }));
+  const topCompanies = [...board].sort((a, b) => b.payScore - a.payScore).slice(0, 10);
   const hasQuery = Boolean(searchParams.role || searchParams.city || searchParams.level || searchParams.base);
   const result = hasQuery
     ? await searchSalaries({
@@ -109,13 +111,30 @@ export default async function Home({
         {result === null ? null : !result.enough ? <NotEnough result={result} /> : <Results result={result} />}
       </section>
 
-      {/* Top paying cities */}
-      {mapData.cities.length > 0 && (
+      {/* The Pay Index — two-column preview: companies ranked | cities ranked */}
+      {board.length > 0 && (
         <section className="mt-24">
-          <SectionHeader kicker="Geography" title="Top-paying cities" />
-          <div className="mt-6">
-            <TopCities cities={mapData.cities} emeaMedian={mapData.emeaMedian} />
+          <div className="flex items-end justify-between gap-4">
+            <SectionHeader kicker="The Pay Index" title="Who pays the most" />
+            <span className="hidden md:block"><ArrowLink href="/companies">View full ranking</ArrowLink></span>
           </div>
+          <div className="mt-6 grid gap-6 lg:grid-cols-2">
+            <div>
+              <div className="tnum mb-2 text-[11px] uppercase tracking-wider text-ink-faint">Top companies · Pay Score</div>
+              <PayIndexTable
+                compact
+                rows={topCompanies.map((c) => ({ company: c.company, slug: c.slug, sector: c.sector, score: c.payScore }))}
+              />
+              <PayScaleLegend className="mt-3" />
+            </div>
+            <div>
+              <div className="tnum mb-2 text-[11px] uppercase tracking-wider text-ink-faint">Top-paying cities · median base</div>
+              {mapData.cities.length > 0
+                ? <TopCities cities={mapData.cities} emeaMedian={mapData.emeaMedian} />
+                : <p className="text-sm text-ink-faint">Not enough city data yet.</p>}
+            </div>
+          </div>
+          <div className="mt-6 md:hidden"><ArrowLink href="/companies">View full ranking</ArrowLink></div>
         </section>
       )}
 
@@ -153,36 +172,6 @@ export default async function Home({
         </div>
       </section>
 
-      {/* Most transparent this week */}
-      {lb.bestDisclosure.length > 0 && (
-        <section className="mt-20">
-          <div className="flex items-center justify-between">
-            <SectionHeader kicker="Transparency" title="Most transparent companies" />
-            <span className="hidden md:block"><ArrowLink href="/leaderboards#transparent">See all</ArrowLink></span>
-          </div>
-          <div className="mt-6 flex gap-3 overflow-x-auto pb-2">
-            {lb.bestDisclosure.slice(0, 10).map((d) => (
-              <Link key={d.slug} href={`/companies/${d.slug}`} className="shrink-0">
-                <div className="surface surface-hover flex items-center gap-3 rounded-2xl px-4 py-3 transition-colors">
-                  <span
-                    className="flex h-6 w-6 items-center justify-center rounded-md text-xs font-semibold"
-                    style={{ background: "var(--surface-3)", color: "var(--ink-muted)" }}
-                  >
-                    {d.company.charAt(0)}
-                  </span>
-                  <span className="whitespace-nowrap text-sm">{d.company}</span>
-                  <span
-                    className="tnum text-lg font-semibold"
-                    style={{ color: d.pct >= 90 ? "var(--mint)" : "var(--ink-muted)" }}
-                  >
-                    {pct(d.pct)}
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 }

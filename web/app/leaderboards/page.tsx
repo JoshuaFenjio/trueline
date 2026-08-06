@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { getLeaderboards, countriesForRole, isConfigured } from "@/lib/data";
+import { getLeaderboards, getCompaniesBoard, countriesForRole, isConfigured, RankRow } from "@/lib/data";
 import { SectionHeader, RankTable, toPayVMs, Chip, RankVM } from "@/components/blocks";
+import { PayIndexTable, PayScaleLegend, IndexRow } from "@/components/PayIndex";
 import { ShareButton } from "@/components/ShareButton";
 import { scoreColor } from "@/components/ui";
-import { slugify, pct } from "@/lib/format";
+import { slugify, pct, eurK } from "@/lib/format";
 
 export const revalidate = 3600;
 
@@ -39,7 +40,19 @@ export default async function Leaderboards({
   searchParams: { sector?: string; role?: string; crole?: string };
 }) {
   if (!isConfigured) return <p className="py-24 text-center text-ink-muted">Supabase not configured.</p>;
-  const lb = await getLeaderboards();
+  const [lb, board] = await Promise.all([getLeaderboards(), getCompaniesBoard()]);
+  const bySlug = new Map(board.map((c) => [c.slug, c]));
+
+  // Company rank rows → Pay Index dialect: bar = Pay Score (5-step scale),
+  // figure = median advertised base.
+  const toIndexRows = (rows: RankRow[]): IndexRow[] =>
+    rows.map((r) => {
+      const c = bySlug.get(r.slug);
+      return {
+        company: r.label, slug: r.slug,
+        sector: c?.sector ?? "", score: c?.payScore ?? 0, value: eurK(r.value),
+      };
+    });
 
   const sector = searchParams.sector || lb.bySector[0]?.sector;
   const role = searchParams.role || lb.byRole[0]?.role;
@@ -89,7 +102,8 @@ export default async function Leaderboards({
           ))}
         </div>
         <div className="mt-6">
-          <RankTable rows={toPayVMs(sectorRows, (s) => `/companies/${s}`)} />
+          <PayIndexTable rows={toIndexRows(sectorRows)} valueHead="Median" />
+          <PayScaleLegend className="mt-4" />
         </div>
       </section>
 
@@ -107,7 +121,8 @@ export default async function Leaderboards({
           ))}
         </div>
         <div className="mt-6">
-          <RankTable rows={toPayVMs(roleRows, (s) => `/companies/${s}`)} />
+          <PayIndexTable rows={toIndexRows(roleRows)} valueHead="Median" />
+          <PayScaleLegend className="mt-4" />
         </div>
         {role && (
           <p className="mt-3 text-sm text-ink-faint">

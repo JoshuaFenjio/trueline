@@ -45,12 +45,10 @@ export function GhostLink({ href, children, className = "" }: { href: string; ch
   );
 }
 
-// Pay Score color by band: mint / blue / amber / ember
+import { payColor } from "@/lib/payScale";
+// Pay Score color = the shared 5-step semantic scale (see lib/payScale).
 export function scoreColor(score: number): string {
-  if (score >= 75) return "var(--mint)";
-  if (score >= 50) return "#5E8BFF";
-  if (score >= 30) return "#C77A15"; // amber, darkened for legibility on white
-  return "var(--ember)";
+  return payColor(score);
 }
 
 export function ScoreBadge({ score, size = "md" }: { score: number; size?: "sm" | "md" | "lg" }) {
