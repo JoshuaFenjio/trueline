@@ -5,8 +5,9 @@ export interface IndexRow {
   company: string;
   slug: string;
   sector: string;
-  score: number; // Pay Score 0-100 (drives bar width + color)
+  score: number; // Pay Score 0-100 (drives bar in "score" variant)
   value?: string; // optional right-hand figure (e.g. "€99k"); else the score
+  barPct?: number; // 0..1, used by the "value" variant to size the bar
 }
 
 function LetterMark({ name }: { name: string }) {
@@ -20,23 +21,29 @@ function LetterMark({ name }: { name: string }) {
   );
 }
 
-// Numbeo/index-style ranked table: # | company (mark + name + sector) | score
-// bar (5-step semantic) | figure. Collapses to #+name+score under sm.
+// Numbeo/index-style ranked table: # | company (mark + name + sector) | bar |
+// figure. Two variants — the bar always visualizes the figure next to it:
+//  - "score": bar width + color = Pay Score, on the 5-step semantic scale.
+//  - "value": bar width = the € figure's rank within the table (row.barPct),
+//    neutral fill with a gradient leader; the figure reads plain ink.
+// Collapses to #+name+figure under md.
 export function PayIndexTable({
-  rows, valueHead = "Pay Score", compact = false,
-}: { rows: IndexRow[]; valueHead?: string; compact?: boolean }) {
+  rows, valueHead = "Pay Score", compact = false, variant = "score",
+}: { rows: IndexRow[]; valueHead?: string; compact?: boolean; variant?: "score" | "value" }) {
   const pad = compact ? "px-3 py-2" : "px-4 py-2.5";
   return (
     <div className="surface overflow-hidden rounded-card">
       <div className={`tnum flex items-center gap-3 border-b ${pad} text-[11px] uppercase tracking-wider text-ink-faint`} style={{ borderColor: "var(--border)" }}>
         <span className="w-6 text-right">#</span>
         <span className="flex-1">Company</span>
-        <span className="hidden w-28 md:block lg:w-44">Score</span>
+        <span className="hidden w-28 md:block lg:w-44">{variant === "value" ? valueHead : "Score"}</span>
         <span className="w-16 text-right">{valueHead}</span>
       </div>
       <ol>
         {rows.map((r, i) => {
-          const col = payColor(r.score);
+          const scoreCol = payColor(r.score);
+          const isValue = variant === "value";
+          const barW = isValue ? Math.max(3, (r.barPct ?? 0) * 100) : Math.max(3, r.score);
           return (
             <li key={r.slug} className="border-t" style={{ borderColor: "var(--border)" }}>
               <Link href={`/companies/${r.slug}`} className={`flex items-center gap-3 ${pad} transition-colors hover:bg-[var(--surface-1)]`}>
@@ -44,7 +51,7 @@ export function PayIndexTable({
                 <LetterMark name={r.company} />
                 <span className="flex min-w-0 flex-1 items-center gap-2">
                   <span className="truncate font-medium">{r.company}</span>
-                  {!compact && (
+                  {!compact && r.sector && (
                     <span className="hidden shrink-0 rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-ink-faint sm:inline" style={{ background: "var(--surface-1)" }}>
                       {r.sector}
                     </span>
@@ -52,10 +59,14 @@ export function PayIndexTable({
                 </span>
                 <span className="hidden w-28 md:block lg:w-44">
                   <span className="relative block h-2 overflow-hidden rounded-full" style={{ background: "var(--surface-3)" }}>
-                    <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${Math.max(3, r.score)}%`, background: col }} />
+                    {isValue && i === 0 ? (
+                      <span className="gradient-bg absolute inset-y-0 left-0 rounded-full" style={{ width: `${barW}%` }} />
+                    ) : (
+                      <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${barW}%`, background: isValue ? "var(--border-strong)" : scoreCol }} />
+                    )}
                   </span>
                 </span>
-                <span className="tnum w-16 shrink-0 text-right font-semibold" style={{ color: col }}>
+                <span className="tnum w-16 shrink-0 text-right font-semibold" style={isValue ? undefined : { color: scoreCol }}>
                   {r.value ?? r.score}
                 </span>
               </Link>

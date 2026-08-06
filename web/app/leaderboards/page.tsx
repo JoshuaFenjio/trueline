@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { getLeaderboards, getCompaniesBoard, countriesForRole, isConfigured, RankRow } from "@/lib/data";
+import { getLeaderboards, countriesForRole, isConfigured, RankRow } from "@/lib/data";
 import { SectionHeader, RankTable, toPayVMs, Chip, RankVM } from "@/components/blocks";
-import { PayIndexTable, PayScaleLegend, IndexRow } from "@/components/PayIndex";
+import { PayIndexTable, IndexRow } from "@/components/PayIndex";
 import { ShareButton } from "@/components/ShareButton";
 import { scoreColor } from "@/components/ui";
 import { slugify, pct, eurK } from "@/lib/format";
@@ -40,19 +40,17 @@ export default async function Leaderboards({
   searchParams: { sector?: string; role?: string; crole?: string };
 }) {
   if (!isConfigured) return <p className="py-24 text-center text-ink-muted">Supabase not configured.</p>;
-  const [lb, board] = await Promise.all([getLeaderboards(), getCompaniesBoard()]);
-  const bySlug = new Map(board.map((c) => [c.slug, c]));
+  const lb = await getLeaderboards();
 
-  // Company rank rows → Pay Index dialect: bar = Pay Score (5-step scale),
-  // figure = median advertised base.
-  const toIndexRows = (rows: RankRow[]): IndexRow[] =>
-    rows.map((r) => {
-      const c = bySlug.get(r.slug);
-      return {
-        company: r.label, slug: r.slug,
-        sector: c?.sector ?? "", score: c?.payScore ?? 0, value: eurK(r.value),
-      };
-    });
+  // Company rank rows → Pay Index table, "value" variant: the bar visualizes
+  // the € median's rank within this table (scaled to the leader), figure = base.
+  const toIndexRows = (rows: RankRow[]): IndexRow[] => {
+    const max = Math.max(1, ...rows.map((r) => r.value));
+    return rows.map((r) => ({
+      company: r.label, slug: r.slug, sector: "", score: 0,
+      value: eurK(r.value), barPct: r.value / max,
+    }));
+  };
 
   const sector = searchParams.sector || lb.bySector[0]?.sector;
   const role = searchParams.role || lb.byRole[0]?.role;
@@ -102,8 +100,7 @@ export default async function Leaderboards({
           ))}
         </div>
         <div className="mt-6">
-          <PayIndexTable rows={toIndexRows(sectorRows)} valueHead="Median" />
-          <PayScaleLegend className="mt-4" />
+          <PayIndexTable rows={toIndexRows(sectorRows)} valueHead="Median" variant="value" />
         </div>
       </section>
 
@@ -121,8 +118,7 @@ export default async function Leaderboards({
           ))}
         </div>
         <div className="mt-6">
-          <PayIndexTable rows={toIndexRows(roleRows)} valueHead="Median" />
-          <PayScaleLegend className="mt-4" />
+          <PayIndexTable rows={toIndexRows(roleRows)} valueHead="Median" variant="value" />
         </div>
         {role && (
           <p className="mt-3 text-sm text-ink-faint">
