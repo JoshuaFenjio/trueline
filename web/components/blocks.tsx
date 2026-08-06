@@ -61,7 +61,7 @@ export function LensCard({
       <div
         className={`flex h-full flex-col justify-between rounded-card border p-5 transition-colors ${accent ? "" : "surface-hover"}`}
         style={accent
-          ? { background: "linear-gradient(150deg, rgba(124,108,255,.10), rgba(78,201,255,.05))", borderColor: "var(--border-strong)" }
+          ? { background: "var(--accent-soft)", borderColor: "var(--accent)" }
           : { background: "var(--surface-1)", borderColor: "var(--border)" }}
       >
         <div>
@@ -111,7 +111,7 @@ export function RankTable({ rows, valueHead = "Median base" }: { rows: RankVM[];
             <div className="relative flex items-center px-1 py-3.5 transition-colors hover:bg-[var(--surface-2)]">
               <div
                 className="pointer-events-none absolute inset-y-1 left-0 -z-10 rounded-r-md"
-                style={{ width: `${Math.max(2, r.barPct * 100)}%`, background: "linear-gradient(90deg, rgba(124,108,255,.14), rgba(78,201,255,.05))" }}
+                style={{ width: `${Math.max(2, r.barPct * 100)}%`, background: "var(--accent-soft)" }}
               />
               <span className="tnum w-8 text-right text-sm text-ink-faint">{i + 1}</span>
               <span className="ml-4 flex-1 truncate">
@@ -170,7 +170,7 @@ export function TrendBadge({ trend, className = "" }: { trend: Trend; className?
     up: { s: "▲", c: "var(--mint)", t: trend.pct != null ? `+${Math.round(trend.pct)}%` : "up" },
     down: { s: "▼", c: "var(--ember)", t: trend.pct != null ? `${Math.round(trend.pct)}%` : "down" },
     flat: { s: "→", c: "var(--ink-faint)", t: "flat" },
-    new: { s: "▲", c: "#5E8BFF", t: "new" },
+    new: { s: "▲", c: "var(--accent)", t: "new" },
     insufficient: { s: "·", c: "var(--ink-faint)", t: "—" },
   };
   const m = map[trend.dir];

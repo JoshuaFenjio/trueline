@@ -1,17 +1,19 @@
 import Link from "next/link";
 import {
   getLiveStats, getFilterOptions, getSectors, getCompaniesBoard, getLeaderboards,
-  getCityMapData, getLastRefreshed, searchSalaries, isConfigured,
+  getCityMapData, getLastRefreshed, getSectorCounts, getRecentSalaried, getRoleIndex,
+  searchSalaries, isConfigured,
 } from "@/lib/data";
 import type { Metadata } from "next";
 import { SearchForm } from "@/components/SearchForm";
 import { SmartSearch } from "@/components/SmartSearch";
 import { TopCities } from "@/components/TopCities";
+import { LiveSalaryCards } from "@/components/LiveSalaryCards";
 import { MeasureBar } from "@/components/MeasureBar";
 import { ShareButton } from "@/components/ShareButton";
 import { Card, Stat, GhostLink } from "@/components/ui";
 import { PayIndexTable, PayScaleLegend } from "@/components/PayIndex";
-import { SectionHeader, ArrowLink, StatStrip, LensCard } from "@/components/blocks";
+import { SectionHeader, ArrowLink, LensCard } from "@/components/blocks";
 import { EmailCapture } from "@/components/EmailCapture";
 import { parseQuery } from "@/lib/parseQuery";
 import { eur, eurK, slugify, pct, timeAgo } from "@/lib/format";
@@ -72,12 +74,14 @@ export default async function Home({
 }) {
   if (!isConfigured) return <NotConfigured />;
 
-  const [stats, options, sectors, board, lb, mapData, refreshed] = await Promise.all([
+  const [stats, options, sectors, board, lb, mapData, refreshed, sectorCounts, recent, roleIdx] = await Promise.all([
     getLiveStats(), getFilterOptions(), getSectors(), getCompaniesBoard(), getLeaderboards(),
-    getCityMapData(), getLastRefreshed(),
+    getCityMapData(), getLastRefreshed(), getSectorCounts(), getRecentSalaried(), getRoleIndex(),
   ]);
   const companyList = board.map((c) => ({ name: c.company, slug: c.slug }));
   const topCompanies = [...board].sort((a, b) => b.payScore - a.payScore).slice(0, 10);
+  const topSectors = sectorCounts.filter((s) => s.sector !== "Other").slice(0, 6);
+  const topRoles = [...roleIdx].filter((r) => r.name !== "Other").sort((a, b) => b.n - a.n).slice(0, 5);
 
   // Free-text nav search (?q=) → parse to role/city, else fall through.
   const parsed = searchParams.q ? parseQuery(searchParams.q, { roles: options.roles, cities: options.cities, companies: companyList }) : null;
@@ -93,23 +97,26 @@ export default async function Home({
 
   return (
     <div className="pb-4">
-      {/* Hero */}
-      <section className="pt-14 text-center md:pt-20">
-        <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">
-          Trueline · European Pay Index · 2026
-        </div>
-        <h1 className="mx-auto mt-4 max-w-3xl text-5xl font-extrabold leading-[1.03] tracking-[-0.04em] md:text-[64px]">
+      {/* Hero — compact */}
+      <section className="pt-8 text-center md:pt-10">
+        <h1 className="mx-auto max-w-3xl text-4xl font-extrabold leading-[1.05] md:text-[44px]">
           Know what Europe actually pays.
         </h1>
-        <p className="mx-auto mt-5 max-w-xl text-lg text-ink-muted">
+        <p className="mx-auto mt-3 max-w-xl text-ink-muted">
           Real base salaries from live job postings across Europe, the Middle East and Africa.
         </p>
       </section>
 
-      {/* Search — dominant */}
-      <section className="mx-auto mt-8 max-w-2xl">
+      {/* Search + compact stats line */}
+      <section className="mx-auto mt-5 max-w-2xl">
         <SmartSearch roles={options.roles} cities={options.cities} companies={companyList} />
-        <details className="group mt-4">
+        <p className="tnum mt-3 text-center text-[13px] text-ink-faint">
+          <Figure n={stats.salaried} /> salaried roles
+          <Dot /> <Figure n={stats.companies} /> companies
+          <Dot /> <Figure n={stats.cities} /> cities
+          <Dot /> refreshed {timeAgo(refreshed)}
+        </p>
+        <details className="group mt-2">
           <summary className="tnum mx-auto flex w-max cursor-pointer list-none items-center gap-1 text-[11px] uppercase tracking-[0.18em] text-ink-faint hover:text-ink">
             Refine <span className="transition-transform group-open:rotate-180">▾</span>
           </summary>
@@ -119,22 +126,40 @@ export default async function Home({
         </details>
       </section>
 
-      {/* Stat strip */}
-      <section className="mx-auto mt-8 max-w-3xl">
-        <StatStrip
-          items={[
-            { value: stats.salaried.toLocaleString(), label: "Salaried roles" },
-            { value: stats.companies.toLocaleString(), label: "Companies" },
-            { value: stats.cities.toLocaleString(), label: "Cities" },
-            { value: timeAgo(refreshed).replace(" ago", ""), label: "Last refreshed" },
-          ]}
-        />
+      {/* Sector + role chip rows */}
+      <section className="mx-auto mt-6 max-w-5xl">
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {topSectors.map((s) => (
+            <Link key={s.sector} href={`/companies?sector=${encodeURIComponent(s.sector)}`} className="surface surface-hover inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm transition-colors">
+              <span>{s.sector}</span>
+              <span className="tnum text-xs text-ink-faint">{s.n}</span>
+            </Link>
+          ))}
+          <Link href="/companies" className="tnum rounded-full px-3 py-1.5 text-xs uppercase tracking-wider text-ink-muted transition-colors hover:text-[var(--accent)]">More →</Link>
+        </div>
+        <div className="mt-2.5 flex flex-wrap items-center justify-center gap-2">
+          {topRoles.map((r) => (
+            <Link key={r.slug} href={`/roles/${r.slug}`} className="tnum rounded-full border px-3 py-1.5 text-[13px] text-ink-muted transition-colors hover:text-ink" style={{ background: "var(--surface-1)" }}>
+              {r.name}
+            </Link>
+          ))}
+          <Link href="/roles" className="tnum rounded-full px-3 py-1.5 text-xs uppercase tracking-wider text-ink-muted transition-colors hover:text-[var(--accent)]">More →</Link>
+        </div>
       </section>
 
-      {/* Results */}
-      <section id="results" className="mx-auto mt-8 max-w-4xl scroll-mt-20">
-        {result === null ? null : !result.enough ? <NotEnough result={result} /> : <Results result={result} />}
-      </section>
+      {/* Live salary cards — proof of life */}
+      {recent.length > 0 && (
+        <section className="mx-auto mt-6 max-w-6xl">
+          <LiveSalaryCards cards={recent} />
+        </section>
+      )}
+
+      {/* Results (only when a query is present) */}
+      {result !== null && (
+        <section id="results" className="mx-auto mt-10 max-w-4xl scroll-mt-20">
+          {!result.enough ? <NotEnough result={result} /> : <Results result={result} />}
+        </section>
+      )}
 
       {/* One dataset, six ways in */}
       <section className="mt-24">
@@ -342,6 +367,13 @@ function NotConfigured() {
       </p>
     </div>
   );
+}
+
+function Figure({ n }: { n: number }) {
+  return <span className="font-semibold text-ink">{n.toLocaleString()}</span>;
+}
+function Dot() {
+  return <span className="mx-1.5 text-ink-faint/60">·</span>;
 }
 
 function ordinal(n: number): string {

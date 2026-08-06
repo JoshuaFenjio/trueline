@@ -252,6 +252,66 @@ function indexBy(rows: Posting[], key: (p: Posting) => string | null): IndexEnti
 export const getRoleIndex = async (): Promise<IndexEntity[]> => indexBy(await getData(), (p) => p.roleFamily);
 export const getCountryIndex = async (): Promise<IndexEntity[]> => indexBy(await getData(), (p) => p.country);
 export const getCityIndex = async (): Promise<IndexEntity[]> => indexBy(await getData(), (p) => p.city);
+
+// Salaried postings per sector — for the homepage sector chip row.
+export const getSectorCounts = async (): Promise<{ sector: Sector; n: number }[]> => {
+  const rows = await getData();
+  const m = new Map<Sector, number>();
+  for (const r of usable(rows)) m.set(r.sector, (m.get(r.sector) || 0) + 1);
+  return [...m.entries()].map(([sector, n]) => ({ sector, n })).sort((a, b) => b.n - a.n);
+};
+
+// Most-recent salaried postings, in their ORIGINAL currency, for the live
+// proof-of-life cards on the homepage fold.
+export interface LiveCard {
+  company: string; slug: string; role: string; city: string;
+  currency: string; amount: number; postedAt: string | null;
+}
+export const getRecentSalaried = unstable_cache(
+  async (): Promise<LiveCard[]> => {
+    const sb = getSupabase();
+    if (!sb) return [];
+    const { data } = await sb
+      .from("job_postings")
+      .select("company,role_family,title,city,location,country,salary_min,salary_max,salary_period,salary_eur_min,salary_eur_max,currency,posted_at,region,multi_market")
+      .eq("status", "active").neq("salary_source", "none")
+      .not("salary_min", "is", null).not("posted_at", "is", null)
+      .order("posted_at", { ascending: false })
+      .limit(200);
+    const out: LiveCard[] = [];
+    const seen = new Set<string>();
+    for (const r of (data as any[]) || []) {
+      if (r.region === "NONEMEA") continue;
+      if (isTrainee(r.title)) continue;
+      // Annual postings only — sidesteps noisy month/hour period tags so every
+      // figure on the flagship row is unambiguous and correct as shown.
+      if ((r.salary_period || "year").toLowerCase() !== "year") continue;
+      // EMEA-currency only — keep the proof-of-life row on-brand (no USD leaks).
+      if (!EMEA_CURRENCIES.has((r.currency || "").toUpperCase())) continue;
+      const eLo = r.salary_eur_min, eHi = r.salary_eur_max || r.salary_eur_min;
+      if (!eLo || eLo < 25_000) continue;
+      const eMid = (eLo + eHi) / 2;
+      if (eMid > 300_000) continue; // implausible base for a single role
+      if (eHi / eLo > 4) continue; // mixed-unit / bad-parse noise (ratio gate)
+      const lo = r.salary_min, hi = r.salary_max || r.salary_min;
+      if (!lo || lo <= 0) continue;
+      if (seen.has(r.company)) continue; // one card per company for variety
+      seen.add(r.company);
+      const place = resolvePlace(r.city || r.location, r.country);
+      out.push({
+        company: r.company, slug: slugify(r.company),
+        role: r.role_family || "Role", city: place.city || place.country || "Remote",
+        currency: (r.currency || "EUR").toUpperCase(),
+        amount: Math.round((lo + (hi || lo)) / 2),
+        postedAt: r.posted_at || null,
+      });
+      if (out.length >= 6) break;
+    }
+    return out;
+  },
+  ["trueline-recent-v4"],
+  { revalidate: 1800 }
+);
 // Entities that exist in the data at all (>= threshold ACTIVE postings), even
 // if their salary data is currently gated. Used so legit markets resolve to a
 // designed empty state instead of a hard 404.

@@ -33,14 +33,14 @@ export async function GET(req: Request) {
         style={{
           width: "100%", height: "100%", display: "flex", flexDirection: "column",
           justifyContent: "space-between", padding: "76px", backgroundColor: "#FFFFFF",
-          backgroundImage: "linear-gradient(150deg, rgba(94,139,255,0.10), rgba(255,255,255,0) 46%)",
+          backgroundImage: "linear-gradient(150deg, rgba(46,91,255,0.08), rgba(255,255,255,0) 46%)",
           fontFamily: ff,
         }}
       >
         {/* Wordmark */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ width: 30, height: 30, borderRadius: 9, backgroundImage: "linear-gradient(92deg,#8F7BFF,#5E8BFF,#4EC9FF)" }} />
-          <div style={{ color: "#16181D", fontSize: 32, fontWeight: 700, letterSpacing: -1 }}>Trueline</div>
+          <div style={{ color: "#0F1729", fontSize: 32, fontWeight: 700, letterSpacing: -1 }}>Trueline</div>
         </div>
 
         {/* Headline stat */}
@@ -48,15 +48,13 @@ export async function GET(req: Request) {
           <div style={{ color: "#5B6472", fontSize: 30, letterSpacing: 3, textTransform: "uppercase" }}>{kicker}</div>
           <div
             style={{
-              maxWidth: 1040, fontSize: title.length <= 16 ? 112 : 66, fontWeight: 700,
-              lineHeight: 1.05, color: "transparent",
-              backgroundImage: "linear-gradient(92deg,#8F7BFF,#5E8BFF 55%,#4EC9FF)",
-              backgroundClip: "text", WebkitBackgroundClip: "text",
+              maxWidth: 1040, fontSize: title.length <= 16 ? 112 : 66, fontWeight: 800,
+              lineHeight: 1.05, letterSpacing: -2, color: "#0F1729",
             }}
           >
             {title}
           </div>
-          <div style={{ color: "#16181D", fontSize: 34 }}>{value}</div>
+          <div style={{ color: "#2E5BFF", fontSize: 34, fontWeight: 700 }}>{value}</div>
         </div>
 
         {/* Footer */}

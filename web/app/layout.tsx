@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans";
+import { Schibsted_Grotesk } from "next/font/google";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { NavBar, Footer } from "@/components/Chrome";
+
+const schibsted = Schibsted_Grotesk({
+  subsets: ["latin"],
+  weight: ["400", "500", "700", "800"],
+  variable: "--font-schibsted",
+  display: "swap",
+});
 
 // Prefer an explicit site URL, else the Vercel deployment URL, else a placeholder.
 // This makes OG image URLs absolute against the real host so LinkedIn can fetch them.
@@ -34,7 +41,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+    <html lang="en" className={`${schibsted.variable} ${GeistMono.variable}`}>
       <body className="font-sans">
         <NavBar />
         <main className="mx-auto max-w-6xl px-5">{children}</main>

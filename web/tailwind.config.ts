@@ -12,21 +12,23 @@ const config: Config = {
         bg: "#FFFFFF",
         "bg-alt": "#F7F8F9",
         ink: {
-          DEFAULT: "#16181D", // primary text
+          DEFAULT: "#0F1729", // ink navy — primary text
           muted: "#5B6472", // secondary
           faint: "#98A1AD", // tertiary
         },
+        accent: "#2E5BFF", // single cobalt accent
         ember: "#E5532F", // below market
         mint: "#1E9E6A", // above market / verified
         brand: {
-          1: "#8F7BFF",
-          2: "#5E8BFF",
-          3: "#4EC9FF",
-          ring: "#5E8BFF",
+          // legacy brand aliases now resolve to the single accent
+          1: "#2E5BFF",
+          2: "#2E5BFF",
+          3: "#2E5BFF",
+          ring: "#2E5BFF",
         },
       },
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
+        sans: ["var(--font-schibsted)", "system-ui", "sans-serif"],
         mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
       },
       borderRadius: {

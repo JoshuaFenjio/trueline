@@ -6,7 +6,7 @@ export function Logo({ className = "" }: { className?: string }) {
   return (
     <Link href="/" className={`inline-flex items-center gap-2 font-semibold tracking-tight ${className}`}>
       <span
-        className="inline-block h-5 w-5 rounded-md gradient-bg"
+        className="logo-mark inline-block h-5 w-5 rounded-md"
         style={{ boxShadow: "0 0 16px -2px rgba(124,108,255,.7)" }}
       />
       <span className="text-[17px]">Trueline</span>
@@ -61,20 +61,20 @@ function SearchBox({ className = "" }: { className?: string }) {
 export function NavBar() {
   return (
     <header className="sticky top-0 z-40 border-b backdrop-blur-md" style={{ background: "rgba(255,255,255,.85)" }}>
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-5">
         <div className="flex items-center gap-1">
           <Logo className="mr-2" />
           <nav className="hidden items-center gap-0.5 text-sm md:flex">
             <Menu label="Salaries" items={SALARIES} />
             <Menu label="Companies" items={COMPANIES} />
             <Link href="/leaderboards" className="rounded-lg px-3 py-2 text-ink-muted transition-colors hover:text-ink">Leaderboards</Link>
-            <Link href="/methodology" className="rounded-lg px-3 py-2 text-ink-muted transition-colors hover:text-ink">Methodology</Link>
+            <Link href="/compare" className="rounded-lg px-3 py-2 text-ink-muted transition-colors hover:text-ink">Compare</Link>
           </nav>
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
           <SearchBox />
-          <Link href="/add" className="btn-primary rounded-lg px-4 py-2 text-sm font-semibold">Add salary</Link>
+          <Link href="/add" className="btn-primary px-4 py-2 text-sm font-semibold">Add salary</Link>
         </div>
 
         {/* Mobile menu */}

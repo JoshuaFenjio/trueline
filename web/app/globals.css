@@ -10,15 +10,18 @@
   --surface-3: #e9ecef; /* active / track fill */
   --border: #e6e8eb;
   --border-strong: #d8dce0;
-  --ink: #16181d;
+  --ink: #0f1729; /* ink navy — primary text */
   --ink-muted: #5b6472;
   --ink-faint: #98a1ad;
+  --accent: #2e5bff; /* single cobalt accent — buttons, links, key figures */
+  --accent-soft: rgba(46, 91, 255, 0.1); /* tint fills */
   --ember: #e5532f; /* below market */
   --mint: #1e9e6a; /* above market / verified (green) */
-  --brand-ring: #5e8bff;
+  --brand-ring: #2e5bff;
+  /* 3-stop gradient — retained ONLY for the logo mark. */
   --gradient: linear-gradient(92deg, #8f7bff, #5e8bff 55%, #4ec9ff);
-  --card-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
-  --card-shadow-hover: 0 4px 12px rgba(16, 24, 40, 0.08);
+  --card-shadow: 0 1px 3px rgba(15, 23, 41, 0.06);
+  --card-shadow-hover: 0 4px 12px rgba(15, 23, 41, 0.08);
 }
 
 * {
@@ -37,14 +40,21 @@ body {
 }
 
 /* Utilities ----------------------------------------------------------------- */
-.gradient-text {
+/* Display headings: characterful grotesk, tight tracking (de-AI move). */
+h1,
+h2 {
+  letter-spacing: -0.03em;
+}
+/* Logo mark keeps the one permitted gradient. */
+.logo-mark {
   background: var(--gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+}
+/* Formerly a gradient — now the single solid accent (bars, fills). */
+.gradient-text {
+  color: var(--accent);
 }
 .gradient-bg {
-  background: var(--gradient);
+  background: var(--accent);
 }
 
 /* Card surface: white, hairline border, soft shadow. No translucency/glow. */
@@ -79,10 +89,7 @@ body {
 }
 .arrow-link:hover,
 .group:hover .arrow-cue {
-  background: var(--gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--accent);
 }
 .arrow-link .arw,
 .arrow-cue .arw {
@@ -103,14 +110,15 @@ body {
 
 /* Buttons ------------------------------------------------------------------- */
 .btn-primary {
-  background: var(--gradient);
+  background: var(--accent);
   color: #ffffff;
   font-weight: 600;
+  border-radius: 8px;
   box-shadow: var(--card-shadow);
   transition: transform 0.12s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
 .btn-primary:hover {
-  filter: brightness(1.04);
+  filter: brightness(1.06);
   box-shadow: var(--card-shadow-hover);
 }
 .btn-primary:active {
