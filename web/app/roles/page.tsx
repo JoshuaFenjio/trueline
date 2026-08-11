@@ -47,7 +47,7 @@ export default async function RolesIndex() {
         <SectionHeader kicker="Ranked" title="Highest-paying roles" />
         <div className="mt-5">
           {ranked.length
-            ? <RankTable rows={toPayVMs(ranked.map((r) => ({ label: r.name, slug: r.slug, value: r.median!, n: r.n })), (s) => `/roles/${s}`)} />
+            ? <RankTable rows={toPayVMs(ranked.map((r) => ({ label: r.name, slug: r.slug, value: r.median!, n: r.n, note: r.concentration && r.concentration.share > 0.6 ? `mostly ${r.concentration.company}` : undefined })), (s) => `/roles/${s}`)} />
             : <p className="text-sm text-ink-faint">No role clears the 8-posting gate yet.</p>}
         </div>
       </section>

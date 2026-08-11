@@ -95,6 +95,9 @@ export function EuropePayMap({ data }: { data: EuropePayData }) {
             {tip.c && tip.c.median != null ? (
               <>
                 <div className="tnum mt-1 text-ink">{eur(tip.c.median)} <span className="text-ink-faint">median · n={tip.c.n}</span></div>
+                {tip.c.concentration && tip.c.concentration.share > 0.6 && (
+                  <div className="mt-0.5 text-[11px] text-ink-faint">mostly {tip.c.concentration.company}</div>
+                )}
                 {showTop && tip.c.topPayers.length > 0 && (
                   <ul className="mt-2 space-y-0.5 border-t pt-2 text-xs" style={{ borderColor: "var(--border)" }}>
                     {tip.c.topPayers.map((p) => (

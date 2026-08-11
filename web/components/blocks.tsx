@@ -136,14 +136,14 @@ export function RankTable({ rows, valueHead = "Median base" }: { rows: RankVM[];
 
 // Build RankVMs from {label, slug/href, value, n} rows.
 export function toPayVMs(
-  rows: { label: string; slug?: string; value: number; n: number }[],
+  rows: { label: string; slug?: string; value: number; n: number; note?: string }[],
   hrefBase?: (slug: string) => string
 ): RankVM[] {
   const max = Math.max(1, ...rows.map((r) => r.value));
   return rows.map((r) => ({
     label: r.label,
     href: hrefBase && r.slug ? hrefBase(r.slug) : undefined,
-    sub: `${r.n}`,
+    sub: r.note ? `${r.n} · ${r.note}` : `${r.n}`,
     valueLabel: eur(r.value),
     barPct: r.value / max,
   }));

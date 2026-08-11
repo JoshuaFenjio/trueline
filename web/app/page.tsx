@@ -216,7 +216,7 @@ export default async function Home({
             <div>
               <div className="tnum mb-2 text-[11px] uppercase tracking-wider text-ink-faint">Top-paying cities · median base</div>
               {mapData.cities.length > 0
-                ? <TopCities cities={mapData.cities} emeaMedian={mapData.emeaMedian} />
+                ? <TopCities cities={mapData.cities} emeaMedian={mapData.emeaMedian} excludeConcentrated />
                 : <p className="text-sm text-ink-faint">Not enough city data yet.</p>}
             </div>
           </div>

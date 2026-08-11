@@ -611,6 +611,32 @@ def is_emea(posting):
 # -----------------------------------------------------------------------------
 # NORMALIZE — build the standard posting record
 # -----------------------------------------------------------------------------
+def sanitize_range(smin, smax, source):
+    """Sanity-check a parsed salary range. Returns (min, max, source).
+    - min > max  -> auto-swap (a swapped-fields mix-up is recoverable).
+    - max/min > 3 -> 'parsed_suspect' (OTE-as-base / unit mix / digit-grouping
+      misparse such as '50'-'80000'); values kept for provenance.
+    Non-suspect sources are left unchanged.
+    """
+    if source == "none":
+        return smin, smax, source
+    try:
+        lo = float(smin) if smin is not None else None
+        hi = float(smax) if smax is not None else None
+    except (TypeError, ValueError):
+        return smin, smax, source
+    if lo is not None and hi is not None and lo > 0 and hi > 0:
+        if lo > hi:                       # inverted -> swap
+            smin, smax = smax, smin
+            lo, hi = hi, lo
+        if hi / lo > 3:                   # implausibly wide -> suspect
+            return smin, smax, "parsed_suspect"
+    # a lone tiny bound paired with a large one is a truncation misparse
+    if lo is not None and hi is not None and lo < 1000 and hi >= 10000:
+        return smin, smax, "parsed_suspect"
+    return smin, smax, source
+
+
 def build_posting(ats, company, ats_job_id, title, location, city, country, remote,
                   posted_at, url, description,
                   structured_salary=None):
@@ -632,6 +658,11 @@ def build_posting(ats, company, ats_job_id, title, location, city, country, remo
             currency = parsed["currency"]
             period = parsed["period"]
             salary_source = "parsed"
+
+    # Range sanity: swap an inverted pair; flag suspect ranges so stats can
+    # exclude them (OTE-as-base, a monthly/annual mix, or a digit-grouping
+    # misparse like "50"–"80000"). We keep the values for provenance.
+    salary_min, salary_max, salary_source = sanitize_range(salary_min, salary_max, salary_source)
 
     region, multi_market = classify_region(location, city, country)
 

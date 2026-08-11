@@ -51,7 +51,7 @@ export default async function CountriesIndex() {
         </div>
         <div className="mt-6 md:hidden">
           {ranked.length
-            ? <RankTable rows={toPayVMs(ranked.map((c) => ({ label: c.name, slug: c.slug, value: c.median!, n: c.n })), (s) => `/locations/country/${s}`)} />
+            ? <RankTable rows={toPayVMs(ranked.map((c) => ({ label: c.name, slug: c.slug, value: c.median!, n: c.n, note: c.concentration && c.concentration.share > 0.6 ? `mostly ${c.concentration.company}` : undefined })), (s) => `/locations/country/${s}`)} />
             : <p className="text-sm text-ink-faint">No country clears the 8-posting gate yet.</p>}
         </div>
       </section>
@@ -60,7 +60,7 @@ export default async function CountriesIndex() {
         <SectionHeader kicker="Ranked" title="Highest-paying countries" />
         <div className="mt-5">
           {ranked.length
-            ? <RankTable rows={toPayVMs(ranked.map((c) => ({ label: c.name, slug: c.slug, value: c.median!, n: c.n })), (s) => `/locations/country/${s}`)} />
+            ? <RankTable rows={toPayVMs(ranked.map((c) => ({ label: c.name, slug: c.slug, value: c.median!, n: c.n, note: c.concentration && c.concentration.share > 0.6 ? `mostly ${c.concentration.company}` : undefined })), (s) => `/locations/country/${s}`)} />
             : <p className="text-sm text-ink-faint">No country clears the 8-posting gate yet.</p>}
         </div>
       </section>

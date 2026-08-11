@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { MapCity } from "@/lib/data";
+import { CONCENTRATION_GATE, type MapCity } from "@/lib/data";
 import { slugify, eur } from "@/lib/format";
 
 // Ranked "top paying cities" bars — dense, financial-style, light system.
@@ -11,8 +11,13 @@ function tone(median: number, emea: number): string {
   return "var(--ink)";
 }
 
-export function TopCities({ cities, emeaMedian }: { cities: MapCity[]; emeaMedian: number }) {
-  const top = [...cities].sort((a, b) => b.median - a.median).slice(0, 12);
+// excludeConcentrated: drop single-employer markets from the flagship board so
+// a one-company cluster (e.g. Cardiff = 100% Monzo) can't read as a "top city".
+export function TopCities({ cities, emeaMedian, excludeConcentrated = false }: { cities: MapCity[]; emeaMedian: number; excludeConcentrated?: boolean }) {
+  const pool = excludeConcentrated
+    ? cities.filter((c) => !c.concentration || c.concentration.share <= CONCENTRATION_GATE)
+    : cities;
+  const top = [...pool].sort((a, b) => b.median - a.median).slice(0, 12);
   if (top.length === 0) return null;
   const max = Math.max(...top.map((c) => c.median));
 
@@ -32,7 +37,12 @@ export function TopCities({ cities, emeaMedian }: { cities: MapCity[]; emeaMedia
               <Link href={`/locations/${slugify(c.city)}`} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--surface-1)]">
                 <span className="tnum w-5 text-right text-sm text-ink-faint">{i + 1}</span>
                 <span className="flex-1 min-w-0">
-                  <span className="truncate">{c.city}</span>
+                  <span className="truncate">
+                    {c.city}
+                    {c.concentration && c.concentration.share > CONCENTRATION_GATE && (
+                      <span className="ml-2 text-xs text-ink-faint">mostly {c.concentration.company}</span>
+                    )}
+                  </span>
                   <span className="relative mt-1.5 block h-1.5 overflow-hidden rounded-full" style={{ background: "var(--surface-3)" }}>
                     <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${(c.median / max) * 100}%`, background: col === "var(--ink)" ? "var(--border-strong)" : col, opacity: col === "var(--ink)" ? 1 : 0.85 }} />
                   </span>

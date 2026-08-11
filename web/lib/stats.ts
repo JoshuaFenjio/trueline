@@ -4,12 +4,17 @@ export function annualMidpointEur(row: {
   salary_eur_max: number | null;
   salary_period: string | null;
 }): number | null {
-  const lo = row.salary_eur_min;
-  const hi = row.salary_eur_max;
-  // Reject mixed-unit / unreliable parses: a genuine salary range almost never
-  // spans more than ~4x. Big ratios mean the parser grabbed, e.g., a monthly
-  // base and an annual commission into one range — garbage, so drop it.
-  if (typeof lo === "number" && lo > 0 && typeof hi === "number" && hi > 0 && hi / lo > 4) {
+  let lo = row.salary_eur_min;
+  let hi = row.salary_eur_max;
+  // Auto-swap an inverted range (min > max) before any ratio check — a swapped
+  // pair is a field mix-up, not garbage, and is recoverable.
+  if (typeof lo === "number" && typeof hi === "number" && lo > 0 && hi > 0 && lo > hi) {
+    [lo, hi] = [hi, lo];
+  }
+  // Reject implausibly wide parses: a genuine base range rarely spans more than
+  // 3x. A big ratio means OTE-as-base, a monthly/annual mix, or a digit-grouping
+  // misparse (e.g. "50"–"80000") — suspect, so drop it from stats.
+  if (typeof lo === "number" && lo > 0 && typeof hi === "number" && hi > 0 && hi / lo > 3) {
     return null;
   }
   const vals = [lo, hi].filter(

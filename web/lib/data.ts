@@ -71,7 +71,10 @@ const _fetch = unstable_cache(
         // Non-EMEA rows (e.g. "Lake Zurich, Illinois") are excluded entirely.
         if (r.region === "NONEMEA") return null;
 
-        const disclosed = r.salary_source && r.salary_source !== "none";
+        // 'parsed_suspect' rows disclosed a number our parser couldn't trust
+        // (OTE-as-base, inverted, or digit-grouping misparse) — treat as if no
+        // salary was stated: excluded from medians AND from transparency %.
+        const disclosed = r.salary_source && r.salary_source !== "none" && r.salary_source !== "parsed_suspect";
         let annual = disclosed ? annualMidpointEur(r) : null;
         // Reject non-EMEA-currency salaries as EMEA base pay. Applies to every
         // posting, not just multi-market ones: a single-location Athens role
@@ -101,7 +104,7 @@ const _fetch = unstable_cache(
       })
       .filter((p): p is Posting => p !== null);
   },
-  ["trueline-active-v9"],
+  ["trueline-active-v10"],
   { revalidate: 3600 }
 );
 
@@ -114,6 +117,19 @@ const usable = (rows: Posting[]) => rows.filter((r) => r.annual !== null) as (Po
 // Gates
 const N_MEDIAN = 8;
 const N_COMPANY = 3;
+
+// A market where one employer supplies most postings is real data but a
+// misleading "market" rate. Flag > 60% single-company concentration.
+export const CONCENTRATION_GATE = 0.6;
+export interface Concentration { company: string; share: number }
+function topCompanyShare(rows: { company: string }[]): Concentration | null {
+  if (rows.length === 0) return null;
+  const c = new Map<string, number>();
+  for (const r of rows) c.set(r.company, (c.get(r.company) || 0) + 1);
+  let company = "", n = 0;
+  for (const [co, k] of c) if (k > n) { company = co; n = k; }
+  return { company, share: n / rows.length };
+}
 
 // ---------------------------------------------------------------------------
 // Generic slice
@@ -247,15 +263,19 @@ export const getCountryList = async (): Promise<{ country: string; n: number }[]
 
 // Index rows for the hub pages: every entity with its posting count and a
 // gated median (null under N_MEDIAN, so we never invent a number).
-export interface IndexEntity { name: string; slug: string; n: number; median: number | null; }
+export interface IndexEntity { name: string; slug: string; n: number; median: number | null; concentration: Concentration | null; }
 function indexBy(rows: Posting[], key: (p: Posting) => string | null): IndexEntity[] {
-  const m = new Map<string, number[]>();
+  const m = new Map<string, (Posting & { annual: number })[]>();
   for (const r of usable(rows)) {
     const k = key(r); if (!k) continue;
-    const a = m.get(k) || []; a.push(r.annual); m.set(k, a);
+    const a = m.get(k) || []; a.push(r); m.set(k, a);
   }
   return [...m.entries()]
-    .map(([name, v]) => ({ name, slug: slugify(name), n: v.length, median: v.length >= N_MEDIAN ? Math.round(median(v)) : null }))
+    .map(([name, rs]) => ({
+      name, slug: slugify(name), n: rs.length,
+      median: rs.length >= N_MEDIAN ? Math.round(median(rs.map((r) => r.annual))) : null,
+      concentration: topCompanyShare(rs),
+    }))
     .sort((a, b) => (b.median ?? 0) - (a.median ?? 0) || b.n - a.n);
 }
 export const getRoleIndex = async (): Promise<IndexEntity[]> => indexBy(await getData(), (p) => p.roleFamily);
@@ -263,7 +283,7 @@ export const getCountryIndex = async (): Promise<IndexEntity[]> => indexBy(await
 export const getCityIndex = async (): Promise<IndexEntity[]> => indexBy(await getData(), (p) => p.city);
 
 // Europe pay map — per-role country medians + top payers, for the choropleth.
-export interface CountryPay { country: string; median: number | null; n: number; topPayers: { company: string; median: number }[]; }
+export interface CountryPay { country: string; median: number | null; n: number; topPayers: { company: string; median: number }[]; concentration: Concentration | null; }
 export interface RolePay { emeaMedian: number; countries: CountryPay[]; }
 export interface EuropePayData { roles: string[]; data: Record<string, RolePay>; }
 
@@ -282,7 +302,7 @@ function rolePay(rows: (Posting & { annual: number })[]): RolePay {
       .filter(([, v]) => v.length >= N_COMPANY)
       .map(([company, v]) => ({ company, median: Math.round(median(v)) }))
       .sort((a, b) => b.median - a.median).slice(0, 3);
-    countries.push({ country, n: ps.length, median: ps.length >= N_MEDIAN ? Math.round(median(ps.map((p) => p.annual))) : null, topPayers });
+    countries.push({ country, n: ps.length, median: ps.length >= N_MEDIAN ? Math.round(median(ps.map((p) => p.annual))) : null, topPayers, concentration: topCompanyShare(ps) });
   }
   return { emeaMedian, countries };
 }
@@ -540,13 +560,23 @@ export interface CompanyDetail extends CompanyStat {
   careersUrl: string | null;
 }
 
-// Annualize a bound (mirrors the median logic) for showing an advertised range.
-function annualizeBound(v: number | null, period: string | null): number | null {
-  if (!v || v <= 0) return null;
+// Annualize an advertised RANGE as a pair (not per-bound), so a monthly range
+// straddling the 25k threshold can't invert into "€204k–€55k". Swaps inverted
+// pairs, applies one period decision to both bounds, and rejects ratio > 3.
+function annualizeRange(min: number | null, max: number | null, period: string | null): { lo: number; hi: number } | null {
+  let lo = min && min > 0 ? min : null;
+  let hi = max && max > 0 ? max : null;
+  if (lo == null && hi == null) return null;
+  if (lo == null) lo = hi;
+  if (hi == null) hi = lo;
+  if (lo! > hi!) [lo, hi] = [hi, lo]; // swap inverted
   const p = (period || "year").toLowerCase();
-  if (p === "month") return v > 25_000 ? v : v * 12;
-  if (p === "hour") return v <= 400 ? v * 1720 : v;
-  return v;
+  let f = 1;
+  if (p === "month") f = hi! > 25_000 ? 1 : 12; // decide once from the top bound
+  else if (p === "hour") f = hi! <= 400 ? 1720 : 1;
+  const L = Math.round(lo! * f), H = Math.round(hi! * f);
+  if (H / L > 3) return null; // suspect (OTE-as-base / mixed units / misparse)
+  return { lo: L, hi: H };
 }
 
 function careersUrl(ats: string, token: string): string {
@@ -603,7 +633,7 @@ export async function getCompanyBySlug(slug: string): Promise<CompanyDetail | nu
     const [meta, posts] = await Promise.all([
       sb.from("companies").select("ats,token").eq("name", stat.company).limit(1),
       sb.from("job_postings")
-        .select("title,city,location,salary_eur_min,salary_eur_max,salary_period,posted_at,url,multi_market,currency,region")
+        .select("title,city,location,salary_eur_min,salary_eur_max,salary_period,posted_at,url,multi_market,currency,region,salary_source")
         .eq("company", stat.company).eq("status", "active").neq("salary_source", "none")
         .order("posted_at", { ascending: false }).limit(30),
     ]);
@@ -612,14 +642,14 @@ export async function getCompanyBySlug(slug: string): Promise<CompanyDetail | nu
 
     for (const r of (posts.data as any[]) || []) {
       if (r.region === "NONEMEA") continue;
+      if (r.salary_source === "parsed_suspect") continue; // untrusted parse
       if (!EMEA_CURRENCIES.has((r.currency || "EUR").toUpperCase())) continue; // no USD-band leakage
-      const lo = annualizeBound(r.salary_eur_min, r.salary_period);
-      const hi = annualizeBound(r.salary_eur_max, r.salary_period) || lo;
-      if (!lo || lo < 20_000 || lo > 500_000) continue; // same plausibility gate
+      const rng = annualizeRange(r.salary_eur_min, r.salary_eur_max, r.salary_period);
+      if (!rng || rng.lo < 20_000 || rng.lo > 500_000) continue; // plausibility + suspect gate
       const place = resolvePlace(r.city || r.location, null);
       latest.push({
         title: r.title || "Role", city: place.city || place.country || "—",
-        lo: Math.round(lo), hi: Math.round(hi || lo), postedAt: r.posted_at || null, url: r.url || null,
+        lo: rng.lo, hi: rng.hi, postedAt: r.posted_at || null, url: r.url || null,
       });
       if (latest.length >= 6) break;
     }
@@ -666,21 +696,24 @@ export async function getCompare(slugs: string[]): Promise<CompareCompany[]> {
 // ---------------------------------------------------------------------------
 // City map data — salaried count + median per city (for the EMEA bubble map).
 // ---------------------------------------------------------------------------
-export interface MapCity { city: string; slug: string; n: number; median: number; lat: number; lon: number; }
+export interface MapCity { city: string; slug: string; n: number; median: number; lat: number; lon: number; concentration: Concentration | null; }
 export const getCityMapData = async (): Promise<{ cities: MapCity[]; emeaMedian: number }> => {
   const { CITY_COORDS } = await import("./cityCoords");
   const rows = usable(await getData());
-  const byCity = new Map<string, number[]>();
+  const byCity = new Map<string, (Posting & { annual: number })[]>();
   for (const r of rows) {
     if (!r.city) continue;
-    const a = byCity.get(r.city) || []; a.push(r.annual); byCity.set(r.city, a);
+    const a = byCity.get(r.city) || []; a.push(r); byCity.set(r.city, a);
   }
   const emeaMedian = rows.length ? median(rows.map((r) => r.annual)) : 0;
   const cities: MapCity[] = [];
-  for (const [city, vals] of byCity.entries()) {
+  for (const [city, rs] of byCity.entries()) {
     const coords = CITY_COORDS[city];
-    if (!coords || vals.length < 5) continue; // need coords + a real sample
-    cities.push({ city, slug: slugify(city), n: vals.length, median: Math.round(median(vals)), lat: coords[0], lon: coords[1] });
+    if (!coords || rs.length < 5) continue; // need coords + a real sample
+    cities.push({
+      city, slug: slugify(city), n: rs.length, median: Math.round(median(rs.map((r) => r.annual))),
+      lat: coords[0], lon: coords[1], concentration: topCompanyShare(rs),
+    });
   }
   cities.sort((a, b) => b.n - a.n);
   return { cities, emeaMedian: Math.round(emeaMedian) };
