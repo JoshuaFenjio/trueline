@@ -14,12 +14,19 @@
 # RUN:
 #   source venv/bin/activate
 #   python3 migrate.py
+#
+# SAFETY GUARD:
+#   Before upserting, it compares the local DB's max last_seen against
+#   production's. If local is older, it aborts ("Local DB is stale ... run
+#   pipeline.py first") so a stale local copy can't overwrite fresher data.
+#   Pass --force to override deliberately.
 # =============================================================================
 
 import os
 import sys
 import json
 import sqlite3
+from datetime import datetime, timezone
 
 import requests
 
@@ -104,8 +111,64 @@ def remote_count(table):
     return cr.split("/")[-1] if "/" in cr else "?"
 
 
+# -----------------------------------------------------------------------------
+# Staleness guard — never push an out-of-date local DB over fresher production.
+# -----------------------------------------------------------------------------
+def _parse_ts(s):
+    if not s:
+        return None
+    s = str(s).strip()
+    if s.endswith("Z"):
+        s = s[:-1] + "+00:00"
+    try:
+        dt = datetime.fromisoformat(s)
+    except ValueError:
+        try:
+            dt = datetime.fromisoformat(s[:19])  # tolerate 'YYYY-MM-DDTHH:MM:SS'
+        except ValueError:
+            return None
+    return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
+
+
+def local_max_last_seen():
+    conn = sqlite3.connect(SQLITE_FILE)
+    row = conn.execute("SELECT MAX(last_seen) FROM job_postings").fetchone()
+    conn.close()
+    return _parse_ts(row[0] if row else None)
+
+
+def remote_max_last_seen():
+    r = requests.get(
+        "{}/job_postings?select=last_seen&order=last_seen.desc.nullslast&limit=1".format(REST),
+        headers=HEADERS, timeout=30)
+    r.raise_for_status()
+    data = r.json()
+    return _parse_ts(data[0]["last_seen"]) if data else None
+
+
+def check_not_stale(force):
+    """Abort if the local DB is older than production, unless --force is given."""
+    local = local_max_last_seen()
+    remote = remote_max_last_seen()
+    if remote is None:
+        return  # fresh/empty Supabase — nothing to be stale against
+    if local is None:
+        sys.exit("ABORT: local DB has no last_seen timestamps — run pipeline.py first.")
+    if local < remote:
+        msg = ("Local DB is stale (local max last_seen {} < production {}) — "
+               "run pipeline.py first.".format(local.isoformat(), remote.isoformat()))
+        if not force:
+            sys.exit("ABORT: {}\n(Pass --force to migrate anyway.)".format(msg))
+        print("--force: overriding stale-DB guard. {}\n".format(msg))
+    else:
+        print("Staleness check OK: local {} >= production {}\n".format(
+            local.isoformat(), remote.isoformat()))
+
+
 def main():
+    force = "--force" in sys.argv
     print("Migrating {} -> {}\n".format(SQLITE_FILE, URL))
+    check_not_stale(force)
 
     companies = rows_from_sqlite("companies", COMPANY_COLS)
     postings = rows_from_sqlite("job_postings", POSTING_COLS)
