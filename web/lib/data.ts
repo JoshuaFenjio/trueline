@@ -553,11 +553,15 @@ export const getCountryHub = (name: string) => locationHub(name, "country");
 export interface LatestPosting {
   title: string; city: string; lo: number; hi: number; postedAt: string | null; url: string | null;
 }
+export interface PeerStat { company: string; slug: string; payScore: number; midpoint: number; disclosurePct: number; }
 export interface CompanyDetail extends CompanyStat {
   roles: { role: string; slug: string; companyMedian: number | null; companyN: number; sectorMedian: number | null }[];
   similar: { company: string; slug: string; midpoint: number; sector: Sector }[];
   latest: LatestPosting[];
   careersUrl: string | null;
+  peers: PeerStat[];                         // 2 nearest sector peers by Pay Score
+  sectorPeers: { company: string; slug: string; payScore: number }[]; // whole sector, for the distribution dot
+  history: { month: string; n: number; median: number }[];           // monthly buckets, gated
 }
 
 // Annualize an advertised RANGE as a pair (not per-bound), so a monthly range
@@ -625,6 +629,32 @@ export async function getCompanyBySlug(slug: string): Promise<CompanyDetail | nu
     .slice(0, 4)
     .map(({ d, ...c }) => c);
 
+  // Sector cohort (for the distribution dot) + 2 nearest peers by Pay Score.
+  const inSector = board.filter((c) => c.sector === stat.sector);
+  const sectorPeers = inSector
+    .map((c) => ({ company: c.company, slug: c.slug, payScore: c.payScore }))
+    .sort((a, b) => b.payScore - a.payScore);
+  const peers: PeerStat[] = inSector
+    .filter((c) => c.slug !== stat.slug)
+    .map((c) => ({ company: c.company, slug: c.slug, payScore: c.payScore, midpoint: c.midpoint, disclosurePct: c.disclosurePct, d: Math.abs(c.payScore - stat.payScore) }))
+    .sort((a, b) => a.d - b.d || b.midpoint - a.midpoint)
+    .slice(0, 2)
+    .map(({ d, ...p }) => p);
+
+  // Salary history: monthly buckets from posted_at. Only surfaced once there
+  // are >=2 months each with a real sample (>=3), else gated to "not enough".
+  const byMonth = new Map<string, number[]>();
+  for (const p of usable(rows).filter((p) => p.company === stat.company && p.dateMs > 0)) {
+    const d = new Date(p.dateMs);
+    const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+    const a = byMonth.get(key) || []; a.push(p.annual); byMonth.set(key, a);
+  }
+  let history = [...byMonth.entries()]
+    .filter(([, v]) => v.length >= 3)
+    .map(([month, v]) => ({ month, n: v.length, median: Math.round(median(v)) }))
+    .sort((a, b) => a.month.localeCompare(b.month));
+  if (history.length < 2) history = [];
+
   // Careers link + latest salaried postings from Supabase.
   let careers: string | null = null;
   const latest: LatestPosting[] = [];
@@ -655,7 +685,7 @@ export async function getCompanyBySlug(slug: string): Promise<CompanyDetail | nu
     }
   }
 
-  return { ...stat, roles, similar, latest, careersUrl: careers };
+  return { ...stat, roles, similar, latest, careersUrl: careers, peers, sectorPeers, history };
 }
 
 export async function getAllCompanySlugs(): Promise<string[]> {

@@ -17,9 +17,10 @@ const ROLE_FAMILIES = [
 ];
 const PROOF = ["Offer letter", "Payslip", "Contract", "Verbal offer", "Prefer not to say"];
 
-export default function AddPage({ searchParams }: { searchParams: { submitted?: string; error?: string } }) {
+export default function AddPage({ searchParams }: { searchParams: { submitted?: string; error?: string; company?: string } }) {
   const submitted = searchParams.submitted === "1";
   const error = searchParams.error;
+  const company = searchParams.company || "";
 
   return (
     <div className="mx-auto max-w-xl py-12">
@@ -58,7 +59,7 @@ export default function AddPage({ searchParams }: { searchParams: { submitted?: 
             <FieldSel name="level" label="Level" options={[...LEVELS]} />
           </Row>
           <Row>
-            <FieldTxt name="company" label="Company *" placeholder="e.g. Monzo" />
+            <FieldTxt name="company" label="Company *" placeholder="e.g. Monzo" defaultValue={company} />
             <FieldNum name="base_eur" label="Annual base (EUR) *" placeholder="75000" />
           </Row>
           <Row>
@@ -85,10 +86,10 @@ function Row({ children }: { children: React.ReactNode }) {
 function Label({ children }: { children: React.ReactNode }) {
   return <span className="mb-1.5 block text-xs text-ink-muted">{children}</span>;
 }
-function FieldTxt({ name, label, placeholder }: { name: string; label: string; placeholder?: string }) {
+function FieldTxt({ name, label, placeholder, defaultValue }: { name: string; label: string; placeholder?: string; defaultValue?: string }) {
   return (
     <label className="block"><Label>{label}</Label>
-      <input name={name} placeholder={placeholder} className="field w-full px-3 py-3" />
+      <input name={name} placeholder={placeholder} defaultValue={defaultValue} className="field w-full px-3 py-3" />
     </label>
   );
 }

@@ -171,12 +171,12 @@ export function TrendBadge({ trend, className = "" }: { trend: Trend; className?
     down: { s: "▼", c: "var(--ember)", t: trend.pct != null ? `${Math.round(trend.pct)}%` : "down" },
     flat: { s: "→", c: "var(--ink-faint)", t: "flat" },
     new: { s: "▲", c: "var(--accent)", t: "new" },
-    insufficient: { s: "·", c: "var(--ink-faint)", t: "—" },
+    insufficient: { s: "", c: "var(--ink-faint)", t: "—" },
   };
   const m = map[trend.dir];
   return (
     <span className={`tnum inline-flex items-center gap-1 text-sm ${className}`} style={{ color: m.c }} title={`${trend.recentN} recent vs ${trend.priorN} prior`}>
-      <span>{m.s}</span><span>{m.t}</span>
+      {m.s && <span>{m.s}</span>}<span>{m.t}</span>
     </span>
   );
 }

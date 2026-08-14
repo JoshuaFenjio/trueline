@@ -4,8 +4,9 @@ import { notFound } from "next/navigation";
 import { getCompanyBySlug, getLastRefreshed } from "@/lib/data";
 import { companyMeta } from "@/lib/companyMeta";
 import { ScoreBadge, scoreColor, Stat, Card } from "@/components/ui";
-import { SectionHeader, TrendBadge, Breadcrumbs } from "@/components/blocks";
+import { SectionHeader, TrendBadge, Breadcrumbs, ArrowLink } from "@/components/blocks";
 import { eur, eurK, pct, timeAgo } from "@/lib/format";
+import type { CompanyDetail } from "@/lib/data";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -102,9 +103,28 @@ export default async function CompanyPage({ params }: { params: { slug: string }
           <Stat label="Median base" value={<span className="tnum">{eur(c.midpoint)}</span>} />
           <Stat label="Transparency" value={<span className="tnum">{pct(c.disclosurePct)}</span>} tone={c.disclosurePct >= 50 ? "var(--mint)" : c.disclosurePct < 25 ? "var(--ember)" : undefined} />
           <Stat label="Salaried roles" value={<span className="tnum">{c.n}</span>} />
-          <Stat label="Pay trend" value={<TrendBadge trend={c.trend} />} />
+          <Stat
+            label="Pay trend"
+            value={c.trend.dir === "insufficient" || c.trend.dir === "new"
+              ? <span className="text-sm font-normal text-ink-faint">Not enough history yet</span>
+              : <TrendBadge trend={c.trend} />}
+          />
         </div>
       </Card>
+
+      {/* Compare with peers */}
+      {c.peers.length > 0 && <PeerCompare c={c} />}
+
+      {/* Sector context */}
+      <SectorContext c={c} />
+
+      {/* Salary history — only once we have >=2 months of it */}
+      {c.history.length >= 2 && (
+        <section className="mt-16">
+          <SectionHeader kicker="History" title="Postings and median over time" />
+          <Card className="mt-5"><Sparkline history={c.history} /></Card>
+        </section>
+      )}
 
       {/* Latest salaried postings */}
       {c.latest.length > 0 && (
@@ -156,7 +176,11 @@ export default async function CompanyPage({ params }: { params: { slug: string }
                       <Link href={`/roles/${r.slug}`} className="hover:text-ink">{r.role}</Link>
                       <span className="tnum ml-2 text-xs text-ink-faint">{r.companyN}</span>
                     </td>
-                    <td className="px-5 py-3 text-right tnum">{r.companyMedian ? eur(r.companyMedian) : <span className="text-ink-faint">n&lt;3</span>}</td>
+                    <td className="px-5 py-3 text-right tnum">
+                      {r.companyMedian
+                        ? eur(r.companyMedian)
+                        : <Link href={`/add?company=${encodeURIComponent(c.company)}`} className="text-xs font-medium hover:underline" style={{ color: "var(--accent)" }}>add yours →</Link>}
+                    </td>
                     <td className="px-5 py-3 text-right tnum text-ink-muted">{r.sectorMedian ? eur(r.sectorMedian) : <span className="text-ink-faint">—</span>}</td>
                     <td className="px-5 py-3 text-right tnum" style={{ color: dColor }}>
                       {delta == null ? "—" : `${delta >= 0 ? "+" : "−"}${eur(Math.abs(delta))}`}
@@ -167,6 +191,10 @@ export default async function CompanyPage({ params }: { params: { slug: string }
             </tbody>
           </table>
         </Card>
+        <p className="mt-3 text-xs text-ink-faint">
+          Roles without a company median need 3+ salaried postings.{" "}
+          <Link href={`/add?company=${encodeURIComponent(c.company)}`} className="hover:underline" style={{ color: "var(--accent)" }}>Help complete this picture — add your salary →</Link>
+        </p>
       </section>
 
       {/* What we don't know yet */}
@@ -208,6 +236,107 @@ export default async function CompanyPage({ params }: { params: { slug: string }
           </a>
         )}
         <Link href="/compare" className="btn-ghost inline-flex rounded-xl px-4 py-2.5 text-sm">Compare with others</Link>
+      </div>
+    </div>
+  );
+}
+
+// -- Compare with peers: this company + its 2 nearest by Pay Score -----------
+function PeerCompare({ c }: { c: CompanyDetail }) {
+  const rows = [
+    { company: c.company, slug: c.slug, payScore: c.payScore, midpoint: c.midpoint, disclosurePct: c.disclosurePct, self: true },
+    ...c.peers.map((p) => ({ ...p, self: false })),
+  ];
+  const compareHref = `/compare?companies=${[c.slug, ...c.peers.map((p) => p.slug)].join(",")}`;
+  return (
+    <section className="mt-16">
+      <div className="flex items-end justify-between gap-4">
+        <SectionHeader kicker="Peers" title="Compare with peers" />
+        <span className="hidden md:block"><ArrowLink href={compareHref}>Full comparison</ArrowLink></span>
+      </div>
+      <Card className="mt-5 overflow-x-auto p-0">
+        <table className="w-full min-w-[420px] text-sm">
+          <thead>
+            <tr className="text-left text-xs text-ink-faint">
+              <th className="px-5 py-3 font-normal">Company</th>
+              <th className="px-5 py-3 text-right font-normal">Pay Score</th>
+              <th className="px-5 py-3 text-right font-normal">Median base</th>
+              <th className="px-5 py-3 text-right font-normal">Transparency</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.slug} className="border-t" style={{ borderColor: "var(--border)", background: r.self ? "var(--accent-soft)" : undefined }}>
+                <td className="px-5 py-3">
+                  {r.self ? <span className="font-semibold">{r.company}</span>
+                    : <Link href={`/companies/${r.slug}`} className="hover:underline">{r.company}</Link>}
+                </td>
+                <td className="px-5 py-3 text-right tnum font-semibold" style={{ color: scoreColor(r.payScore) }}>{r.payScore}</td>
+                <td className="px-5 py-3 text-right tnum">{eur(r.midpoint)}</td>
+                <td className="px-5 py-3 text-right tnum text-ink-muted">{pct(r.disclosurePct)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+      <div className="mt-3 md:hidden"><ArrowLink href={compareHref}>Full comparison</ArrowLink></div>
+    </section>
+  );
+}
+
+// -- Sector context: this company's Pay Score on the sector distribution -----
+function SectorContext({ c }: { c: CompanyDetail }) {
+  const scores = c.sectorPeers.map((p) => p.payScore);
+  const lo = Math.min(...scores, c.payScore);
+  const hi = Math.max(...scores, c.payScore);
+  const span = Math.max(1, hi - lo);
+  const posOf = (s: number) => ((s - lo) / span) * 100;
+  const col = scoreColor(c.payScore);
+  return (
+    <section className="mt-16">
+      <SectionHeader kicker="Sector context" title={`${ordinal(c.sectorRank)} of ${c.sectorTotal} in ${c.sector}`} />
+      <Card className="mt-5">
+        <div className="text-sm text-ink-muted">Pay Score across {c.sectorTotal} {c.sector} {c.sectorTotal === 1 ? "company" : "companies"} we track.</div>
+        <div className="relative mt-8 mb-6 h-1.5 rounded-full" style={{ background: "var(--surface-3)" }}>
+          {/* peer ticks */}
+          {c.sectorPeers.filter((p) => p.slug !== c.slug).map((p) => (
+            <span key={p.slug} className="absolute top-1/2 h-3 w-px -translate-y-1/2" style={{ left: `${posOf(p.payScore)}%`, background: "var(--border-strong)" }} title={`${p.company}: ${p.payScore}`} />
+          ))}
+          {/* this company */}
+          <span className="absolute -translate-x-1/2" style={{ left: `${posOf(c.payScore)}%`, top: "-6px" }}>
+            <span className="block h-3.5 w-3.5 rounded-full ring-2 ring-white" style={{ background: col }} />
+            <span className="tnum absolute left-1/2 top-5 -translate-x-1/2 whitespace-nowrap text-xs font-semibold" style={{ color: col }}>{c.payScore}</span>
+          </span>
+        </div>
+        <div className="tnum flex justify-between text-[11px] text-ink-faint">
+          <span>lowest {lo}</span><span>highest {hi}</span>
+        </div>
+      </Card>
+    </section>
+  );
+}
+
+// -- Salary history sparkline (median line + posting-count bars) -------------
+function Sparkline({ history }: { history: CompanyDetail["history"] }) {
+  const W = 640, H = 120, padX = 8, padY = 14;
+  const meds = history.map((h) => h.median);
+  const lo = Math.min(...meds), hi = Math.max(...meds);
+  const span = Math.max(1, hi - lo);
+  const x = (i: number) => padX + (i / Math.max(1, history.length - 1)) * (W - 2 * padX);
+  const y = (m: number) => padY + (1 - (m - lo) / span) * (H - 2 * padY);
+  const line = history.map((h, i) => `${i === 0 ? "M" : "L"} ${x(i).toFixed(1)} ${y(h.median).toFixed(1)}`).join(" ");
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: "auto" }} preserveAspectRatio="none">
+        <path d={line} fill="none" stroke="var(--accent)" strokeWidth={2} />
+        {history.map((h, i) => (
+          <circle key={h.month} cx={x(i)} cy={y(h.median)} r={3} fill="var(--accent)" />
+        ))}
+      </svg>
+      <div className="tnum mt-2 flex justify-between text-[11px] text-ink-faint">
+        {history.map((h) => (
+          <span key={h.month} className="text-center">{h.month.slice(2)}<br /><span className="text-ink">{eurK(h.median)}</span> · {h.n}</span>
+        ))}
       </div>
     </div>
   );
