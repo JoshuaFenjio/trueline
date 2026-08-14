@@ -11,11 +11,15 @@ export function annualMidpointEur(row: {
   if (typeof lo === "number" && typeof hi === "number" && lo > 0 && hi > 0 && lo > hi) {
     [lo, hi] = [hi, lo];
   }
-  // Reject implausibly wide parses: a genuine base range rarely spans more than
-  // 3x. A big ratio means OTE-as-base, a monthly/annual mix, or a digit-grouping
-  // misparse (e.g. "50"–"80000") — suspect, so drop it from stats.
-  if (typeof lo === "number" && lo > 0 && typeof hi === "number" && hi > 0 && hi / lo > 3) {
-    return null;
+  // Range-width gate, period-aware. A digit-grouping misparse (a tiny bound
+  // paired with a large one, e.g. "50"–"80000") is always garbage. Otherwise
+  // annual-period ranges may legitimately span up to 4x (director-era ladder
+  // bands are wide); monthly/hourly-derived ranges keep the strict 3x, since a
+  // wide monthly span is almost always OTE-as-base or a unit mix.
+  if (typeof lo === "number" && lo > 0 && typeof hi === "number" && hi > 0) {
+    if (lo < 1000 && hi >= 10_000) return null; // digit-grouping misparse
+    const annual = (row.salary_period || "year").toLowerCase() === "year";
+    if (hi / lo > (annual ? 4 : 3)) return null;
   }
   const vals = [lo, hi].filter(
     (v): v is number => typeof v === "number" && v > 0

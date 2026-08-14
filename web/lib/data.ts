@@ -104,7 +104,7 @@ const _fetch = unstable_cache(
       })
       .filter((p): p is Posting => p !== null);
   },
-  ["trueline-active-v10"],
+  ["trueline-active-v11"],
   { revalidate: 3600 }
 );
 
@@ -574,13 +574,14 @@ function annualizeRange(min: number | null, max: number | null, period: string |
   if (lo == null) lo = hi;
   if (hi == null) hi = lo;
   if (lo! > hi!) [lo, hi] = [hi, lo]; // swap inverted
+  if (lo! < 1000 && hi! >= 10_000) return null; // digit-grouping misparse
   const p = (period || "year").toLowerCase();
+  // Period-aware width gate: annual bands up to 4x, monthly/hourly strict 3x.
+  if (hi! / lo! > (p === "year" ? 4 : 3)) return null;
   let f = 1;
   if (p === "month") f = hi! > 25_000 ? 1 : 12; // decide once from the top bound
   else if (p === "hour") f = hi! <= 400 ? 1720 : 1;
-  const L = Math.round(lo! * f), H = Math.round(hi! * f);
-  if (H / L > 3) return null; // suspect (OTE-as-base / mixed units / misparse)
-  return { lo: L, hi: H };
+  return { lo: Math.round(lo! * f), hi: Math.round(hi! * f) };
 }
 
 function careersUrl(ats: string, token: string): string {

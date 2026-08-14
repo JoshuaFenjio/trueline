@@ -611,12 +611,15 @@ def is_emea(posting):
 # -----------------------------------------------------------------------------
 # NORMALIZE — build the standard posting record
 # -----------------------------------------------------------------------------
-def sanitize_range(smin, smax, source):
+def sanitize_range(smin, smax, source, period=None):
     """Sanity-check a parsed salary range. Returns (min, max, source).
     - min > max  -> auto-swap (a swapped-fields mix-up is recoverable).
-    - max/min > 3 -> 'parsed_suspect' (OTE-as-base / unit mix / digit-grouping
-      misparse such as '50'-'80000'); values kept for provenance.
-    Non-suspect sources are left unchanged.
+    - digit-grouping misparse (a tiny bound with a large one, '50'-'80000')
+      -> 'parsed_suspect' regardless of period.
+    - width gate is PERIOD-AWARE: annual ranges may span up to 4x (director-era
+      ladder bands are legitimately wide); monthly/hourly-derived ranges keep
+      the strict 3x, since a wide monthly span is OTE-as-base or a unit mix.
+    Values are kept for provenance; non-suspect sources are left unchanged.
     """
     if source == "none":
         return smin, smax, source
@@ -629,11 +632,11 @@ def sanitize_range(smin, smax, source):
         if lo > hi:                       # inverted -> swap
             smin, smax = smax, smin
             lo, hi = hi, lo
-        if hi / lo > 3:                   # implausibly wide -> suspect
+        if lo < 1000 and hi >= 10000:     # digit-grouping truncation -> suspect
             return smin, smax, "parsed_suspect"
-    # a lone tiny bound paired with a large one is a truncation misparse
-    if lo is not None and hi is not None and lo < 1000 and hi >= 10000:
-        return smin, smax, "parsed_suspect"
+        annual = (period or "year").lower() == "year"
+        if hi / lo > (4 if annual else 3):
+            return smin, smax, "parsed_suspect"
     return smin, smax, source
 
 
@@ -662,7 +665,7 @@ def build_posting(ats, company, ats_job_id, title, location, city, country, remo
     # Range sanity: swap an inverted pair; flag suspect ranges so stats can
     # exclude them (OTE-as-base, a monthly/annual mix, or a digit-grouping
     # misparse like "50"–"80000"). We keep the values for provenance.
-    salary_min, salary_max, salary_source = sanitize_range(salary_min, salary_max, salary_source)
+    salary_min, salary_max, salary_source = sanitize_range(salary_min, salary_max, salary_source, period)
 
     region, multi_market = classify_region(location, city, country)
 
