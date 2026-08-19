@@ -3,6 +3,8 @@ import { getLastRefreshed, getFilterOptions, getCompaniesBoard, isConfigured } f
 import { timeAgo } from "@/lib/format";
 import { NavEnhancer } from "@/components/NavEnhancer";
 import { SmartSearch } from "@/components/SmartSearch";
+import { WATCHLIST } from "@/lib/watchlist";
+import { slugify } from "@/lib/format";
 
 export function Logo({ className = "" }: { className?: string }) {
   return (
@@ -53,7 +55,11 @@ export async function NavBar() {
   if (isConfigured) {
     const [opts, board] = await Promise.all([getFilterOptions(), getCompaniesBoard()]);
     roles = opts.roles; cities = opts.cities;
-    companies = board.map((c) => ({ name: c.company, slug: c.slug }));
+    const slugs = new Set(board.map((c) => c.slug));
+    companies = [
+      ...board.map((c) => ({ name: c.company, slug: c.slug })),
+      ...WATCHLIST.filter((w) => !slugs.has(slugify(w.name))).map((w) => ({ name: w.name, slug: slugify(w.name) })),
+    ];
   }
   const navSearch = <SmartSearch compact roles={roles} cities={cities} companies={companies} />;
   return (

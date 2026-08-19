@@ -17,6 +17,7 @@ import { EuropePayMap } from "@/components/EuropePayMap";
 import { SectionHeader, ArrowLink } from "@/components/blocks";
 import { EmailCapture } from "@/components/EmailCapture";
 import { parseQuery } from "@/lib/parseQuery";
+import { WATCHLIST } from "@/lib/watchlist";
 import { eur, eurK, slugify, pct, timeAgo } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -71,7 +72,12 @@ export default async function Home({
     getCityMapData(), getLastRefreshed(), getSectorCounts(), getRecentSalaried(), getRoleIndex(),
     getEuropePayData(),
   ]);
-  const companyList = board.map((c) => ({ name: c.company, slug: c.slug }));
+  const boardSlugs = new Set(board.map((c) => c.slug));
+  const companyList = [
+    ...board.map((c) => ({ name: c.company, slug: c.slug })),
+    // famous watchlist names so a search for "Uber" finds its honest page
+    ...WATCHLIST.filter((w) => !boardSlugs.has(slugify(w.name))).map((w) => ({ name: w.name, slug: slugify(w.name) })),
+  ];
   const countryNames = europe.data["All roles"].countries.map((c) => c.country).sort();
   const topCompanies = [...board].sort((a, b) => b.payScore - a.payScore).slice(0, 10);
   const topSectors = sectorCounts.filter((s) => s.sector !== "Other").slice(0, 6);

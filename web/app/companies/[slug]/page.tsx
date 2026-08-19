@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCompanyBySlug, getLastRefreshed } from "@/lib/data";
 import { companyMeta } from "@/lib/companyMeta";
+import { watchlistBySlug, WatchEntry } from "@/lib/watchlist";
 import { ScoreBadge, scoreColor, Stat, Card } from "@/components/ui";
 import { SectionHeader, TrendBadge, Breadcrumbs, ArrowLink } from "@/components/blocks";
 import { CompanyLogo } from "@/components/CompanyLogo";
@@ -20,7 +21,11 @@ function ordinal(n: number): string {
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const c = await getCompanyBySlug(params.slug);
-  if (!c) return { title: "Company not found" };
+  if (!c) {
+    const w = watchlistBySlug(params.slug);
+    if (w) return { title: `${w.name} salaries — not published`, description: `${w.name} doesn't publish salary ranges on the public job boards we read, so we have no pay data. No invented numbers.` };
+    return { title: "Company not found" };
+  }
   const title = `${c.company} salaries 2026 · Pay Score ${c.payScore}/100`;
   return {
     title,
@@ -34,7 +39,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 export default async function CompanyPage({ params }: { params: { slug: string } }) {
   const c = await getCompanyBySlug(params.slug);
-  if (!c) notFound();
+  if (!c) {
+    const w = watchlistBySlug(params.slug);
+    if (w) return <WatchlistCompany w={w} />;
+    notFound();
+  }
   const color = scoreColor(c.payScore);
   const refreshed = await getLastRefreshed();
   const meta = companyMeta(c.company);
@@ -242,6 +251,48 @@ export default async function CompanyPage({ params }: { params: { slug: string }
         )}
         <Link href="/compare" className="btn-ghost inline-flex rounded-xl px-4 py-2.5 text-sm">Compare with others</Link>
       </div>
+    </div>
+  );
+}
+
+// -- Watchlist: a famous company we track by name but have no pay data for ---
+function WatchlistCompany({ w }: { w: WatchEntry }) {
+  return (
+    <div className="py-14">
+      <Breadcrumbs items={[{ label: "Companies", href: "/companies" }, { label: w.name }]} />
+      <div className="mt-5 flex items-center gap-4">
+        <CompanyLogo name={w.name} domain={w.domain} size={56} rounded="rounded-2xl" />
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight md:text-5xl">{w.name}</h1>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 text-sm text-ink-muted">
+            <span>{w.sector}</span>
+            {w.hqCity && <><span className="text-ink-faint/60">·</span><span>{w.hqCity}</span></>}
+          </div>
+        </div>
+      </div>
+
+      <Card className="mt-6">
+        <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
+          <Stat label="Pay Score" value={<span className="text-ink-faint">—</span>} />
+          <Stat label="Median base" value={<span className="text-ink-faint">No data</span>} />
+          <Stat label="Salaried postings" value={<span className="tnum">0</span>} />
+          <Stat label="Transparency" value={<span className="text-ink-faint">Unknown</span>} />
+        </div>
+      </Card>
+
+      <section className="mt-10 max-w-2xl">
+        <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">Why no numbers</div>
+        <h2 className="mt-2 text-2xl font-extrabold tracking-tight">We don&rsquo;t have {w.name}&rsquo;s pay yet.</h2>
+        <p className="mt-3 text-ink-muted">{w.reason}</p>
+        <p className="mt-3 text-ink-muted">
+          Rather than invent a figure, we show nothing. If {w.name} starts posting salaried roles on a public
+          board we read, this page fills in automatically. Until then, the honest answer is: unknown.
+        </p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link href={`/add?company=${encodeURIComponent(w.name)}`} className="btn-primary rounded-lg px-4 py-2.5 text-sm font-semibold">Know their pay? Add it</Link>
+          <Link href="/companies" className="btn-ghost inline-flex rounded-xl px-4 py-2.5 text-sm">Browse The Pay Index</Link>
+        </div>
+      </section>
     </div>
   );
 }

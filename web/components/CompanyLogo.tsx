@@ -8,9 +8,9 @@ import { companyMeta } from "@/lib/companyMeta";
 // We only ever know a domain for the companies in companyMeta, so unknowns
 // stay letter-marks.
 export function CompanyLogo({
-  name, size = 32, rounded = "rounded-md", className = "",
-}: { name: string; size?: number; rounded?: string; className?: string }) {
-  const domain = companyMeta(name).website;
+  name, size = 32, rounded = "rounded-md", className = "", domain: domainProp,
+}: { name: string; size?: number; rounded?: string; className?: string; domain?: string }) {
+  const domain = domainProp || companyMeta(name).website;
   const [failed, setFailed] = useState(false);
 
   const box = `flex shrink-0 items-center justify-center overflow-hidden ${rounded} ${className}`;
