@@ -134,6 +134,56 @@ COMPANY_NAMES = [
     "Fresha", "Bayzat", "Sarwa", "Lean Technologies", "Monday.com", "Gong",
     "Fireblocks", "Melio", "Rapyd", "JFrog", "Similarweb", "Riskified",
     "Papaya Global",
+    # --- COUNTRY-DEPTH EXPANSION (deepen thin/gated markets) ----------------
+    # Belgium
+    "ML6", "In The Pocket", "Robovision", "Cumul.io", "EclecticIQ", "Sentiance",
+    "Ontoforce", "Radix", "Faktion", "Rombit", "Citymesh", "Skryv", "iText",
+    # Czechia
+    "Manta", "Emplifi", "Keboola", "GoodData", "Resistant AI", "Threatmark",
+    "Better Stack", "Deepnote", "Superface", "Signageos", "Livesport", "Storyous",
+    # Norway
+    "Otovo", "Airthings", "Huddly", "Vipps", "No Isolation", "Unloc", "Kron",
+    "Spond", "Attensi", "Boost.ai", "Strise", "Two", "Ardoq",
+    # Romania
+    "MultiversX", "Tremend", "Softbinator", "Questo", "Bunnyshell", "Sameday",
+    "TotalSoft", "Bright Spaces", "Flip", "Innoship", "2Performant", "Frisbo",
+    # Denmark
+    "Monta", "Ageras", "Pento", "Cardlay", "Siteimprove", "Queue-it", "Firi",
+    "Kanpla", "Zenegy", "GomSpace", "Netcompany",
+    # Austria
+    "Bitmovin", "TourRadar", "mySugr", "Usersnap", "Celum", "Nuki", "Symflower",
+    "Cropster", "Presono", "Kern Tec", "Journi", "Playbrush", "Robo Wunderkind",
+    # Finland
+    "Framery", "ICEYE", "Varjo", "Yousician", "Metacore", "Enfuce", "Solita",
+    "Noona", "Kaiku Health", "Sharper Shape", "Woolman",
+    # Portugal
+    "Uphold", "Probely", "Jscrambler", "YData", "Barkyn", "Kevel", "Sensei",
+    "Bizay", "Uniplaces", "Aptoide", "HUUB", "Xgeeks", "Defined.ai",
+    # Ireland
+    "Teamwork", "Kitman Labs", "Sedicii", "Circit", "Ding", "AMCS Group",
+    "Learnovate", "PhoneWatch", "Zerve", "Boxever", "Umba",
+    # Spain
+    "Paack", "Capchase", "Clarity AI", "Bit2Me", "Nextail", "Lodgify", "Badi",
+    "Fintonic", "Bnext", "CoverManager", "Boopos", "Ontruck",
+    # Italy
+    "Sysdig", "Young Platform", "Credimi", "Fabrick", "Cortilia", "Milkman",
+    "Cardo AI", "MDOTM", "Axyon AI", "D-Orbit", "Newcleo", "Talent Garden", "Nextome",
+    # Poland
+    "Tidio", "Survicate", "Brand24", "Woodpecker", "Landingi", "Piwik PRO",
+    "GetResponse", "SentiOne", "Infermedica", "Sundose", "Airly", "Restaumatic",
+    # --- HOUSEHOLD NAMES (probe all; enterprise-ATS misses go to the watchlist)
+    "Uber", "Airbnb", "Booking.com", "Netflix", "Amazon", "Google", "Microsoft",
+    "Apple", "Meta", "TikTok", "Snap", "Pinterest", "LinkedIn", "PayPal",
+    "Just Eat Takeaway", "Ryanair", "easyJet", "Trainline", "Expedia", "eBay",
+    "Etsy", "Shopify", "ASOS", "Allegro", "Rakuten", "Grab", "Talabat",
+    "Foodpanda", "Zomato", "DoorDash", "Instacart", "Adidas", "Nike", "IKEA",
+    "Lego", "Philips", "Bosch", "Siemens", "SAP", "Salesforce", "Oracle", "IBM",
+    "Cisco", "VMware", "Nvidia", "Intel", "Dell", "Zoom", "Slack", "Dropbox",
+    "Box", "Zendesk", "Freshworks", "HubSpot", "Squarespace", "Atlassian",
+    "Datadog", "Snowflake", "MongoDB", "Elastic", "Twilio", "Cloudflare",
+    "DigitalOcean", "GitHub", "Docker", "HashiCorp", "Databricks", "OpenAI",
+    "Anthropic", "Cohere", "Canva", "Figma", "Airtable", "Asana", "Miro",
+    "Ubisoft", "King", "Rovio", "Supercell", "Unity", "Palantir", "Expedia",
 ]
 
 
