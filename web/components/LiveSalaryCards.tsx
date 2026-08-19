@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { LiveCard } from "@/lib/data";
+import { CompanyLogo } from "@/components/CompanyLogo";
 import { origPay, timeAgoShort } from "@/lib/format";
 
 // Proof-of-life: the most recent real salaried postings, original currency.
@@ -21,9 +22,12 @@ export function LiveSalaryCards({ cards, viewAllHref = "/roles" }: { cards: Live
           href={`/companies/${c.slug}`}
           className="surface surface-hover flex min-w-[168px] flex-1 flex-col justify-between rounded-xl px-4 py-3 transition-colors"
         >
-          <div>
-            <div className="truncate text-sm font-semibold">{c.company}</div>
-            <div className="truncate text-xs text-ink-faint">{c.role}</div>
+          <div className="flex items-center gap-2">
+            <CompanyLogo name={c.company} size={22} />
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold">{c.company}</div>
+              <div className="truncate text-xs text-ink-faint">{c.role}</div>
+            </div>
           </div>
           <div className="mt-3">
             <div className="tnum text-lg font-semibold" style={{ color: "var(--accent)" }}>{origPay(c.amount, c.currency)}</div>

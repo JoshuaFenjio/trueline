@@ -14,7 +14,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { Card, Stat, GhostLink } from "@/components/ui";
 import { PayIndexTable, PayScaleLegend } from "@/components/PayIndex";
 import { EuropePayMap } from "@/components/EuropePayMap";
-import { SectionHeader, ArrowLink, RankTable, toPayVMs } from "@/components/blocks";
+import { SectionHeader, ArrowLink } from "@/components/blocks";
 import { EmailCapture } from "@/components/EmailCapture";
 import { parseQuery } from "@/lib/parseQuery";
 import { eur, eurK, slugify, pct, timeAgo } from "@/lib/format";
@@ -52,15 +52,6 @@ export async function generateMetadata({
   };
 }
 
-const LENSES = [
-  { href: "/roles", kicker: "By role", title: "Salaries by role", line: "Medians by role and seniority, EMEA-wide." },
-  { href: "/locations", kicker: "By city", title: "Salaries by city", line: "What each tech hub actually pays." },
-  { href: "/locations/countries", kicker: "By country", title: "Salaries by country", line: "Compare national markets side by side." },
-  { href: "/companies", kicker: "By company", title: "The Pay Index", line: "Every employer, ranked on pay." },
-  { href: "/compare", kicker: "Compare", title: "Company vs company", line: "Two or three, role by role." },
-  { href: "/leaderboards", kicker: "Leaderboards", title: "Who pays most", line: "Top payers by sector, role and country." },
-];
-
 const RULES = [
   { k: "Source", t: "Live job boards", d: "Every figure is scraped from companies' own public job postings." },
   { k: "Scope", t: "Base pay, not TC", d: "Advertised base salary only. No guessed bonus or equity." },
@@ -80,11 +71,8 @@ export default async function Home({
     getCityMapData(), getLastRefreshed(), getSectorCounts(), getRecentSalaried(), getRoleIndex(),
     getEuropePayData(),
   ]);
-  const euroCountryRows = europe.data["All roles"].countries
-    .filter((c) => c.median != null)
-    .sort((a, b) => (b.median! - a.median!))
-    .map((c) => ({ label: c.country, slug: slugify(c.country), value: c.median!, n: c.n }));
   const companyList = board.map((c) => ({ name: c.company, slug: c.slug }));
+  const countryNames = europe.data["All roles"].countries.map((c) => c.country).sort();
   const topCompanies = [...board].sort((a, b) => b.payScore - a.payScore).slice(0, 10);
   const topSectors = sectorCounts.filter((s) => s.sector !== "Other").slice(0, 6);
   const topRoles = [...roleIdx].filter((r) => r.name !== "Other").sort((a, b) => b.n - a.n).slice(0, 5);
@@ -115,7 +103,7 @@ export default async function Home({
 
       {/* Search + compact stats line */}
       <section className="mx-auto mt-5 max-w-2xl">
-        <SmartSearch roles={options.roles} cities={options.cities} companies={companyList} />
+        <SmartSearch roles={options.roles} cities={options.cities} companies={companyList} countries={countryNames} />
         <p className="tnum mt-3 text-center text-[13px] text-ink-faint">
           <Figure n={stats.salaried} /> salaried roles
           <Dot /> <Figure n={stats.companies} /> companies
@@ -160,42 +148,28 @@ export default async function Home({
         </section>
       )}
 
-      {/* Results (only when a query is present) */}
+      {/* Search answer: country-level view for this role, above the results */}
       {result !== null && (
-        <section id="results" className="mx-auto mt-10 max-w-4xl scroll-mt-20">
-          {!result.enough ? <NotEnough result={result} /> : <Results result={result} />}
+        <section id="results" className="mx-auto mt-10 max-w-5xl scroll-mt-20">
+          <SectionHeader kicker="Across Europe" title={`${result.role === "Any" ? "All roles" : result.role} pay by country`} />
+          <div className="surface mt-5 rounded-card p-5">
+            <EuropePayMap
+              data={europe}
+              withTable
+              initialRole={result.role === "Any" ? "All roles" : result.role}
+              highlightCountry={result.city}
+              facts={[
+                { label: "Top payer", value: result.topPayers[0]?.company ?? "—" },
+                { label: "EMEA median", value: eur((europe.data[result.role === "Any" ? "All roles" : result.role] ?? europe.data["All roles"]).emeaMedian) },
+                { label: "Sample", value: `${result.advertisedN} postings` },
+              ]}
+            />
+          </div>
+          <div className="mt-8">
+            {!result.enough ? <NotEnough result={result} /> : <Results result={result} />}
+          </div>
         </section>
       )}
-
-      {/* One dataset, six ways in — lead card + compact list (not an even grid) */}
-      <section className="mt-20">
-        <SectionHeader kicker="Start here" title="One dataset, six ways in" />
-        <div className="mt-7 grid gap-5 lg:grid-cols-3">
-          <Link href="/companies" className="group lg:col-span-2">
-            <div className="flex h-full flex-col justify-between rounded-card border p-6 transition-colors md:p-8" style={{ background: "var(--accent-soft)", borderColor: "var(--accent)" }}>
-              <div>
-                <div className="tnum text-[10px] uppercase tracking-[0.18em] text-ink-faint">The Pay Index</div>
-                <div className="mt-2 max-w-md text-2xl font-semibold tracking-tight md:text-3xl">Every employer, ranked on pay</div>
-                <p className="mt-2 max-w-md text-ink-muted">A 0–100 Pay Score for {board.length} EMEA companies, each scored against its sector peers.</p>
-              </div>
-              <span className="arrow-cue mt-6 inline-flex items-center gap-1 text-[11px] uppercase tracking-wider">
-                Open the index <span className="arw">→</span>
-              </span>
-            </div>
-          </Link>
-          <div className="surface divide-y overflow-hidden rounded-card" style={{ borderColor: "var(--border)" }}>
-            {LENSES.filter((l) => l.href !== "/companies").map((l) => (
-              <Link key={l.href} href={l.href} className="group flex items-center justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-[var(--surface-1)]" style={{ borderColor: "var(--border)" }}>
-                <span className="min-w-0">
-                  <span className="tnum block text-[10px] uppercase tracking-[0.18em] text-ink-faint">{l.kicker}</span>
-                  <span className="block truncate font-medium">{l.title}</span>
-                </span>
-                <span className="arrow-cue shrink-0 text-[11px]"><span className="arw">→</span></span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Top 10 — two-column preview */}
       {board.length > 0 && (
@@ -224,19 +198,14 @@ export default async function Home({
         </section>
       )}
 
-      {/* Europe pay map */}
+      {/* Europe pay map — table beside map (matches the search-result treatment) */}
       <section className="mt-16">
         <div className="flex items-end justify-between gap-4">
           <SectionHeader kicker="Geography" title="The Europe pay map" />
           <span className="hidden md:block"><ArrowLink href="/locations/countries">Explore countries</ArrowLink></span>
         </div>
-        <div className="surface mt-6 hidden rounded-card p-5 md:block">
-          <EuropePayMap data={europe} />
-        </div>
-        <div className="mt-6 md:hidden">
-          {euroCountryRows.length
-            ? <RankTable rows={toPayVMs(euroCountryRows, (s) => `/locations/country/${s}`)} />
-            : <p className="text-sm text-ink-faint">Not enough country data yet.</p>}
+        <div className="surface mt-6 rounded-card p-5">
+          <EuropePayMap data={europe} withTable />
         </div>
       </section>
 

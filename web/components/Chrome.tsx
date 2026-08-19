@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { getLastRefreshed } from "@/lib/data";
+import { getLastRefreshed, getFilterOptions, getCompaniesBoard, isConfigured } from "@/lib/data";
 import { timeAgo } from "@/lib/format";
+import { NavEnhancer } from "@/components/NavEnhancer";
+import { SmartSearch } from "@/components/SmartSearch";
 
 export function Logo({ className = "" }: { className?: string }) {
   return (
@@ -30,7 +32,7 @@ const summaryCls =
 // Dropdown built on <details> so it works without client JS (incl. mobile tap).
 function Menu({ label, items }: { label: string; items: { href: string; label: string }[] }) {
   return (
-    <details className="group relative">
+    <details data-navmenu className="group relative">
       <summary className={summaryCls}>
         {label} <span className="text-[10px] transition-transform group-open:rotate-180">▾</span>
       </summary>
@@ -45,22 +47,18 @@ function Menu({ label, items }: { label: string; items: { href: string; label: s
   );
 }
 
-function SearchBox({ className = "" }: { className?: string }) {
-  return (
-    <form action="/" method="get" className={`flex items-center ${className}`}>
-      <input
-        name="q"
-        placeholder="Search role, city, company…"
-        aria-label="Search salaries"
-        className="field w-full rounded-lg px-3 py-2 text-sm md:w-52"
-      />
-    </form>
-  );
-}
-
-export function NavBar() {
+export async function NavBar() {
+  // Data for the type-ahead nav search (all cached, shared across pages).
+  let roles: string[] = [], cities: { label: string; n: number }[] = [], companies: { name: string; slug: string }[] = [];
+  if (isConfigured) {
+    const [opts, board] = await Promise.all([getFilterOptions(), getCompaniesBoard()]);
+    roles = opts.roles; cities = opts.cities;
+    companies = board.map((c) => ({ name: c.company, slug: c.slug }));
+  }
+  const navSearch = <SmartSearch compact roles={roles} cities={cities} companies={companies} />;
   return (
     <header className="sticky top-0 z-40 border-b backdrop-blur-md" style={{ background: "rgba(255,255,255,.85)" }}>
+      <NavEnhancer />
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-5">
         <div className="flex items-center gap-1">
           <Logo className="mr-2" />
@@ -73,7 +71,7 @@ export function NavBar() {
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
-          <SearchBox />
+          {navSearch}
           <Link
             href="/add"
             className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
@@ -84,12 +82,12 @@ export function NavBar() {
         </div>
 
         {/* Mobile menu */}
-        <details className="group relative md:hidden">
+        <details data-navmenu className="group relative md:hidden">
           <summary className="flex cursor-pointer list-none items-center rounded-lg px-2 py-2 text-ink-muted [&::-webkit-details-marker]:hidden">
             <span className="text-xl leading-none">≡</span>
           </summary>
           <div className="surface absolute right-0 z-50 mt-1 w-64 rounded-xl border p-3 shadow-glow">
-            <SearchBox className="mb-3" />
+            <div className="mb-3">{navSearch}</div>
             <div className="tnum px-1 pb-1 text-[10px] uppercase tracking-wider text-ink-faint">Salaries</div>
             {SALARIES.map((it) => <MobileLink key={it.href} {...it} />)}
             <div className="tnum px-1 pb-1 pt-2 text-[10px] uppercase tracking-wider text-ink-faint">Companies</div>

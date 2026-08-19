@@ -562,6 +562,8 @@ export interface CompanyDetail extends CompanyStat {
   peers: PeerStat[];                         // 2 nearest sector peers by Pay Score
   sectorPeers: { company: string; slug: string; payScore: number }[]; // whole sector, for the distribution dot
   history: { month: string; n: number; median: number }[];           // monthly buckets, gated
+  markets: { country: string; postings: number; median: number | null }[]; // where they hire
+  offices: { city: string; lat: number; lon: number; n: number }[];        // office-city dots
 }
 
 // Annualize an advertised RANGE as a pair (not per-bound), so a monthly range
@@ -656,6 +658,27 @@ export async function getCompanyBySlug(slug: string): Promise<CompanyDetail | nu
     .sort((a, b) => a.month.localeCompare(b.month));
   if (history.length < 2) history = [];
 
+  // Where they hire: active postings per country (median where salaried n>=3),
+  // and office-city dots for the map.
+  const compAll = rows.filter((p) => p.company === stat.company);
+  const mByCountry = new Map<string, { all: number; sal: number[] }>();
+  for (const p of compAll) {
+    if (!p.country) continue;
+    const g = mByCountry.get(p.country) || { all: 0, sal: [] };
+    g.all++; if (p.annual != null) g.sal.push(p.annual);
+    mByCountry.set(p.country, g);
+  }
+  const markets = [...mByCountry.entries()]
+    .map(([country, g]) => ({ country, postings: g.all, median: g.sal.length >= N_COMPANY ? Math.round(median(g.sal)) : null }))
+    .sort((a, b) => b.postings - a.postings);
+  const { CITY_COORDS } = await import("./cityCoords");
+  const cityCount = new Map<string, number>();
+  for (const p of compAll) if (p.city) cityCount.set(p.city, (cityCount.get(p.city) || 0) + 1);
+  const offices = [...cityCount.entries()]
+    .filter(([c]) => CITY_COORDS[c])
+    .map(([city, n]) => ({ city, lat: CITY_COORDS[city][0], lon: CITY_COORDS[city][1], n }))
+    .sort((a, b) => b.n - a.n).slice(0, 12);
+
   // Careers link + latest salaried postings from Supabase.
   let careers: string | null = null;
   const latest: LatestPosting[] = [];
@@ -686,7 +709,7 @@ export async function getCompanyBySlug(slug: string): Promise<CompanyDetail | nu
     }
   }
 
-  return { ...stat, roles, similar, latest, careersUrl: careers, peers, sectorPeers, history };
+  return { ...stat, roles, similar, latest, careersUrl: careers, peers, sectorPeers, history, markets, offices };
 }
 
 export async function getAllCompanySlugs(): Promise<string[]> {

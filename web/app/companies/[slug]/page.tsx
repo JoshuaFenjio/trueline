@@ -5,6 +5,8 @@ import { getCompanyBySlug, getLastRefreshed } from "@/lib/data";
 import { companyMeta } from "@/lib/companyMeta";
 import { ScoreBadge, scoreColor, Stat, Card } from "@/components/ui";
 import { SectionHeader, TrendBadge, Breadcrumbs, ArrowLink } from "@/components/blocks";
+import { CompanyLogo } from "@/components/CompanyLogo";
+import { CompanyHiresMap } from "@/components/CompanyHiresMap";
 import { eur, eurK, pct, timeAgo } from "@/lib/format";
 import type { CompanyDetail } from "@/lib/data";
 
@@ -62,12 +64,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
       {/* Hero */}
       <div className="mt-5 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
-          <span
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-2xl font-semibold"
-            style={{ background: "var(--surface-3)", color: "var(--ink)", border: "1px solid var(--border)" }}
-          >
-            {c.company.charAt(0)}
-          </span>
+          <CompanyLogo name={c.company} size={56} rounded="rounded-2xl" />
           <div>
             <h1 className="text-4xl font-extrabold tracking-tight md:text-5xl">{c.company}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-muted">
@@ -123,6 +120,14 @@ export default async function CompanyPage({ params }: { params: { slug: string }
         <section className="mt-16">
           <SectionHeader kicker="History" title="Postings and median over time" />
           <Card className="mt-5"><Sparkline history={c.history} /></Card>
+        </section>
+      )}
+
+      {/* Where they hire */}
+      {c.markets.length > 0 && (
+        <section className="mt-16">
+          <SectionHeader kicker="Geography" title={`Where ${c.company} hires`} sub="Active postings by country. Median shown where 3+ are salaried; dots mark office cities." />
+          <div className="mt-5"><CompanyHiresMap company={c.company} markets={c.markets} offices={c.offices} /></div>
         </section>
       )}
 

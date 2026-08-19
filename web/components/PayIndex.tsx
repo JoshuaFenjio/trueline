@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PAY_BANDS, payColor } from "@/lib/payScale";
+import { CompanyLogo } from "@/components/CompanyLogo";
 
 export interface IndexRow {
   company: string;
@@ -8,17 +9,6 @@ export interface IndexRow {
   score: number; // Pay Score 0-100 (drives bar in "score" variant)
   value?: string; // optional right-hand figure (e.g. "€99k"); else the score
   barPct?: number; // 0..1, used by the "value" variant to size the bar
-}
-
-function LetterMark({ name }: { name: string }) {
-  return (
-    <span
-      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-xs font-semibold"
-      style={{ background: "var(--surface-3)", color: "var(--ink-muted)" }}
-    >
-      {name.charAt(0)}
-    </span>
-  );
 }
 
 // Numbeo/index-style ranked table: # | company (mark + name + sector) | bar |
@@ -48,7 +38,7 @@ export function PayIndexTable({
             <li key={r.slug} className="border-t" style={{ borderColor: "var(--border)" }}>
               <Link href={`/companies/${r.slug}`} className={`flex items-center gap-3 ${pad} transition-colors hover:bg-[var(--surface-1)]`}>
                 <span className="tnum w-6 shrink-0 text-right text-sm text-ink-faint">{i + 1}</span>
-                <LetterMark name={r.company} />
+                <CompanyLogo name={r.company} size={32} />
                 <span className="flex min-w-0 flex-1 items-center gap-2">
                   <span className="truncate font-medium">{r.company}</span>
                   {!compact && r.sector && (

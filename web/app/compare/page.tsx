@@ -5,6 +5,7 @@ import { CompareBuilder } from "@/components/CompareBuilder";
 import { ShareButton } from "@/components/ShareButton";
 import { SectionHeader, Breadcrumbs } from "@/components/blocks";
 import { SubNav } from "@/components/SubNav";
+import { CompanyLogo } from "@/components/CompanyLogo";
 import { Card, ScoreBadge, scoreColor } from "@/components/ui";
 import { eur, pct } from "@/lib/format";
 
@@ -86,7 +87,9 @@ export default async function ComparePage({ searchParams }: { searchParams: { co
                 <th className="px-5 py-4 text-left text-xs font-normal text-ink-faint">Metric</th>
                 {cos.map((c) => (
                   <th key={c.slug} className="px-5 py-4 text-right">
-                    <Link href={`/companies/${c.slug}`} className="hover:underline">{c.company}</Link>
+                    <Link href={`/companies/${c.slug}`} className="inline-flex items-center gap-2 hover:underline">
+                      <CompanyLogo name={c.company} size={22} />{c.company}
+                    </Link>
                     <div className="text-[11px] font-normal text-ink-faint">{c.sector}</div>
                   </th>
                 ))}
