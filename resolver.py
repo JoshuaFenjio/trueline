@@ -172,6 +172,32 @@ COMPANY_NAMES = [
     "Tidio", "Survicate", "Brand24", "Woodpecker", "Landingi", "Piwik PRO",
     "GetResponse", "SentiOne", "Infermedica", "Sundose", "Airly", "Restaumatic",
     # --- HOUSEHOLD NAMES (probe all; enterprise-ATS misses go to the watchlist)
+    # --- ROUND 4 (census-weighted, disclosure-yield first) -----------------
+    # (a) ASHBY-first: EMEA AI labs / devtools / fintech (richest disclosure)
+    "Legora", "Lovable", "Neko Health", "Validio", "Deepset", "Merantix",
+    "Adaptive ML", "Bioptimus", "Sifflet", "Isomorphic Labs", "PhysicsX",
+    "Doccla", "Nelly", "Kittl", "Ecosia", "Tacto", "Circula", "Finmid", "Y42",
+    "Choco", "Parcellab", "Kadmos", "Pliant", "Coincover", "Vitesse", "Bud",
+    "Cushon", "Shift Technology", "Descartes Underwriting", "Nium", "Sardine",
+    "Squirro", "Unique", "Nexoya", "Legartis", "Sennder", "Forto", "Limehome",
+    "Alaiko", "Doctronic", "Fena",
+    # (b) RECRUITEE: NL / BE / PL mid-market (also deepens thin countries)
+    "Bynder", "Trengo", "Leaseweb", "Catawiki", "Amberscript", "Homerr",
+    "Tellow", "Datacake", "Tessi", "Woorank", "Bothrs", "Pattyn", "Radix",
+    "Faktion", "Rombit", "Digazu", "Sunroof", "Callpage", "Uncapped", "Cosmose",
+    # (c) TEAMTAILOR: Nordics depth (Denmark especially)
+    "Contractbook", "Airtame", "Famly", "Zervant", "Grafikr", "Instabee",
+    "Depict", "Kognic", "Sellpy", "Bokio", "Deemly", "Modig", "Planday",
+    # (d) THIN-COUNTRY gap-fill — Austria
+    "Wikifolio", "Cashpresso", "Kompany", "Fretello", "TTTech", "Frequentis",
+    "Waterdrop", "Tributech", "Butleroy",
+    #     Switzerland
+    "Climeworks", "Sygnum", "21Shares", "Amina", "Yapeal", "Amnis", "PXL Vision",
+    "Nezasa", "Bexio", "Ava", "Selma", "Neustark", "Cutiss", "Distalmotion",
+    "Sonect", "Planted",
+    #     Denmark / Nordics extra
+    "Cardlay", "Zenegy", "Lakrids", "Peakon",
+    # --- HOUSEHOLD NAMES (probe all; enterprise-ATS misses go to the watchlist)
     "Uber", "Airbnb", "Booking.com", "Netflix", "Amazon", "Google", "Microsoft",
     "Apple", "Meta", "TikTok", "Snap", "Pinterest", "LinkedIn", "PayPal",
     "Just Eat Takeaway", "Ryanair", "easyJet", "Trainline", "Expedia", "eBay",
