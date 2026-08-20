@@ -1237,11 +1237,17 @@ def main():
     #                                (one-time backfill; default is new-only)
     only_ats = os.environ.get("ONLY_ATS")
     sr_backfill = os.environ.get("SR_BACKFILL") == "1"
+    only_companies = os.environ.get("ONLY_COMPANIES")  # comma-separated names
+    only_set = {s.strip() for s in only_companies.split(",")} if only_companies else None
 
-    companies = [c for c in COMPANIES if not only_ats or c["ats"] == only_ats]
-    if only_ats:
-        log("Scoped run: ATS='{}' ({} companies){}".format(
-            only_ats, len(companies), " · SR_BACKFILL" if sr_backfill else ""))
+    companies = [c for c in COMPANIES
+                 if (not only_ats or c["ats"] == only_ats)
+                 and (not only_set or c["name"] in only_set)]
+    if only_ats or only_set:
+        log("Scoped run: {} companies{}{}".format(
+            len(companies),
+            " · ATS=" + only_ats if only_ats else "",
+            " · SR_BACKFILL" if sr_backfill else ""))
 
     all_postings = []
     total_new = 0
