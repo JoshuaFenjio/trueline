@@ -1079,17 +1079,31 @@ class SupabaseDB:
         headers = dict(self.h)
         if prefer:
             headers["Prefer"] = prefer
-        r = requests.request(method, self.base + path, headers=headers,
-                             params=params, json=body, timeout=HTTP_TIMEOUT)
-        if r.status_code >= 300:
-            log("    ! supabase {} {} -> {} {}".format(method, path, r.status_code, r.text[:200]))
-            return None
-        if r.text:
+        last_err = None
+        for attempt in range(5):
             try:
-                return r.json()
-            except Exception:
+                r = requests.request(method, self.base + path, headers=headers,
+                                     params=params, json=body, timeout=HTTP_TIMEOUT)
+            except requests.exceptions.RequestException as e:
+                # Connection reset / timeout — back off and retry so one flaky
+                # write can't abort the whole run.
+                last_err = e
+                time.sleep(1.5 * (attempt + 1))
+                continue
+            if r.status_code >= 300:
+                if r.status_code in (429, 500, 502, 503, 504) and attempt < 4:
+                    time.sleep(1.5 * (attempt + 1))
+                    continue
+                log("    ! supabase {} {} -> {} {}".format(method, path, r.status_code, r.text[:200]))
                 return None
-        return []
+            if r.text:
+                try:
+                    return r.json()
+                except Exception:
+                    return None
+            return []
+        log("    ! supabase {} {} failed after retries: {}".format(method, path, last_err))
+        return None
 
     def upsert_company(self, name, ats, token, ts):
         existing = self._req("GET", "/companies",
