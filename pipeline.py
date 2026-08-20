@@ -815,10 +815,17 @@ def fetch_ashby(company, token):
     return out
 
 
-def fetch_smartrecruiters(company, token):
+def fetch_smartrecruiters(company, token, known_ids=None):
+    # SmartRecruiters' list endpoint omits pay; the structured `compensation`
+    # object only appears on the per-posting DETAIL endpoint. To bound cost we
+    # fetch detail only for postings NOT already stored (new since last run);
+    # known postings keep their previously-found salary (no-downgrade guard in
+    # upsert_posting). Pass known_ids=set() to backfill everything.
+    known_ids = known_ids or set()
     out = []
     offset = 0
     page_size = 100
+    detail_calls = 0
     while True:
         url = ("https://api.smartrecruiters.com/v1/companies/{}/postings"
                "?limit={}&offset={}".format(token, page_size, offset))
@@ -835,19 +842,33 @@ def fetch_smartrecruiters(company, token):
             country = loc.get("country")
             remote = bool(loc.get("remote"))
             loc_str = ", ".join([p for p in [city, country] if p]) or None
-            # Salary lives in the detail endpoint; kept OFF by default for speed.
+            pid = j.get("id")
+            structured = None
+            if pid and pid not in known_ids:
+                det = http_get_json(
+                    "https://api.smartrecruiters.com/v1/companies/{}/postings/{}".format(token, pid))
+                detail_calls += 1
+                comp = (det or {}).get("compensation") or {}
+                if comp and (comp.get("min") or comp.get("max")):
+                    structured = {
+                        "min": comp.get("min"), "max": comp.get("max"),
+                        "currency": (comp.get("currency") or "").upper() or None,
+                        "period": comp.get("period"),  # YEARLY/MONTHLY -> normalize_period
+                    }
             out.append(build_posting(
-                ats="smartrecruiters", company=company, ats_job_id=j.get("id"),
+                ats="smartrecruiters", company=company, ats_job_id=pid,
                 title=j.get("name"), location=loc_str, city=city, country=country,
                 remote=remote, posted_at=j.get("releasedDate"),
                 url=(j.get("ref") or "").replace("api.smartrecruiters.com/v1/companies",
                                                  "jobs.smartrecruiters.com")
                     if j.get("ref") else j.get("applyUrl"),
-                description=j.get("name"), structured_salary=None,
+                description=j.get("name"), structured_salary=structured,
             ))
         offset += page_size
         if len(content) < page_size:
             break
+    if detail_calls:
+        log("    (smartrecruiters: {} detail fetches for new postings)".format(detail_calls))
     return out
 
 
@@ -1009,15 +1030,26 @@ class SQLiteDB:
                       "VALUES(?,?,?,?,?)", (name, ats, token, ts, ts))
         self.conn.commit()
 
+    def known_ids(self, company, ats):
+        c = self.conn.cursor()
+        c.execute("SELECT ats_job_id FROM job_postings WHERE company=? AND ats=?", (company, ats))
+        return {r["ats_job_id"] for r in c.fetchall()}
+
     def upsert_posting(self, p, ts):
         """Returns True if this was a brand-new posting."""
         c = self.conn.cursor()
-        c.execute("SELECT id FROM job_postings WHERE ats=? AND ats_job_id=?",
+        c.execute("SELECT id, salary_source FROM job_postings WHERE ats=? AND ats_job_id=?",
                   (p["ats"], p["ats_job_id"]))
         row = c.fetchone()
-        values = [p[f] for f in POSTING_FIELDS]
+        # Never downgrade a previously-found salary to none.
+        fields = list(POSTING_FIELDS)
+        if row and (p.get("salary_source") in (None, "none")) and (row["salary_source"] not in (None, "none")):
+            fields = [f for f in fields if f not in
+                      ("salary_min", "salary_max", "currency", "salary_period",
+                       "salary_eur_min", "salary_eur_max", "salary_source")]
+        values = [p[f] for f in fields]
         if row:
-            set_clause = ", ".join("{}=?".format(f) for f in POSTING_FIELDS)
+            set_clause = ", ".join("{}=?".format(f) for f in fields)
             c.execute(
                 "UPDATE job_postings SET {}, last_seen=?, status='active', "
                 "expired_at=NULL WHERE id=?".format(set_clause),
@@ -1122,10 +1154,17 @@ class SupabaseDB:
         existing = self._req("GET", "/job_postings",
                             params={"ats": "eq." + p["ats"],
                                     "ats_job_id": "eq." + p["ats_job_id"],
-                                    "select": "id"})
+                                    "select": "id,salary_source"})
         body = dict(p)
         body.update({"last_seen": ts, "status": "active", "expired_at": None})
         if existing:
+            # Never downgrade a previously-found salary to none (e.g. when we
+            # skip the detail fetch for a known SmartRecruiters posting).
+            ex = existing[0]
+            if (p.get("salary_source") in (None, "none")) and (ex.get("salary_source") not in (None, "none")):
+                for k in ("salary_min", "salary_max", "currency", "salary_period",
+                          "salary_eur_min", "salary_eur_max", "salary_source"):
+                    body.pop(k, None)
             self._req("PATCH", "/job_postings",
                      params={"ats": "eq." + p["ats"],
                              "ats_job_id": "eq." + p["ats_job_id"]},
@@ -1135,6 +1174,12 @@ class SupabaseDB:
             body["first_seen"] = ts
             self._req("POST", "/job_postings", body=body)
             return True
+
+    def known_ids(self, company, ats):
+        rows = self._req("GET", "/job_postings",
+                        params={"company": "eq." + company, "ats": "eq." + ats,
+                                "select": "ats_job_id"}) or []
+        return {r["ats_job_id"] for r in rows}
 
     def expire_unseen(self, company, ats, seen_ids, ts):
         stored = self._req("GET", "/job_postings",
@@ -1186,11 +1231,23 @@ def main():
 
     db = open_db()
 
+    # Optional scoping (bounded / targeted runs):
+    #   ONLY_ATS=smartrecruiters  -> scrape only that ATS's companies
+    #   SR_BACKFILL=1             -> fetch SmartRecruiters detail for ALL postings
+    #                                (one-time backfill; default is new-only)
+    only_ats = os.environ.get("ONLY_ATS")
+    sr_backfill = os.environ.get("SR_BACKFILL") == "1"
+
+    companies = [c for c in COMPANIES if not only_ats or c["ats"] == only_ats]
+    if only_ats:
+        log("Scoped run: ATS='{}' ({} companies){}".format(
+            only_ats, len(companies), " · SR_BACKFILL" if sr_backfill else ""))
+
     all_postings = []
     total_new = 0
     total_expired = 0
 
-    for comp in COMPANIES:
+    for comp in companies:
         name = comp["name"]
         ats = comp["ats"]
         token = comp["token"]
@@ -1206,7 +1263,11 @@ def main():
 
         # One bad company must never stop the run.
         try:
-            postings = fetcher(name, token)
+            if ats == "smartrecruiters":
+                known = set() if sr_backfill else db.known_ids(name, ats)
+                postings = fetch_smartrecruiters(name, token, known_ids=known)
+            else:
+                postings = fetcher(name, token)
         except Exception as e:
             log("    ! fetch error: {} — continuing".format(e))
             postings = []
