@@ -111,7 +111,7 @@ export default async function ComparePage({ searchParams }: { searchParams: { co
                 {cos.map((c) => <td key={c.slug} className="px-5 py-3 text-right tnum text-ink-muted">#{c.sectorRank}/{c.sectorTotal}</td>)}
               </Row>
               {roles.length > 0 && (
-                <tr><td colSpan={cos.length + 1} className="px-5 pt-5 pb-1 text-[11px] uppercase tracking-wider text-ink-faint">Median by role</td></tr>
+ <tr><td colSpan={cos.length + 1} className="px-5 pt-5 pb-1 text-[11px] text-ink-faint">Median by role</td></tr>
               )}
               {roles.map((role) => {
                 const vals = cos.map((c) => c.roleMedians[role]);

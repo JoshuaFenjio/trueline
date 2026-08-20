@@ -7,12 +7,11 @@ import {
 import type { Metadata } from "next";
 import { SearchForm } from "@/components/SearchForm";
 import { SmartSearch } from "@/components/SmartSearch";
-import { TopCities } from "@/components/TopCities";
+import { WhoPaysInteractive } from "@/components/WhoPaysInteractive";
 import { LiveSalaryCards } from "@/components/LiveSalaryCards";
 import { MeasureBar } from "@/components/MeasureBar";
 import { ShareButton } from "@/components/ShareButton";
 import { Card, Stat, GhostLink } from "@/components/ui";
-import { PayIndexTable, PayScaleLegend } from "@/components/PayIndex";
 import { EuropePayMap } from "@/components/EuropePayMap";
 import { SectionHeader, ArrowLink } from "@/components/blocks";
 import { EmailCapture } from "@/components/EmailCapture";
@@ -79,7 +78,6 @@ export default async function Home({
     ...WATCHLIST.filter((w) => !boardSlugs.has(slugify(w.name))).map((w) => ({ name: w.name, slug: slugify(w.name) })),
   ];
   const countryNames = europe.data["All roles"].countries.map((c) => c.country).sort();
-  const topCompanies = [...board].sort((a, b) => b.payScore - a.payScore).slice(0, 10);
   const topSectors = sectorCounts.filter((s) => s.sector !== "Other").slice(0, 6);
   const topRoles = [...roleIdx].filter((r) => r.name !== "Other").sort((a, b) => b.n - a.n).slice(0, 5);
 
@@ -107,44 +105,54 @@ export default async function Home({
         </p>
       </section>
 
-      {/* Search + compact stats line */}
+      {/* Search + stats + one merged chip row; full set lives under Browse all */}
       <section className="mx-auto mt-5 max-w-2xl">
         <SmartSearch roles={options.roles} cities={options.cities} companies={companyList} countries={countryNames} />
-        <p className="tnum mt-3 text-center text-[13px] text-ink-faint">
+        <p className="mt-3 text-center text-[13px] text-ink-faint">
           <Figure n={stats.salaried} /> salaried roles
           <Dot /> <Figure n={stats.companies} /> companies
           <Dot /> <Figure n={stats.cities} /> cities
           <Dot /> refreshed {timeAgo(refreshed)}
         </p>
+
+        {/* one row: top 3 sectors + top 3 roles + Browse all */}
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+          {topSectors.slice(0, 3).map((s) => (
+            <Link key={s.sector} href={`/companies?sector=${encodeURIComponent(s.sector)}`} className="surface surface-hover inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm transition-colors">
+              <span>{s.sector}</span><span className="tnum text-xs text-ink-faint">{s.n}</span>
+            </Link>
+          ))}
+          {topRoles.slice(0, 3).map((r) => (
+            <Link key={r.slug} href={`/roles/${r.slug}`} className="rounded-full border px-3 py-1.5 text-[13px] text-ink-muted transition-colors hover:text-ink" style={{ background: "var(--surface-1)" }}>{r.name}</Link>
+          ))}
+        </div>
+
         <details className="group mt-2">
-          <summary className="tnum mx-auto flex w-max cursor-pointer list-none items-center gap-1 text-[11px] uppercase tracking-[0.18em] text-ink-faint hover:text-ink">
-            Refine <span className="transition-transform group-open:rotate-180">▾</span>
+          <summary className="arrow-link mx-auto flex w-max cursor-pointer list-none items-center gap-1 text-xs">
+            Browse all <span className="arw transition-transform group-open:rotate-90">→</span>
           </summary>
-          <div className="mt-3">
+          <div className="mt-4 space-y-4">
             <SearchForm roles={options.roles} cities={options.cities} current={{ role, city, level: searchParams.level, base: searchParams.base }} compact />
+            <div>
+              <div className="mb-2 text-xs text-ink-faint">Sectors</div>
+              <div className="flex flex-wrap gap-2">
+                {topSectors.map((s) => (
+                  <Link key={s.sector} href={`/companies?sector=${encodeURIComponent(s.sector)}`} className="rounded-full border px-3 py-1 text-sm text-ink-muted transition-colors hover:text-ink" style={{ background: "var(--surface-1)" }}>
+                    {s.sector} <span className="tnum text-xs text-ink-faint">{s.n}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="mb-2 text-xs text-ink-faint">Roles</div>
+              <div className="flex flex-wrap gap-2">
+                {[...roleIdx].filter((r) => r.name !== "Other").sort((a, b) => b.n - a.n).slice(0, 14).map((r) => (
+                  <Link key={r.slug} href={`/roles/${r.slug}`} className="rounded-full border px-3 py-1 text-sm text-ink-muted transition-colors hover:text-ink" style={{ background: "var(--surface-1)" }}>{r.name}</Link>
+                ))}
+              </div>
+            </div>
           </div>
         </details>
-      </section>
-
-      {/* Sector + role chip rows */}
-      <section className="mx-auto mt-6 max-w-5xl">
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {topSectors.map((s) => (
-            <Link key={s.sector} href={`/companies?sector=${encodeURIComponent(s.sector)}`} className="surface surface-hover inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm transition-colors">
-              <span>{s.sector}</span>
-              <span className="tnum text-xs text-ink-faint">{s.n}</span>
-            </Link>
-          ))}
-          <Link href="/companies" className="tnum rounded-full px-3 py-1.5 text-xs uppercase tracking-wider text-ink-muted transition-colors hover:text-[var(--accent)]">More →</Link>
-        </div>
-        <div className="mt-2.5 flex flex-wrap items-center justify-center gap-2">
-          {topRoles.map((r) => (
-            <Link key={r.slug} href={`/roles/${r.slug}`} className="tnum rounded-full border px-3 py-1.5 text-[13px] text-ink-muted transition-colors hover:text-ink" style={{ background: "var(--surface-1)" }}>
-              {r.name}
-            </Link>
-          ))}
-          <Link href="/roles" className="tnum rounded-full px-3 py-1.5 text-xs uppercase tracking-wider text-ink-muted transition-colors hover:text-[var(--accent)]">More →</Link>
-        </div>
       </section>
 
       {/* Live salary cards — proof of life */}
@@ -177,46 +185,39 @@ export default async function Home({
         </section>
       )}
 
-      {/* Top 10 — two-column preview */}
+      {/* Who pays the most — interactive, on a sage band */}
       {board.length > 0 && (
-        <section className="mt-16">
+        <section className="band mt-14 py-14">
           <div className="flex items-end justify-between gap-4">
             <SectionHeader kicker="A first look" title="Who pays the most" />
             <span className="hidden md:block"><ArrowLink href="/companies">View full ranking</ArrowLink></span>
           </div>
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <div>
-              <div className="tnum mb-2 text-[11px] uppercase tracking-wider text-ink-faint">Top companies · Pay Score</div>
-              <PayIndexTable
-                compact
-                rows={topCompanies.map((c) => ({ company: c.company, slug: c.slug, sector: c.sector, score: c.payScore }))}
-              />
-              <PayScaleLegend className="mt-3" />
-            </div>
-            <div>
-              <div className="tnum mb-2 text-[11px] uppercase tracking-wider text-ink-faint">Top-paying cities · median base</div>
-              {mapData.cities.length > 0
-                ? <TopCities cities={mapData.cities} emeaMedian={mapData.emeaMedian} excludeConcentrated />
-                : <p className="text-sm text-ink-faint">Not enough city data yet.</p>}
-            </div>
+          <div className="mt-6">
+            <WhoPaysInteractive
+              companies={board.map((c) => ({ company: c.company, slug: c.slug, sector: c.sector, payScore: c.payScore }))}
+              cities={mapData.cities}
+              sectors={sectors}
+              countries={countryNames}
+              emeaMedian={mapData.emeaMedian}
+            />
           </div>
           <div className="mt-6 md:hidden"><ArrowLink href="/companies">View full ranking</ArrowLink></div>
         </section>
       )}
 
-      {/* Europe pay map — table beside map (matches the search-result treatment) */}
+      {/* Europe pay map — table beside map, in a tinted panel */}
       <section className="mt-16">
         <div className="flex items-end justify-between gap-4">
           <SectionHeader kicker="Geography" title="The Europe pay map" />
           <span className="hidden md:block"><ArrowLink href="/locations/countries">Explore countries</ArrowLink></span>
         </div>
-        <div className="surface mt-6 rounded-card p-5">
+        <div className="mt-6 rounded-card border p-5" style={{ background: "var(--band)", borderColor: "var(--border)" }}>
           <EuropePayMap data={europe} withTable />
         </div>
       </section>
 
-      {/* Four rules — methodology preview, as an editorial list (airy rhythm) */}
-      <section className="mt-28">
+      {/* Four rules — methodology preview, editorial list on a sage band */}
+      <section className="band mt-16 py-14">
         <div className="flex items-end justify-between gap-4">
           <SectionHeader kicker="Method" title="Four rules. One honest number." />
           <span className="hidden md:block"><ArrowLink href="/methodology">Read the full methodology</ArrowLink></span>
@@ -358,7 +359,7 @@ function NotEnough({ result }: { result: Awaited<ReturnType<typeof searchSalarie
   const pctv = Math.min(100, (result.n / 8) * 100);
   return (
     <Card className="text-center">
-      <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">Gated · sample too small</div>
+      <div className="text-[11px] text-ink-faint">Gated · sample too small</div>
       <h2 className="mt-2 text-2xl font-extrabold tracking-tight">Not enough recent data yet</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-ink-muted">
         We track <span className="tnum text-ink">{result.n}</span> salaried posting{result.n === 1 ? "" : "s"} for{" "}

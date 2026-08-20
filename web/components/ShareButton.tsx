@@ -29,7 +29,7 @@ export function ShareButton({ path, label = "Share" }: { path?: string; label?: 
     <button
       type="button"
       onClick={copy}
-      className="tnum inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] uppercase tracking-wider text-ink-muted transition-colors hover:text-ink"
+      className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] text-ink-muted transition-colors hover:text-ink"
       style={{ background: "var(--surface-1)" }}
     >
       {copied ? "Copied ✓" : (

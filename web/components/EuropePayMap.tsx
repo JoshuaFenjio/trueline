@@ -34,7 +34,7 @@ export function EuropePayMap({
 
   const controls = (
     <div className="mb-4 flex flex-wrap items-center gap-3">
-      <label className="tnum text-[11px] uppercase tracking-wider text-ink-faint">Role</label>
+      <label className="text-[11px] text-ink-faint">Role</label>
       <select value={role} onChange={(e) => setRole(e.target.value)} className="field px-3 py-2 text-sm">
         <option>All roles</option>
         {data.roles.map((r) => <option key={r}>{r}</option>)}
@@ -127,7 +127,7 @@ export function EuropePayMap({
 
   const legendEl = (
     <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
-      <span className="text-[11px] uppercase tracking-wider text-ink-faint">vs EMEA median</span>
+      <span className="text-[11px] text-ink-faint">vs EMEA median</span>
       <PayScaleLegend />
       <span className="flex items-center gap-1.5 text-[11px]">
         <i className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ background: NO_DATA_FILL }} />
@@ -150,7 +150,7 @@ export function EuropePayMap({
           {facts.map((f) => (
             <div key={f.label}>
               <div className="tnum text-lg font-semibold">{f.value}</div>
-              <div className="text-[11px] uppercase tracking-wider text-ink-faint">{f.label}</div>
+              <div className="text-[11px] text-ink-faint">{f.label}</div>
             </div>
           ))}
         </div>
@@ -158,14 +158,14 @@ export function EuropePayMap({
       {controls}
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="surface overflow-hidden rounded-card">
-          <div className="tnum flex items-center gap-3 border-b px-4 py-2.5 text-[11px] uppercase tracking-wider text-ink-faint" style={{ borderColor: "var(--border)" }}>
+          <div className="flex items-center gap-3 border-b px-4 py-2.5 text-[11px] text-ink-faint" style={{ borderColor: "var(--border)" }}>
             <span className="w-5 text-right">#</span><span className="flex-1">Country</span>
             <span className="w-24 text-right">Median</span><span className="hidden w-12 text-right sm:block">n</span>
           </div>
           <ol>
             {ranked.map((c, i) => (
               <li key={c.country} className="border-t" style={{ borderColor: "var(--border)" }}>
-                <Link href={`/locations/country/${slugify(c.country)}`} className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--surface-1)]" style={{ background: c.country === highlight ? "var(--accent-soft)" : undefined }}>
+                <Link href={`/locations/country/${slugify(c.country)}`} className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--band)]" style={{ background: c.country === highlight ? "var(--accent-soft)" : undefined }}>
                   <span className="tnum w-5 text-right text-sm text-ink-faint">{i + 1}</span>
                   <span className="min-w-0 flex-1">
                     <span className="truncate">{c.country}</span>

@@ -120,7 +120,7 @@ const N_COMPANY = 3;
 
 // A market where one employer supplies most postings is real data but a
 // misleading "market" rate. Flag > 60% single-company concentration.
-export const CONCENTRATION_GATE = 0.6;
+export { CONCENTRATION_GATE } from "./payScale";
 export interface Concentration { company: string; share: number }
 function topCompanyShare(rows: { company: string }[]): Concentration | null {
   if (rows.length === 0) return null;
@@ -750,7 +750,7 @@ export async function getCompare(slugs: string[]): Promise<CompareCompany[]> {
 // ---------------------------------------------------------------------------
 // City map data — salaried count + median per city (for the EMEA bubble map).
 // ---------------------------------------------------------------------------
-export interface MapCity { city: string; slug: string; n: number; median: number; lat: number; lon: number; concentration: Concentration | null; }
+export interface MapCity { city: string; slug: string; n: number; median: number; lat: number; lon: number; concentration: Concentration | null; country: string | null; }
 export const getCityMapData = async (): Promise<{ cities: MapCity[]; emeaMedian: number }> => {
   const { CITY_COORDS } = await import("./cityCoords");
   const rows = usable(await getData());
@@ -764,9 +764,12 @@ export const getCityMapData = async (): Promise<{ cities: MapCity[]; emeaMedian:
   for (const [city, rs] of byCity.entries()) {
     const coords = CITY_COORDS[city];
     if (!coords || rs.length < 5) continue; // need coords + a real sample
+    const cc = new Map<string, number>();
+    for (const r of rs) if (r.country) cc.set(r.country, (cc.get(r.country) || 0) + 1);
+    const country = [...cc.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
     cities.push({
       city, slug: slugify(city), n: rs.length, median: Math.round(median(rs.map((r) => r.annual))),
-      lat: coords[0], lon: coords[1], concentration: topCompanyShare(rs),
+      lat: coords[0], lon: coords[1], concentration: topCompanyShare(rs), country,
     });
   }
   cities.sort((a, b) => b.n - a.n);

@@ -84,7 +84,7 @@ export function SmartSearch({ roles, cities, companies, countries = [], compact 
           className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm ${i === active ? "bg-[var(--surface-3)]" : ""}`}
         >
           <span>{s.label}</span>
-          <span className="tnum text-[10px] uppercase tracking-wider text-ink-faint">{s.kind}</span>
+ <span className="text-[10px] text-ink-faint">{s.kind}</span>
         </button>
       ))}
     </div>
@@ -110,39 +110,38 @@ export function SmartSearch({ roles, cities, companies, countries = [], compact 
 
   return (
     <div ref={boxRef} className="relative">
-      <div className="surface flex flex-col gap-2 rounded-xl p-2 sm:flex-row sm:items-center sm:pl-4" style={{ borderColor: "var(--border-strong)" }}>
+      {/* One instrument: bare role input | hairline | bare location | button */}
+      <div className="surface flex items-center gap-0 rounded-xl p-1.5 pl-4" style={{ borderColor: "var(--border-strong)" }}>
         <input
           value={q}
           onChange={(e) => { setQ(e.target.value); setOpen(true); setActive(-1); }}
           onKeyDown={onKey}
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
-          placeholder="Role or company, e.g. “software engineer”, “Monzo”"
-          className="min-w-0 flex-1 bg-transparent px-2 py-3 text-[17px] outline-none placeholder:text-ink-faint sm:px-0"
+          placeholder="Search a role or company…"
+          className="min-w-0 flex-1 bg-transparent py-2.5 text-[17px] outline-none placeholder:text-ink-faint"
           aria-label="Search roles or companies"
         />
-        <div className="flex items-center gap-2">
-          <span className="hidden h-6 w-px sm:block" style={{ background: "var(--border)" }} />
-          <select
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="field shrink-0 rounded-lg px-3 py-2.5 text-sm"
-            aria-label="Location"
-          >
-            <option value="">All locations</option>
-            {cities.length > 0 && (
-              <optgroup label="Cities">
-                {cities.map((c) => <option key={"c" + c.label} value={c.label}>{c.label}</option>)}
-              </optgroup>
-            )}
-            {countries.length > 0 && (
-              <optgroup label="Countries">
-                {countries.map((c) => <option key={"n" + c} value={c}>{c}</option>)}
-              </optgroup>
-            )}
-          </select>
-          <button onClick={submit} className="btn-primary shrink-0 rounded-lg px-6 py-3 text-sm font-semibold">Search</button>
-        </div>
+        <span className="mx-1 h-7 w-px shrink-0" style={{ background: "var(--border)" }} />
+        <select
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          className="shrink-0 cursor-pointer border-0 bg-transparent py-2.5 pl-2 pr-1 text-sm text-ink-muted outline-none"
+          aria-label="Location"
+        >
+          <option value="">All locations</option>
+          {cities.length > 0 && (
+            <optgroup label="Cities">
+              {cities.map((c) => <option key={"c" + c.label} value={c.label}>{c.label}</option>)}
+            </optgroup>
+          )}
+          {countries.length > 0 && (
+            <optgroup label="Countries">
+              {countries.map((c) => <option key={"n" + c} value={c}>{c}</option>)}
+            </optgroup>
+          )}
+        </select>
+        <button onClick={submit} className="btn-primary ml-1.5 shrink-0 rounded-lg px-5 py-2.5 text-sm font-semibold">Search</button>
       </div>
       {dropdown}
     </div>

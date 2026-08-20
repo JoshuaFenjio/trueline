@@ -35,7 +35,7 @@ export function SubNav({ items }: { items: SubNavItem[] }) {
           <Link
             key={it.href}
             href={it.href}
-            className={`tnum whitespace-nowrap px-3 py-2.5 text-[12px] uppercase tracking-wider transition-colors ${
+            className={`whitespace-nowrap px-3 py-2.5 text-[13px] font-medium transition-colors ${
               active ? "text-ink" : "text-ink-faint hover:text-ink-muted"
             }`}
             style={active ? { boxShadow: "inset 0 -2px 0 0 var(--ink)" } : undefined}

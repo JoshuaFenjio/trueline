@@ -94,9 +94,9 @@ export async function NavBar() {
           </summary>
           <div className="surface absolute right-0 z-50 mt-1 w-64 rounded-xl border p-3 shadow-glow">
             <div className="mb-3">{navSearch}</div>
-            <div className="tnum px-1 pb-1 text-[10px] uppercase tracking-wider text-ink-faint">Salaries</div>
+            <div className="px-1 pb-1 text-[10px] text-ink-faint">Salaries</div>
             {SALARIES.map((it) => <MobileLink key={it.href} {...it} />)}
-            <div className="tnum px-1 pb-1 pt-2 text-[10px] uppercase tracking-wider text-ink-faint">Companies</div>
+            <div className="px-1 pb-1 pt-2 text-[10px] text-ink-faint">Companies</div>
             {COMPANIES.map((it) => <MobileLink key={it.href} {...it} />)}
             <div className="mt-2 border-t pt-2" style={{ borderColor: "var(--border)" }}>
               <MobileLink href="/leaderboards" label="Leaderboards" />
@@ -162,7 +162,7 @@ export async function Footer() {
           </div>
           {FOOTER_COLS.map((col) => (
             <div key={col.title}>
-              <div className="tnum text-[10px] uppercase tracking-[0.18em] text-ink-faint">{col.title}</div>
+              <div className="text-[10px] text-ink-faint">{col.title}</div>
               <ul className="mt-3 space-y-2 text-sm">
                 {col.links.map((l) => (
                   <li key={l.href}><Link href={l.href} className="text-ink-muted transition-colors hover:text-ink">{l.label}</Link></li>

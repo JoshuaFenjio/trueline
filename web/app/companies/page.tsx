@@ -56,7 +56,7 @@ export default async function CompaniesPage({
         ]} />
       </div>
       <header className="max-w-3xl">
-        <div className="tnum text-[11px] uppercase tracking-[0.2em] text-ink-faint">The Pay Index</div>
+        <div className="text-[11px] text-ink-faint">The Pay Index</div>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">
           Top companies · Pay Ranking
         </h1>
@@ -97,7 +97,7 @@ export default async function CompaniesPage({
         <div className="mt-6">
           <PayIndexTable rows={rows} />
           <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
-            <span className="text-[11px] uppercase tracking-wider text-ink-faint">Scale</span>
+            <span className="text-[11px] text-ink-faint">Scale</span>
             <PayScaleLegend />
           </div>
         </div>

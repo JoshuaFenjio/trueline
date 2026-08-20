@@ -41,7 +41,7 @@ export function LiveSalaryCards({ cards, viewAllHref = "/roles" }: { cards: Live
 
       <Link
         href={viewAllHref}
-        className="flex min-w-[92px] shrink-0 flex-col items-center justify-center rounded-xl px-3 text-center text-[11px] uppercase tracking-wider text-ink-muted transition-colors hover:text-[var(--accent)]"
+ className="flex min-w-[92px] shrink-0 flex-col items-center justify-center rounded-xl px-3 text-center text-[11px] text-ink-muted transition-colors hover:text-[var(--accent)]"
       >
         View all →
       </Link>

@@ -29,3 +29,8 @@ export function scoreFromRatio(value: number, base: number): number {
   return Math.max(0, Math.min(100, Math.round(50 + (value / base - 1) * 100)));
 }
 export const NO_DATA_FILL = "#D5D2CB"; // gated / no data yet
+
+// A market where one employer supplies >60% of postings is real but misleading.
+// Lives here (client-safe) so client components can read it without pulling in
+// the server-only data module.
+export const CONCENTRATION_GATE = 0.6;

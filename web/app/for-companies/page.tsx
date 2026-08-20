@@ -22,7 +22,7 @@ export default function ForCompanies() {
   return (
     <div className="py-16">
       <section className="max-w-2xl">
-        <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">For companies</div>
+        <div className="text-[11px] text-ink-faint">For companies</div>
         <h1 className="mt-3 text-4xl font-extrabold leading-[1.06] tracking-tight md:text-5xl">
           Know exactly what the market pays, before you <span>post.</span>
         </h1>
@@ -41,7 +41,7 @@ export default function ForCompanies() {
         <div className="mt-7 grid gap-4 md:grid-cols-3">
           {FEATURES.map((f) => (
             <Card key={f.k} className="h-full">
-              <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">{f.k}</div>
+              <div className="text-[11px] text-ink-faint">{f.k}</div>
               <div className="mt-2 text-xl font-semibold">{f.t}</div>
               <p className="mt-2 text-sm text-ink-muted">{f.d}</p>
             </Card>

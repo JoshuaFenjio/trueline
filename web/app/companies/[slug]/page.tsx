@@ -158,7 +158,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
                 );
                 return (
                   <li key={i} className={i > 0 ? "border-t" : ""} style={{ borderColor: "var(--border)" }}>
-                    {p.url ? <a href={p.url} target="_blank" rel="noopener noreferrer" className="block transition-colors hover:bg-[var(--surface-2)]">{inner}</a> : inner}
+                    {p.url ? <a href={p.url} target="_blank" rel="noopener noreferrer" className="block transition-colors hover:bg-[var(--band)]">{inner}</a> : inner}
                   </li>
                 );
               })}
@@ -281,7 +281,7 @@ function WatchlistCompany({ w }: { w: WatchEntry }) {
       </Card>
 
       <section className="mt-10 max-w-2xl">
-        <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">Why no numbers</div>
+        <div className="text-[11px] text-ink-faint">Why no numbers</div>
         <h2 className="mt-2 text-2xl font-extrabold tracking-tight">We don&rsquo;t have {w.name}&rsquo;s pay yet.</h2>
         <p className="mt-3 text-ink-muted">{w.reason}</p>
         <p className="mt-3 text-ink-muted">

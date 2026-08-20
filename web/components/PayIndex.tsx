@@ -23,7 +23,7 @@ export function PayIndexTable({
   const pad = compact ? "px-3 py-2" : "px-4 py-2.5";
   return (
     <div className="surface overflow-hidden rounded-card">
-      <div className={`tnum flex items-center gap-3 border-b ${pad} text-[11px] uppercase tracking-wider text-ink-faint`} style={{ borderColor: "var(--border)" }}>
+ <div className={`tnum flex items-center gap-3 border-b ${pad} text-[11px] text-ink-faint`} style={{ borderColor: "var(--border)" }}>
         <span className="w-6 text-right">#</span>
         <span className="flex-1">Company</span>
         <span className="hidden w-28 md:block lg:w-44">{variant === "value" ? valueHead : "Score"}</span>
@@ -36,13 +36,13 @@ export function PayIndexTable({
           const barW = isValue ? Math.max(3, (r.barPct ?? 0) * 100) : Math.max(3, r.score);
           return (
             <li key={r.slug} className="border-t" style={{ borderColor: "var(--border)" }}>
-              <Link href={`/companies/${r.slug}`} className={`flex items-center gap-3 ${pad} transition-colors hover:bg-[var(--surface-1)]`}>
+              <Link href={`/companies/${r.slug}`} className={`flex items-center gap-3 ${pad} transition-colors hover:bg-[var(--band)]`}>
                 <span className="tnum w-6 shrink-0 text-right text-sm text-ink-faint">{i + 1}</span>
                 <CompanyLogo name={r.company} size={32} />
                 <span className="flex min-w-0 flex-1 items-center gap-2">
                   <span className="truncate font-medium">{r.company}</span>
                   {!compact && r.sector && (
-                    <span className="hidden shrink-0 rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-ink-faint sm:inline" style={{ background: "var(--surface-1)" }}>
+                    <span className="hidden shrink-0 rounded px-1.5 py-0.5 text-[10px] text-ink-faint sm:inline" style={{ background: "var(--surface-1)" }}>
                       {r.sector}
                     </span>
                   )}

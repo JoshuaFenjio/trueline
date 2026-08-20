@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { CONCENTRATION_GATE, type MapCity } from "@/lib/data";
+import type { MapCity } from "@/lib/data";
+import { CONCENTRATION_GATE } from "@/lib/payScale";
 import { slugify, eur } from "@/lib/format";
 
 // Ranked "top paying cities" bars — dense, financial-style, light system.
@@ -23,7 +24,7 @@ export function TopCities({ cities, emeaMedian, excludeConcentrated = false }: {
 
   return (
     <div className="surface overflow-hidden rounded-card">
-      <div className="tnum flex items-center gap-3 border-b px-4 py-2.5 text-[11px] uppercase tracking-wider text-ink-faint" style={{ borderColor: "var(--border)" }}>
+      <div className="flex items-center gap-3 border-b px-4 py-2.5 text-[11px] text-ink-faint" style={{ borderColor: "var(--border)" }}>
         <span className="w-5 text-right">#</span>
         <span className="flex-1">City</span>
         <span className="w-28 text-right">Median base</span>
@@ -34,7 +35,7 @@ export function TopCities({ cities, emeaMedian, excludeConcentrated = false }: {
           const col = tone(c.median, emeaMedian);
           return (
             <li key={c.slug} className="border-t" style={{ borderColor: "var(--border)" }}>
-              <Link href={`/locations/${slugify(c.city)}`} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--surface-1)]">
+              <Link href={`/locations/${slugify(c.city)}`} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--band)]">
                 <span className="tnum w-5 text-right text-sm text-ink-faint">{i + 1}</span>
                 <span className="flex-1 min-w-0">
                   <span className="truncate">

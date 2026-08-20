@@ -40,9 +40,9 @@ export function MeasureBar({
 
       {/* scale labels */}
       <div className="tnum mt-3 flex justify-between text-xs text-ink-faint">
-        <span>{eurK(lo)}<span className="ml-1 text-[10px] uppercase tracking-wide">P10</span></span>
+ <span>{eurK(lo)}<span className="ml-1 text-[10px] ">P10</span></span>
         <span className="text-ink-muted">{eurK(spread.median)} median</span>
-        <span>{eurK(hi)}<span className="ml-1 text-[10px] uppercase tracking-wide">P90</span></span>
+ <span>{eurK(hi)}<span className="ml-1 text-[10px] ">P90</span></span>
       </div>
 
       {youPos != null && (

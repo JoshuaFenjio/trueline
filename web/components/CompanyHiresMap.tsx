@@ -71,13 +71,13 @@ export function CompanyHiresMap({ company, markets, offices }: {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="surface overflow-hidden rounded-card">
-        <div className="tnum flex items-center gap-3 border-b px-4 py-2.5 text-[11px] uppercase tracking-wider text-ink-faint" style={{ borderColor: "var(--border)" }}>
+        <div className="flex items-center gap-3 border-b px-4 py-2.5 text-[11px] text-ink-faint" style={{ borderColor: "var(--border)" }}>
           <span className="flex-1">Market</span><span className="w-20 text-right">Postings</span><span className="w-24 text-right">Median</span>
         </div>
         <ol>
           {markets.map((m) => (
             <li key={m.country} className="border-t" style={{ borderColor: "var(--border)" }}>
-              <Link href={`/locations/country/${slugify(m.country)}`} className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--surface-1)]">
+              <Link href={`/locations/country/${slugify(m.country)}`} className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--band)]">
                 <span className="flex-1 truncate">{m.country}</span>
                 <span className="tnum w-20 text-right">{m.postings}</span>
                 <span className="tnum w-24 text-right text-ink-muted">{m.median != null ? eur(m.median) : "—"}</span>

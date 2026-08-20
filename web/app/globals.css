@@ -18,6 +18,7 @@
   --ember: #e5532f; /* below market (semantic, data only) */
   --mint: #1e9e6a; /* above market / verified — green, data only */
   --brand-ring: #0f766e;
+  --band: #eef2ef; /* sage-tinted paper — alternating section bands + row hover */
   --card-shadow: 0 1px 3px rgba(23, 22, 20, 0.05);
   --card-shadow-hover: 0 4px 12px rgba(23, 22, 20, 0.08);
 }
@@ -28,6 +29,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip; /* contain full-bleed 100vw bands without a horizontal scrollbar; keeps sticky nav */
 }
 
 body {
@@ -64,6 +66,32 @@ h2 {
   background: var(--accent);
 }
 
+/* Kicker: Schibsted, small, 600, sentence case, teal. NOT mono/uppercase — mono
+   is reserved for data values only. */
+.kicker {
+  font-family: var(--font-schibsted), system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--accent);
+}
+
+/* Full-bleed sage band for alternating sections — breaks out of the centered
+   container without changing layout width. */
+.band {
+  position: relative;
+}
+.band::before {
+  content: "";
+  position: absolute;
+  inset: 0 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background: var(--band);
+  z-index: -1;
+}
+
 /* Card surface: white, hairline border, soft shadow. No translucency/glow. */
 .surface {
   background: #ffffff;
@@ -87,10 +115,12 @@ h2 {
   font-feature-settings: "tnum";
 }
 
-/* Arrow links — mono affordance; gradient text on hover (active state only). */
+/* Arrow links — Schibsted affordance (mono is for data values only); teal on
+   hover. Sentence case, set at the call site with font-medium. */
 .arrow-link,
 .arrow-cue {
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-family: var(--font-schibsted), system-ui, sans-serif;
+  font-weight: 500;
   color: var(--ink-muted);
   transition: color 0.15s ease;
 }

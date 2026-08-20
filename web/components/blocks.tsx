@@ -9,7 +9,7 @@ export function SectionHeader({
 }: { kicker?: string; title: ReactNode; accent?: string; sub?: ReactNode; id?: string }) {
   return (
     <div id={id} className="scroll-mt-24">
-      {kicker && <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">{kicker}</div>}
+      {kicker && <div className="kicker">{kicker}</div>}
       <h2 className="mt-2 text-3xl font-extrabold leading-[1.04] tracking-tight md:text-4xl">
         {title} {accent && <span>{accent}</span>}
       </h2>
@@ -21,7 +21,7 @@ export function SectionHeader({
 // -- Breadcrumbs: mono trail, last crumb is the current page ------------------
 export function Breadcrumbs({ items }: { items: { label: string; href?: string }[] }) {
   return (
-    <nav aria-label="Breadcrumb" className="tnum flex flex-wrap items-center gap-1.5 text-xs text-ink-faint">
+    <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs text-ink-faint">
       {items.map((it, i) => (
         <span key={i} className="flex items-center gap-1.5">
           {i > 0 && <span className="text-ink-faint/50">/</span>}
@@ -45,7 +45,7 @@ export function StatStrip({ items, className = "" }: { items: { value: ReactNode
           style={{ borderColor: "var(--border)" }}
         >
           <div className="tnum truncate text-2xl font-semibold leading-none md:text-3xl">{it.value}</div>
-          <div className="mt-1.5 text-[10px] uppercase tracking-[0.14em] text-ink-faint">{it.label}</div>
+          <div className="mt-1.5 text-[10px] text-ink-faint">{it.label}</div>
         </div>
       ))}
     </div>
@@ -65,11 +65,11 @@ export function LensCard({
           : { background: "var(--surface-1)", borderColor: "var(--border)" }}
       >
         <div>
-          <div className="tnum text-[10px] uppercase tracking-[0.18em] text-ink-faint">{kicker}</div>
+          <div className="text-[10px] text-ink-faint">{kicker}</div>
           <div className="mt-2 text-lg font-semibold tracking-tight">{title}</div>
           <p className="mt-1.5 text-sm text-ink-muted">{line}</p>
         </div>
-        <span className="arrow-cue mt-5 inline-flex items-center gap-1 text-[11px] uppercase tracking-wider">
+        <span className="arrow-cue mt-5 inline-flex items-center gap-1 text-[11px]">
           Open <span className="arw">→</span>
         </span>
       </div>
@@ -80,7 +80,7 @@ export function LensCard({
 // -- Arrow link: mono 11px uppercase, gradient text + arrow +2px on hover -----
 export function ArrowLink({ href, children, className = "" }: { href: string; children: ReactNode; className?: string }) {
   return (
-    <Link href={href} className={`arrow-link inline-flex items-center gap-1 text-[11px] uppercase tracking-wider ${className}`}>
+    <Link href={href} className={`arrow-link inline-flex items-center gap-1 text-xs ${className}`}>
       <span>{children}</span>
       <span className="arw">→</span>
     </Link>
@@ -100,7 +100,7 @@ export interface RankVM {
 export function RankTable({ rows, valueHead = "Median base" }: { rows: RankVM[]; valueHead?: string }) {
   return (
     <div className="border-y" style={{ borderColor: "var(--border)" }}>
-      <div className="tnum flex items-center px-1 py-2 text-[11px] uppercase tracking-wider text-ink-faint">
+      <div className="flex items-center px-1 py-2 text-[11px] text-ink-faint">
         <span className="w-8 text-right">#</span>
         <span className="ml-4 flex-1">Name</span>
         <span className="text-right">{valueHead}</span>
@@ -108,7 +108,7 @@ export function RankTable({ rows, valueHead = "Median base" }: { rows: RankVM[];
       <ol>
         {rows.map((r, i) => {
           const inner = (
-            <div className="relative flex items-center px-1 py-3.5 transition-colors hover:bg-[var(--surface-2)]">
+            <div className="relative flex items-center px-1 py-3.5 transition-colors hover:bg-[var(--band)]">
               <div
                 className="pointer-events-none absolute inset-y-1 left-0 -z-10 rounded-r-md"
                 style={{ width: `${Math.max(2, r.barPct * 100)}%`, background: "var(--accent-soft)" }}
@@ -208,7 +208,7 @@ export function GatedState({ n, gate = 8, what, tracked }: { n: number; gate?: n
   const pct = Math.min(100, (n / gate) * 100);
   return (
     <div className="surface rounded-card p-8 text-center">
-      <div className="tnum text-[11px] uppercase tracking-[0.22em] text-ink-faint">Gated · sample too small</div>
+      <div className="text-[11px] text-ink-faint">Gated · sample too small</div>
       <h3 className="mt-2 text-2xl font-extrabold tracking-tight">
         Not enough reliable pay data <span>yet.</span>
       </h3>
