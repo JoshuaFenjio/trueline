@@ -100,15 +100,17 @@ export default async function CompanyPage({ params }: { params: { slug: string }
         </div>
       </div>
 
-      <div className="tnum mt-4 text-[11px] text-ink-faint">
-        {c.activeN} active postings · data refreshed {timeAgo(refreshed)}
+      <div className="mt-4 text-[13px] text-ink-muted">
+        We track <span className="tnum font-medium text-ink">{c.activeN}</span> live {c.company} roles;{" "}
+        <span className="tnum font-medium text-ink">{c.disclosedN}</span> disclose pay.{" "}
+        <span className="text-ink-faint">Refreshed {timeAgo(refreshed)}.</span>
       </div>
 
       <Card className="mt-6">
         <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
           <Stat label="Median base" value={<span className="tnum">{eur(c.midpoint)}</span>} />
           <Stat label="Transparency" value={<span className="tnum">{pct(c.disclosurePct)}</span>} tone={c.disclosurePct >= 50 ? "var(--mint)" : c.disclosurePct < 25 ? "var(--ember)" : undefined} />
-          <Stat label="Salaried roles" value={<span className="tnum">{c.n}</span>} />
+          <Stat label="Roles tracked" value={<span className="tnum">{c.activeN}</span>} />
           <Stat
             label="Pay trend"
             value={c.trend.dir === "insufficient" || c.trend.dir === "new"
@@ -117,6 +119,9 @@ export default async function CompanyPage({ params }: { params: { slug: string }
           />
         </div>
       </Card>
+      <p className="mt-3 text-xs text-ink-faint">
+        Transparency is the share of {c.company}&rsquo;s tracked ads that publish pay ({pct(c.disclosurePct)}) — we monitor both the disclosed and the silent. The median is built from {c.n} salaried posting{c.n === 1 ? "" : "s"}.
+      </p>
 
       {/* Compare with peers */}
       {c.peers.length > 0 && <PeerCompare c={c} />}

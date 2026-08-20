@@ -162,7 +162,7 @@ export default async function Leaderboards({
       {/* 5. Best disclosure */}
       <section className="mt-24" id="transparent">
         <div className="flex items-start justify-between gap-3">
-          <SectionHeader kicker="05 · Transparency" title="Most transparent employers" sub="Share of active ads that state a salary. Companies with 10+ live postings." />
+          <SectionHeader kicker="05 · Transparency" title="Most transparent employers" sub="What share of each company's tracked ads publish pay — we monitor both the disclosed and the silent. Companies with 10+ live postings." />
           <ShareButton path="/leaderboards#transparent" />
         </div>
         <div className="mt-6">

@@ -17,7 +17,7 @@ export function LocationView({ hub, related = [] }: { hub: LocationHub; related?
       ]} />
       <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
         <SectionHeader
-          kicker={`${kindLabel} · ${hub.overall.n} salaried ads`}
+          kicker={`${kindLabel} · EMEA`}
           title={`What ${hub.name}`}
           accent="pays."
         />
@@ -30,6 +30,10 @@ export function LocationView({ hub, related = [] }: { hub: LocationHub; related?
           <TrendBadge trend={hub.trend} />
         </div>
       </div>
+      <p className="mt-3 text-[13px] text-ink-muted">
+        We track <span className="tnum font-medium text-ink">{hub.trackedN}</span> live roles in {hub.name};{" "}
+        <span className="tnum font-medium text-ink">{hub.disclosedN}</span> disclose pay.
+      </p>
 
       <section className="mt-8">
         {hub.overall.spread ? (

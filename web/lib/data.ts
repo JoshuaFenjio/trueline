@@ -172,8 +172,9 @@ export const getLiveStats = async () => {
   const u = usable(rows);
   return {
     companies: new Set(rows.map((r) => r.company)).size,
-    postings: rows.length,
-    salaried: u.length,
+    postings: rows.length, // total live EMEA roles we track
+    disclosed: rows.filter((r) => r.disclosed).length, // published a salary
+    salaried: u.length, // disclosed AND usable for a median
     cities: new Set(u.map((r) => r.city).filter(Boolean)).size,
   };
 };
@@ -183,7 +184,7 @@ export const getLiveStats = async () => {
 // ---------------------------------------------------------------------------
 export interface CompanyStat {
   company: string; slug: string; sector: Sector;
-  midpoint: number; n: number; activeN: number; disclosurePct: number;
+  midpoint: number; n: number; activeN: number; disclosedN: number; disclosurePct: number;
   payScore: number; sectorRank: number; sectorTotal: number; trend: Trend;
 }
 
@@ -214,7 +215,7 @@ export const getCompaniesBoard = async (): Promise<CompanyStat[]> => {
       );
       return {
         company, slug: slugify(company), sector: sectorOf(company),
-        midpoint: median(v), n: v.length, activeN: active.length,
+        midpoint: median(v), n: v.length, activeN: active.length, disclosedN,
         disclosurePct: active.length ? Math.round((disclosedN / active.length) * 100) : 0,
         trend,
       };
@@ -487,7 +488,7 @@ export async function countriesForRole(role: string): Promise<RankRow[]> {
 // ---------------------------------------------------------------------------
 export interface RoleHub {
   role: string; slug: string;
-  overall: Slice; trackedN: number;
+  overall: Slice; trackedN: number; disclosedN: number;
   byLevel: { level: Level; slice: Slice }[];
   topCities: RankRow[]; topCountries: RankRow[]; topCompanies: RankRow[];
   trend: Trend;
@@ -499,6 +500,7 @@ export async function getRoleHub(role: string): Promise<RoleHub> {
     role, slug: slugify(role),
     overall: sliceOf(rows, inRole),
     trackedN: rows.filter(inRole).length,
+    disclosedN: rows.filter((p) => inRole(p) && p.disclosed).length,
     byLevel: LEVELS.map((level) => ({ level, slice: sliceOf(rows, (p) => inRole(p) && p.level === level) })),
     topCities: rankCitiesBy(rows, inRole).slice(0, 10),
     topCountries: rankCountriesBy(rows, inRole).slice(0, 10),
@@ -512,7 +514,7 @@ export async function getRoleHub(role: string): Promise<RoleHub> {
 // ---------------------------------------------------------------------------
 export interface LocationHub {
   name: string; slug: string; kind: "city" | "country";
-  overall: Slice; trackedN: number;
+  overall: Slice; trackedN: number; disclosedN: number;
   byRole: RankRow[]; topPayers: RankRow[];
   rank: { pos: number; total: number } | null;
   trend: Trend;
@@ -523,6 +525,7 @@ async function locationHub(name: string, kind: "city" | "country"): Promise<Loca
   const match = (p: Posting) => (kind === "city" ? p.city === name : p.country === name);
   const overall = sliceOf(rows, match);
   const trackedN = rows.filter(match).length;
+  const disclosedN = rows.filter((p) => match(p) && p.disclosed).length;
 
   // Rank vs peer markets (only markets that clear the gate).
   const peers = kind === "city" ? rankCitiesBy(rows, () => true) : rankCountriesBy(rows, () => true);
@@ -531,7 +534,7 @@ async function locationHub(name: string, kind: "city" | "country"): Promise<Loca
 
   return {
     name, slug: slugify(name), kind,
-    overall, trackedN,
+    overall, trackedN, disclosedN,
     byRole: (() => {
       const m = new Map<string, number[]>();
       for (const r of usable(rows).filter(match)) { const a = m.get(r.roleFamily) || []; a.push(r.annual); m.set(r.roleFamily, a); }

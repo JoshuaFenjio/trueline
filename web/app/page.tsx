@@ -109,9 +109,9 @@ export default async function Home({
       <section className="mx-auto mt-5 max-w-2xl">
         <SmartSearch roles={options.roles} cities={options.cities} companies={companyList} countries={countryNames} />
         <p className="mt-3 text-center text-[13px] text-ink-faint">
-          <Figure n={stats.salaried} /> salaried roles
+          <Figure n={stats.postings} /> live roles tracked
           <Dot /> <Figure n={stats.companies} /> companies
-          <Dot /> <Figure n={stats.cities} /> cities
+          <Dot /> <Figure n={stats.disclosed} /> with disclosed pay
           <Dot /> refreshed {timeAgo(refreshed)}
         </p>
 
@@ -238,7 +238,7 @@ export default async function Home({
       {lb.bestDisclosure.length > 0 && (
         <section className="mt-20">
           <div className="flex items-center justify-between">
-            <SectionHeader kicker="Transparency" title="Most transparent companies" />
+            <SectionHeader kicker="Transparency" title="Most transparent companies" sub="The share of each company's tracked ads that publish pay — we monitor both the disclosed and the silent." />
             <span className="hidden md:block"><ArrowLink href="/leaderboards#transparent">See all</ArrowLink></span>
           </div>
           <div className="mt-6 flex gap-3 overflow-x-auto pb-2">

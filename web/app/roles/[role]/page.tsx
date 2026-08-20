@@ -40,12 +40,16 @@ export default async function RolePage({ params }: { params: { role: string } })
         { label: role },
       ]} />
       <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
-        <SectionHeader kicker={`Role · EMEA · ${hub.overall.n} salaried ads`} title={role} accent="pay." />
+        <SectionHeader kicker="Role · EMEA" title={role} accent="pay." />
         <div className="flex items-center gap-3">
           {hub.overall.spread && <div className="tnum text-3xl font-semibold">{eur(hub.overall.spread.median)}</div>}
           <TrendBadge trend={hub.trend} />
         </div>
       </div>
+      <p className="mt-3 text-[13px] text-ink-muted">
+        We track <span className="tnum font-medium text-ink">{hub.trackedN}</span> live {role} roles across EMEA;{" "}
+        <span className="tnum font-medium text-ink">{hub.disclosedN}</span> disclose pay.
+      </p>
 
       {/* Spread */}
       <section className="mt-8">
