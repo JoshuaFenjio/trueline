@@ -19,7 +19,10 @@ on:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # 312 companies + SmartRecruiters per-posting detail fetches overrun the old
+    # 60-minute cap (scheduled runs were being cancelled mid-list, so later
+    # companies never got scraped). 150 gives the full pass room to finish.
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
 
