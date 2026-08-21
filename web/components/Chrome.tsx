@@ -214,7 +214,7 @@ export async function Footer() {
             <div className="text-[15px] font-semibold">Get the monthly EMEA pay brief</div>
             <div className="mt-1 text-sm text-ink-muted">What moved, which roles heated up, where pay is rising. One email a month, no spam.</div>
           </div>
-          <div className="w-full md:w-96"><EmailCapture source="candidate" cta="Subscribe" placeholder="you@email.com" /></div>
+          <div className="w-full md:w-96"><EmailCapture source="newsletter" cta="Subscribe" placeholder="you@email.com" /></div>
         </div>
 
         <div className="mt-10 flex flex-col gap-3 border-t pt-6 text-xs text-ink-faint md:flex-row md:items-center md:justify-between" style={{ borderColor: "var(--border)" }}>

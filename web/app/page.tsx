@@ -272,33 +272,30 @@ export default async function Home({
         </section>
       )}
 
-      {/* Employer CTA — full-width dark band card */}
+      {/* Employer CTA — full-width dark teal band card */}
       <section className="section-y">
         <div className="band-dark flex flex-col gap-8 p-8 md:p-10 min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between">
           <div className="min-[900px]:max-w-xl">
             <div className="flex items-center gap-4">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full" style={{ background: "rgba(255,255,255,.1)" }} aria-hidden="true">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full" style={{ background: "rgba(255,255,255,.12)" }} aria-hidden="true">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="7" width="18" height="13" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18" />
                 </svg>
               </span>
-              <h2 className="text-2xl font-bold tracking-tight text-white md:text-[28px]">Hiring in EMEA? See what the market really pays.</h2>
+              <h2 className="text-2xl font-bold tracking-tight text-white md:text-[28px]">Hiring? Benchmark your pay against your sector.</h2>
             </div>
             <p className="mt-4 text-[15px] leading-relaxed" style={{ color: "rgba(255,255,255,.72)" }}>
-              Benchmark your offers against live base-pay data from public job postings, city by city.
+              See where your offers sit against live base-pay data from real job postings, by role and city.
             </p>
             <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
               {[
-                { t: "Live from job boards", d: "Scraped, not surveyed" },
-                { t: "City-level, never national", d: "Anchored to the posting" },
-                { t: "Base pay, no guessed TC", d: "Advertised salary only" },
+                "Real market data",
+                "Directive-ready ranges",
+                "Transparency score",
               ].map((f) => (
-                <div key={f.t} className="flex items-start gap-2">
-                  <svg className="mt-0.5 shrink-0" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--mint)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5" /></svg>
-                  <div>
-                    <div className="text-[13px] font-medium text-white">{f.t}</div>
-                    <div className="text-[12px]" style={{ color: "rgba(255,255,255,.55)" }}>{f.d}</div>
-                  </div>
+                <div key={f} className="flex items-center gap-2">
+                  <svg className="shrink-0" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--mint)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5" /></svg>
+                  <span className="text-[13px] font-medium text-white">{f}</span>
                 </div>
               ))}
             </div>

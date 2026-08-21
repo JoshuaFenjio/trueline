@@ -2,7 +2,7 @@
 import { useState } from "react";
 
 interface Props {
-  source: "employer" | "candidate";
+  source: "employer" | "candidate" | "newsletter";
   withCompany?: boolean;
   cta?: string;
   placeholder?: string;

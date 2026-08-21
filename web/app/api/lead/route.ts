@@ -13,7 +13,8 @@ export async function POST(req: Request) {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return NextResponse.json({ error: "invalid_email" }, { status: 400 });
   }
-  const source = body.source === "employer" ? "employer" : "candidate";
+  const ALLOWED_SOURCES = new Set(["employer", "candidate", "newsletter"]);
+  const source = ALLOWED_SOURCES.has(body.source) ? body.source : "candidate";
   const company = body.company ? String(body.company).trim().slice(0, 120) : null;
 
   const sb = getSupabase();

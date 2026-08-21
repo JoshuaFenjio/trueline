@@ -15,6 +15,7 @@
   --ink-faint: #9c968c;
   --accent: #0f766e; /* deep teal — structural: buttons, links, key figures */
   --accent-soft: rgba(15, 118, 110, 0.1); /* tint fills */
+  --accent-deep: #0b4f4a; /* darker teal — employer CTA band surface */
   --ember: #e5532f; /* below market (semantic, data only) */
   --mint: #1e9e6a; /* above market / verified — green, data only */
   --brand-ring: #0f766e;
@@ -283,9 +284,9 @@ h2 {
   padding: 6px 12px;
 }
 
-/* Dark brand band — employer CTA. Ink surface, light text. */
+/* Dark brand band — employer CTA. Deep-teal surface, light text. */
 .band-dark {
-  background: var(--ink);
+  background: var(--accent-deep);
   color: #ffffff;
   border-radius: 16px;
 }

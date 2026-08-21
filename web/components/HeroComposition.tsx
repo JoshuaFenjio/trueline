@@ -24,8 +24,8 @@ export function HeroComposition({ comp }: { comp: HomeComposition }) {
   // which posted_at is too sparse to support honestly.
   if (comp.emeaMedian > 0) {
     cards.push(
-      <div key="median" className="card-float flex h-full flex-col justify-between p-3.5">
-        <div className="text-[11px] leading-tight text-ink-faint">EMEA median base salary</div>
+      <div key="median" className="card-float flex h-full flex-col justify-between p-4">
+        <div className="text-[12px] leading-tight text-ink-faint">EMEA median base salary</div>
         <div>
           <div className="tnum mt-2 text-[20px] font-semibold leading-none">{eur(comp.emeaMedian)}</div>
           <div className="tnum mt-1.5 text-[11px] text-ink-faint">{comp.salaried.toLocaleString()} salaried roles</div>
@@ -42,8 +42,8 @@ export function HeroComposition({ comp }: { comp: HomeComposition }) {
   // b) Top paying city
   if (comp.topCity) {
     cards.push(
-      <Link key="city" href={`/locations/${comp.topCity.slug}`} className="card-float card-hover flex h-full flex-col justify-between p-3.5">
-        <div className="text-[11px] leading-tight text-ink-faint">Top paying city</div>
+      <Link key="city" href={`/locations/${comp.topCity.slug}`} className="card-float card-hover flex h-full flex-col justify-between p-4">
+        <div className="text-[12px] leading-tight text-ink-faint">Top paying city</div>
         <div className="mt-2">
           <div className="t-h3">{comp.topCity.city}</div>
           <div className="tnum mt-1 text-[15px] font-semibold text-ink">{eur(comp.topCity.median)}</div>
@@ -57,8 +57,8 @@ export function HeroComposition({ comp }: { comp: HomeComposition }) {
   if (comp.inDemandRole) {
     const r = comp.inDemandRole;
     cards.push(
-      <Link key="role" href={`/roles/${r.slug}`} className="card-float card-hover flex h-full flex-col justify-between p-3.5">
-        <div className="text-[11px] leading-tight text-ink-faint">In-demand role</div>
+      <Link key="role" href={`/roles/${r.slug}`} className="card-float card-hover flex h-full flex-col justify-between p-4">
+        <div className="text-[12px] leading-tight text-ink-faint">In-demand role</div>
         <div className="mt-2">
           <div className="t-h3">{r.name}</div>
           <div className="tnum mt-1 text-[11px] text-ink-faint">{r.activeN.toLocaleString()} open roles tracked</div>
@@ -69,7 +69,7 @@ export function HeroComposition({ comp }: { comp: HomeComposition }) {
 
   return (
     <div
-      className="grid aspect-[4/3.4] w-full grid-cols-4 grid-rows-4 gap-3 rounded-[20px] p-4"
+      className="grid aspect-[4/3.4] w-full grid-cols-4 grid-rows-4 gap-3 rounded-[20px] p-6"
       style={{ background: "var(--panel)" }}
     >
       {cards.slice(0, 3).map((c, i) => (
