@@ -117,6 +117,10 @@ const usable = (rows: Posting[]) => rows.filter((r) => r.annual !== null) as (Po
 // Gates
 const N_MEDIAN = 8;
 const N_COMPANY = 3;
+// Flagship gate: the map insight card's #1 country slot needs a deeper sample
+// than the standard median gate before we headline it as the top payer. Below
+// this, the insight features the highest-median country that does clear it.
+const N_FLAGSHIP = 15;
 
 // A market where one employer supplies most postings is real data but a
 // misleading "market" rate. Flag > 60% single-company concentration.
@@ -847,12 +851,14 @@ export const getHomeComposition = async (): Promise<HomeComposition> => {
 };
 
 // Map insight finding — the top-paying country for a role vs the EMEA median,
-// computed from the pay data (no hand-written copy). Skips concentration-gated
-// markets so the headline isn't one employer masquerading as a country.
+// computed from the pay data (no hand-written copy). The flagship #1 slot needs
+// n>=N_FLAGSHIP (deeper than the standard median gate) so a thin sample can't
+// headline as the top payer; below that we feature the highest-median country
+// that does clear it. Also skips concentration-gated single-employer markets.
 export interface CountryFinding { country: string; slug: string; median: number; deltaPct: number; n: number }
 export function topCountryFinding(rp: RolePay): CountryFinding | null {
   const eligible = rp.countries
-    .filter((c) => c.median != null && c.n >= N_MEDIAN && !(c.concentration && c.concentration.share > 0.6))
+    .filter((c) => c.median != null && c.n >= N_FLAGSHIP && !(c.concentration && c.concentration.share > 0.6))
     .sort((a, b) => b.median! - a.median!);
   const top = eligible[0];
   if (!top || !rp.emeaMedian) return null;

@@ -158,7 +158,8 @@ export function EuropePayMap({
             <Link href={`/locations/country/${slugify(c.country)}`} className="flex items-center gap-3 px-4 py-2 transition-colors hover:bg-[var(--band)]" style={{ background: c.country === highlight ? "var(--accent-soft)" : undefined }}>
               <span className="tnum w-5 text-right text-sm text-ink-faint">{i + 1}</span>
               <span className="min-w-0 flex-1">
-                <span className="truncate text-sm">{c.country}</span>
+                <span className="text-sm">{c.country}</span>
+                <span className="tnum ml-2 text-[11px] text-ink-faint">n={c.n}</span>
                 <span className="rank-track mt-1.5 block">
                   <span className="rank-fill" style={{ width: `${(c.median! / maxMed) * 100}%`, background: payColor(scoreFromRatio(c.median!, rp.emeaMedian)) }} />
                 </span>
