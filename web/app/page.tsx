@@ -2,18 +2,19 @@ import Link from "next/link";
 import {
   getLiveStats, getFilterOptions, getSectors, getCompaniesBoard, getLeaderboards,
   getCityMapData, getLastRefreshed, getSectorCounts, getRecentSalaried, getRoleIndex,
-  getEuropePayData, searchSalaries, isConfigured,
+  getEuropePayData, getHomeComposition, topCountryFinding, searchSalaries, isConfigured,
 } from "@/lib/data";
 import type { Metadata } from "next";
 import { SearchForm } from "@/components/SearchForm";
 import { SmartSearch } from "@/components/SmartSearch";
 import { WhoPaysInteractive } from "@/components/WhoPaysInteractive";
 import { LiveSalaryCards } from "@/components/LiveSalaryCards";
+import { HeroComposition } from "@/components/HeroComposition";
 import { MeasureBar } from "@/components/MeasureBar";
 import { ShareButton } from "@/components/ShareButton";
-import { Card, Stat, GhostLink } from "@/components/ui";
+import { Card, Stat, GhostLink, LiveDot } from "@/components/ui";
 import { EuropePayMap } from "@/components/EuropePayMap";
-import { SectionHeader, ArrowLink } from "@/components/blocks";
+import { SectionHeader, ArrowLink, PillButton, IconChip } from "@/components/blocks";
 import { EmailCapture } from "@/components/EmailCapture";
 import { parseQuery } from "@/lib/parseQuery";
 import { WATCHLIST } from "@/lib/watchlist";
@@ -66,11 +67,15 @@ export default async function Home({
 }) {
   if (!isConfigured) return <NotConfigured />;
 
-  const [stats, options, sectors, board, lb, mapData, refreshed, sectorCounts, recent, roleIdx, europe] = await Promise.all([
+  const [stats, options, sectors, board, lb, mapData, refreshed, sectorCounts, recent, roleIdx, europe, comp] = await Promise.all([
     getLiveStats(), getFilterOptions(), getSectors(), getCompaniesBoard(), getLeaderboards(),
     getCityMapData(), getLastRefreshed(), getSectorCounts(), getRecentSalaried(), getRoleIndex(),
-    getEuropePayData(),
+    getEuropePayData(), getHomeComposition(),
   ]);
+  // Per-role top-country findings for the map insight card, computed at build
+  // time from the pay data (never hand-written). Keyed by role, incl. "All roles".
+  const findings: Record<string, ReturnType<typeof topCountryFinding>> = {};
+  for (const [roleKey, rp] of Object.entries(europe.data)) findings[roleKey] = topCountryFinding(rp);
   const boardSlugs = new Set(board.map((c) => c.slug));
   const companyList = [
     ...board.map((c) => ({ name: c.company, slug: c.slug })),
@@ -95,69 +100,79 @@ export default async function Home({
 
   return (
     <div className="pb-4">
-      {/* Hero — compact */}
-      <section className="pt-8 text-center md:pt-10">
-        <h1 className="mx-auto max-w-3xl text-4xl font-extrabold leading-[1.05] md:text-[44px]">
-          Know what Europe actually pays.
-        </h1>
-        <p className="mx-auto mt-3 max-w-xl text-ink-muted">
-          Real base salaries from live job postings across Europe, the Middle East and Africa.
-        </p>
-      </section>
+      {/* Hero — two columns: search-led text left, live composition right. The
+          composition panel is hidden below 900px (hero becomes text-only). */}
+      <section className="grid items-center gap-10 pt-10 md:pt-14 min-[900px]:grid-cols-[1fr_1.12fr] min-[900px]:gap-12">
+        <div>
+          <span className="eyebrow-pill">
+            <LiveDot />
+            <span className="eyebrow">
+              {stats.companies.toLocaleString()} companies · {countryNames.length} countries · live
+            </span>
+          </span>
+          <h1 className="t-h1 mt-5 max-w-xl">Know what Europe actually pays.</h1>
+          <p className="mt-4 max-w-lg text-lg leading-relaxed text-ink-muted">
+            Real base salaries from live job postings across Europe, the Middle East and Africa.
+          </p>
 
-      {/* Search + stats + one merged chip row; full set lives under Browse all */}
-      <section className="mx-auto mt-5 max-w-2xl">
-        <SmartSearch roles={options.roles} cities={options.cities} companies={companyList} countries={countryNames} />
-        <p className="mt-3 text-center text-[13px] text-ink-faint">
-          <Figure n={stats.postings} /> live roles tracked
-          <Dot /> <Figure n={stats.companies} /> companies
-          <Dot /> <Figure n={stats.disclosed} /> with disclosed pay
-          <Dot /> refreshed {timeAgo(refreshed)}
-        </p>
+          <div className="mt-7">
+            <SmartSearch roles={options.roles} cities={options.cities} companies={companyList} countries={countryNames} />
+          </div>
+          <p className="mt-3 text-[13px] text-ink-faint">
+            <Figure n={stats.postings} /> live roles tracked
+            <Dot /> <Figure n={stats.disclosed} /> with disclosed pay
+            <Dot /> refreshed {timeAgo(refreshed)}
+          </p>
 
-        {/* one row: top 3 sectors + top 3 roles + Browse all */}
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-          {topSectors.slice(0, 3).map((s) => (
-            <Link key={s.sector} href={`/companies?sector=${encodeURIComponent(s.sector)}`} className="surface surface-hover inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm transition-colors">
-              <span>{s.sector}</span><span className="tnum text-xs text-ink-faint">{s.n}</span>
-            </Link>
-          ))}
-          {topRoles.slice(0, 3).map((r) => (
-            <Link key={r.slug} href={`/roles/${r.slug}`} className="rounded-full border px-3 py-1.5 text-[13px] text-ink-muted transition-colors hover:text-ink" style={{ background: "var(--surface-1)" }}>{r.name}</Link>
-          ))}
+          {/* one row: top 3 sectors + top 3 roles + Browse all */}
+          <div className="mt-5 flex flex-wrap items-center gap-2">
+            {topSectors.slice(0, 3).map((s) => (
+              <Link key={s.sector} href={`/companies?sector=${encodeURIComponent(s.sector)}`} className="surface surface-hover inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm transition-colors">
+                <span>{s.sector}</span><span className="tnum text-xs text-ink-faint">{s.n}</span>
+              </Link>
+            ))}
+            {topRoles.slice(0, 3).map((r) => (
+              <Link key={r.slug} href={`/roles/${r.slug}`} className="rounded-full border px-3 py-1.5 text-[13px] text-ink-muted transition-colors hover:text-ink" style={{ background: "var(--surface-1)" }}>{r.name}</Link>
+            ))}
+          </div>
+
+          <details className="group mt-3">
+            <summary className="arrow-link flex w-max cursor-pointer list-none items-center gap-1 text-xs">
+              Browse all <span className="arw transition-transform group-open:rotate-90">→</span>
+            </summary>
+            <div className="mt-4 space-y-4">
+              <SearchForm roles={options.roles} cities={options.cities} current={{ role, city, level: searchParams.level, base: searchParams.base }} compact />
+              <div>
+                <div className="mb-2 text-xs text-ink-faint">Sectors</div>
+                <div className="flex flex-wrap gap-2">
+                  {topSectors.map((s) => (
+                    <Link key={s.sector} href={`/companies?sector=${encodeURIComponent(s.sector)}`} className="rounded-full border px-3 py-1 text-sm text-ink-muted transition-colors hover:text-ink" style={{ background: "var(--surface-1)" }}>
+                      {s.sector} <span className="tnum text-xs text-ink-faint">{s.n}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="mb-2 text-xs text-ink-faint">Roles</div>
+                <div className="flex flex-wrap gap-2">
+                  {[...roleIdx].filter((r) => r.name !== "Other").sort((a, b) => b.n - a.n).slice(0, 14).map((r) => (
+                    <Link key={r.slug} href={`/roles/${r.slug}`} className="rounded-full border px-3 py-1 text-sm text-ink-muted transition-colors hover:text-ink" style={{ background: "var(--surface-1)" }}>{r.name}</Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </details>
         </div>
 
-        <details className="group mt-2">
-          <summary className="arrow-link mx-auto flex w-max cursor-pointer list-none items-center gap-1 text-xs">
-            Browse all <span className="arw transition-transform group-open:rotate-90">→</span>
-          </summary>
-          <div className="mt-4 space-y-4">
-            <SearchForm roles={options.roles} cities={options.cities} current={{ role, city, level: searchParams.level, base: searchParams.base }} compact />
-            <div>
-              <div className="mb-2 text-xs text-ink-faint">Sectors</div>
-              <div className="flex flex-wrap gap-2">
-                {topSectors.map((s) => (
-                  <Link key={s.sector} href={`/companies?sector=${encodeURIComponent(s.sector)}`} className="rounded-full border px-3 py-1 text-sm text-ink-muted transition-colors hover:text-ink" style={{ background: "var(--surface-1)" }}>
-                    {s.sector} <span className="tnum text-xs text-ink-faint">{s.n}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div className="mb-2 text-xs text-ink-faint">Roles</div>
-              <div className="flex flex-wrap gap-2">
-                {[...roleIdx].filter((r) => r.name !== "Other").sort((a, b) => b.n - a.n).slice(0, 14).map((r) => (
-                  <Link key={r.slug} href={`/roles/${r.slug}`} className="rounded-full border px-3 py-1 text-sm text-ink-muted transition-colors hover:text-ink" style={{ background: "var(--surface-1)" }}>{r.name}</Link>
-                ))}
-              </div>
-            </div>
-          </div>
-        </details>
+        {/* Right column — live-data composition. Reserve height to avoid CLS. */}
+        <div className="hidden min-[900px]:block">
+          <HeroComposition comp={comp} />
+        </div>
       </section>
 
       {/* Live salary cards — proof of life */}
       {recent.length > 0 && (
-        <section className="mx-auto mt-6 max-w-6xl">
+        <section className="mt-14">
           <LiveSalaryCards cards={recent} />
         </section>
       )}
@@ -205,14 +220,14 @@ export default async function Home({
         </section>
       )}
 
-      {/* Europe pay map — table beside map, in a tinted panel */}
-      <section className="mt-16">
+      {/* Europe pay map — three columns: country table · map on the band · insight */}
+      <section className="band section-y mt-16">
         <div className="flex items-end justify-between gap-4">
           <SectionHeader kicker="Geography" title="The Europe pay map" />
           <span className="hidden md:block"><ArrowLink href="/locations/countries">Explore countries</ArrowLink></span>
         </div>
-        <div className="mt-6 rounded-card border p-5" style={{ background: "var(--band)", borderColor: "var(--border)" }}>
-          <EuropePayMap data={europe} withTable />
+        <div className="mt-8">
+          <EuropePayMap data={europe} triptych findings={findings} spark={comp.spark} />
         </div>
       </section>
 
@@ -256,6 +271,43 @@ export default async function Home({
           </div>
         </section>
       )}
+
+      {/* Employer CTA — full-width dark band card */}
+      <section className="section-y">
+        <div className="band-dark flex flex-col gap-8 p-8 md:p-10 min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between">
+          <div className="min-[900px]:max-w-xl">
+            <div className="flex items-center gap-4">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full" style={{ background: "rgba(255,255,255,.1)" }} aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="7" width="18" height="13" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18" />
+                </svg>
+              </span>
+              <h2 className="text-2xl font-bold tracking-tight text-white md:text-[28px]">Hiring in EMEA? See what the market really pays.</h2>
+            </div>
+            <p className="mt-4 text-[15px] leading-relaxed" style={{ color: "rgba(255,255,255,.72)" }}>
+              Benchmark your offers against live base-pay data from public job postings, city by city.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
+              {[
+                { t: "Live from job boards", d: "Scraped, not surveyed" },
+                { t: "City-level, never national", d: "Anchored to the posting" },
+                { t: "Base pay, no guessed TC", d: "Advertised salary only" },
+              ].map((f) => (
+                <div key={f.t} className="flex items-start gap-2">
+                  <svg className="mt-0.5 shrink-0" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--mint)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5" /></svg>
+                  <div>
+                    <div className="text-[13px] font-medium text-white">{f.t}</div>
+                    <div className="text-[12px]" style={{ color: "rgba(255,255,255,.55)" }}>{f.d}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <Link href="/for-companies" className="pill-btn pill-btn-light shrink-0 self-start px-6 py-3 text-sm min-[900px]:self-center">
+            <span>For employers</span><span className="arw">→</span>
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }

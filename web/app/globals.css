@@ -19,8 +19,11 @@
   --mint: #1e9e6a; /* above market / verified — green, data only */
   --brand-ring: #0f766e;
   --band: #eef2ef; /* sage-tinted paper — alternating section bands + row hover */
-  --card-shadow: 0 1px 3px rgba(23, 22, 20, 0.05);
-  --card-shadow-hover: 0 4px 12px rgba(23, 22, 20, 0.08);
+  --panel: #eef2ef; /* soft tint behind the hero card composition */
+  /* Card shadow: two-layer lift — a tight contact shadow + a soft ambient one. */
+  --card-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 8px 24px rgba(16, 24, 40, 0.04);
+  --card-shadow-hover: 0 2px 4px rgba(16, 24, 40, 0.06), 0 12px 32px rgba(16, 24, 40, 0.07);
+  --float-shadow: 0 4px 16px rgba(16, 24, 40, 0.08); /* hero + insight floating cards */
 }
 
 * {
@@ -39,11 +42,71 @@ body {
   min-height: 100vh;
 }
 
-/* Utilities ----------------------------------------------------------------- */
+/* Layout container — 1180px, 24px gutters, centred. Shared by nav, main, footer. */
+.container-page {
+  width: 100%;
+  max-width: 1180px;
+  margin-inline: auto;
+  padding-inline: 24px;
+}
+
+/* Section rhythm — full-bleed bands read at 96/64; plain sections match. */
+.section-y {
+  padding-block: 64px;
+}
+@media (min-width: 768px) {
+  .section-y {
+    padding-block: 96px;
+  }
+}
+
+/* Type scale ---------------------------------------------------------------- */
 /* Display headings: characterful grotesk, tight tracking (de-AI move). */
 h1,
 h2 {
   letter-spacing: -0.03em;
+}
+.t-h1 {
+  font-size: 40px;
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+@media (min-width: 768px) {
+  .t-h1 {
+    font-size: 60px;
+  }
+}
+.t-h2 {
+  font-size: 28px;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+@media (min-width: 768px) {
+  .t-h2 {
+    font-size: 34px;
+  }
+}
+.t-h3 {
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.t-label {
+  font-size: 13px;
+  line-height: 1.4;
+}
+/* Eyebrow — 11px 600 uppercase, wide tracking, brand teal. Used on the hero
+   pill and small section eyebrows in the refined sections. */
+.eyebrow {
+  font-family: var(--font-schibsted), system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
 }
 /* Logo mark: ink + teal two-tone, no gradient. */
 .logo-mark {
@@ -101,6 +164,130 @@ h2 {
 .surface-hover:hover {
   border-color: var(--border-strong);
   box-shadow: var(--card-shadow-hover);
+}
+
+/* Card: white, hairline, 14px radius, two-layer shadow, 24px padding. The one
+   card spec the whole product uses (see components/ui Card). */
+.card {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--card-shadow);
+  padding: 24px;
+}
+.card-hover {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.card-hover:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--card-shadow-hover);
+}
+/* Floating card — hero composition + map insight. Lighter than a page card. */
+.card-float {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--float-shadow);
+}
+
+/* Ranked bar — 5px tall, 3px radius, neutral track at 20% strength. */
+.rank-track {
+  position: relative;
+  height: 5px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--border-strong) 20%, transparent);
+}
+.rank-fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  border-radius: 3px;
+}
+
+/* Pill button — radius 999, hairline, 13px, trailing arrow nudges on hover. */
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.pill-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.pill-btn .arw {
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+.pill-btn:hover .arw {
+  transform: translateX(2px);
+}
+.pill-btn-light {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: #ffffff;
+}
+.pill-btn-light:hover {
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+/* Filter pill — the select/chevron control. radius 999, 8/14, 13px. */
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.filter-pill:hover {
+  border-color: var(--border-strong);
+}
+
+/* Icon chip — 28px tinted rounded-square holding a small glyph. */
+.icon-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  width: 28px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* Eyebrow pill — the hero coverage pill. */
+.eyebrow-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  padding: 6px 12px;
+}
+
+/* Dark brand band — employer CTA. Ink surface, light text. */
+.band-dark {
+  background: var(--ink);
+  color: #ffffff;
+  border-radius: 16px;
 }
 
 /* Serif dropped on light — neutralize any stray usage to normal text. */

@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import topo from "@/lib/europe.topo.json";
-import type { EuropePayData, CountryPay } from "@/lib/data";
+import type { EuropePayData, CountryPay, CountryFinding } from "@/lib/data";
 import { payColor, scoreFromRatio, NO_DATA_FILL } from "@/lib/payScale";
 import { PayScaleLegend } from "@/components/PayIndex";
+import { Sparkline } from "@/components/Sparkline";
 import { eur, slugify } from "@/lib/format";
 
 // topojson NAME -> our canonical country name
@@ -16,9 +17,11 @@ export interface Fact { label: string; value: string }
 
 export function EuropePayMap({
   data, initialRole = "All roles", highlightCountry, withTable = false, facts,
+  triptych = false, findings, spark,
 }: {
   data: EuropePayData; initialRole?: string; highlightCountry?: string | null;
   withTable?: boolean; facts?: Fact[];
+  triptych?: boolean; findings?: Record<string, CountryFinding | null>; spark?: number[];
 }) {
   const [mounted, setMounted] = useState(false);
   const [role, setRole] = useState(data.data[initialRole] ? initialRole : "All roles");
@@ -33,18 +36,16 @@ export function EuropePayMap({
   const highlight = highlightCountry || null;
 
   const controls = (
-    <div className="mb-4 flex flex-wrap items-center gap-3">
+    <div className="mb-5 flex flex-wrap items-center gap-3">
       <label className="text-[11px] text-ink-faint">Role</label>
-      <select value={role} onChange={(e) => setRole(e.target.value)} className="field px-3 py-2 text-sm">
+      <select value={role} onChange={(e) => setRole(e.target.value)} className="filter-pill">
         <option>All roles</option>
         {data.roles.map((r) => <option key={r}>{r}</option>)}
       </select>
       <button
         onClick={() => setShowTop((v) => !v)}
-        className="rounded-lg border px-3 py-2 text-sm transition-colors"
-        style={showTop
-          ? { background: "var(--accent-soft)", borderColor: "var(--accent)", color: "var(--accent)" }
-          : { background: "var(--surface-1)", color: "var(--ink-muted)" }}
+        className="filter-pill"
+        style={showTop ? { borderColor: "var(--accent)", color: "var(--accent)" } : undefined}
       >
         Top payers {showTop ? "on" : "off"}
       </button>
@@ -136,13 +137,104 @@ export function EuropePayMap({
     </div>
   );
 
-  if (!withTable) {
+  if (!withTable && !triptych) {
     return <div>{controls}{mapEl}{legendEl}</div>;
   }
 
   // Table-beside-map: ranked country table (always visible) + map (lg+ only).
   const ranked = [...rp.countries].filter((c) => c.median != null).sort((a, b) => b.median! - a.median!);
   const maxMed = Math.max(1, ...ranked.map((c) => c.median!));
+
+  // Compact ranked table (used in the triptych left column).
+  const tableEl = (
+    <div className="card overflow-hidden !p-0">
+      <div className="flex items-center gap-3 border-b px-4 py-2.5 text-[12px] text-ink-faint" style={{ borderColor: "var(--border)" }}>
+        <span className="w-5 text-right">#</span><span className="flex-1">Country</span>
+        <span className="w-20 text-right">Median</span>
+      </div>
+      <ol>
+        {ranked.slice(0, 12).map((c, i) => (
+          <li key={c.country} className="border-t" style={{ borderColor: "var(--border)" }}>
+            <Link href={`/locations/country/${slugify(c.country)}`} className="flex items-center gap-3 px-4 py-2 transition-colors hover:bg-[var(--band)]" style={{ background: c.country === highlight ? "var(--accent-soft)" : undefined }}>
+              <span className="tnum w-5 text-right text-sm text-ink-faint">{i + 1}</span>
+              <span className="min-w-0 flex-1">
+                <span className="truncate text-sm">{c.country}</span>
+                <span className="rank-track mt-1.5 block">
+                  <span className="rank-fill" style={{ width: `${(c.median! / maxMed) * 100}%`, background: payColor(scoreFromRatio(c.median!, rp.emeaMedian)) }} />
+                </span>
+              </span>
+              <span className="tnum w-20 text-right text-sm font-semibold">{eur(c.median!)}</span>
+            </Link>
+          </li>
+        ))}
+        {ranked.length === 0 && <li className="px-4 py-6 text-sm text-ink-faint">No country clears the 8-posting gate for this role yet.</li>}
+      </ol>
+      <Link href="/locations/countries" className="arrow-link flex items-center justify-center gap-1 border-t px-4 py-2.5 text-xs" style={{ borderColor: "var(--border)" }}>
+        View all countries <span className="arw">→</span>
+      </Link>
+    </div>
+  );
+
+  // Legend as a row of coloured dots (sits under the map on the band).
+  const dotsLegend = (
+    <div className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+      <span className="text-[11px] text-ink-faint">vs EMEA median</span>
+      <PayScaleLegend />
+      <span className="flex items-center gap-1.5 text-[11px]">
+        <i className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ background: NO_DATA_FILL }} />
+        <span className="text-ink">No data yet</span>
+      </span>
+    </div>
+  );
+
+  // Insight card — reactive to the role selector. Finding is computed at build
+  // time (top country vs EMEA median) and passed in via `findings`.
+  const finding = findings?.[role] ?? null;
+  const insightEl = (
+    <div className="card-float flex h-full flex-col p-5">
+      <div className="eyebrow">Insight</div>
+      {spark && spark.length >= 2 && (
+        <div className="mt-3"><Sparkline values={spark} width={220} height={36} className="w-full" /></div>
+      )}
+      {finding ? (
+        <>
+          <p className="mt-4 text-lg font-semibold leading-snug">
+            {finding.country} pays{" "}
+            <span className="tnum" style={{ color: finding.deltaPct >= 0 ? "var(--mint)" : "var(--ember)" }}>
+              {finding.deltaPct >= 0 ? "+" : ""}{finding.deltaPct}%
+            </span>{" "}
+            {finding.deltaPct >= 0 ? "above" : "below"} the EMEA median for {role === "All roles" ? "all roles" : role}.
+          </p>
+          <p className="mt-2 text-sm text-ink-muted">
+            Median <span className="tnum text-ink">{eur(finding.median)}</span> base here versus{" "}
+            <span className="tnum text-ink">{eur(rp.emeaMedian)}</span> across EMEA.
+          </p>
+          <p className="mt-1 text-sm text-ink-muted">From <span className="tnum text-ink">{finding.n}</span> salaried postings that clear the gate.</p>
+          <div className="mt-5">
+            <Link href={`/locations/country/${finding.slug}`} className="pill-btn">
+              <span>Explore {finding.country}</span><span className="arw">→</span>
+            </Link>
+          </div>
+        </>
+      ) : (
+        <p className="mt-4 text-sm text-ink-muted">Not enough data to name a leader for {role === "All roles" ? "all roles" : role} yet. We show one at the 8-posting gate.</p>
+      )}
+    </div>
+  );
+
+  if (triptych) {
+    return (
+      <div>
+        {controls}
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.25fr)_minmax(0,0.85fr)] lg:items-start">
+          <div>{tableEl}</div>
+          {/* map sits directly on the band, no card */}
+          <div className="hidden min-h-[420px] lg:block">{mapEl}{dotsLegend}</div>
+          <div>{insightEl}</div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div>
       {facts && facts.length > 0 && (

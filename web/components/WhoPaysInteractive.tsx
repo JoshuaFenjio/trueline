@@ -39,17 +39,14 @@ export function WhoPaysInteractive({
     [cities, loc]
   );
 
-  const selCls = "cursor-pointer rounded-lg border px-3 py-2 text-sm";
-  const selStyle = { background: "#fff", borderColor: "var(--border)" } as const;
-
   return (
     <div>
-      <div className="mb-5 flex flex-wrap items-center gap-3">
-        <select value={sector} onChange={(e) => setSector(e.target.value)} className={selCls} style={selStyle} aria-label="Sector">
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <select value={sector} onChange={(e) => setSector(e.target.value)} className="filter-pill" aria-label="Sector">
           <option value="">All companies</option>
           {sectors.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-        <select value={loc} onChange={(e) => setLoc(e.target.value)} className={selCls} style={selStyle} aria-label="Location">
+        <select value={loc} onChange={(e) => setLoc(e.target.value)} className="filter-pill" aria-label="Location">
           <option value="">All locations</option>
           {countries.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
@@ -60,19 +57,60 @@ export function WhoPaysInteractive({
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div>
-          <div className="mb-2 text-[11px] text-ink-faint">Top companies{sector ? ` · ${sector}` : ""} · Pay Score</div>
+          <CardHead
+            icon={<BuildingIcon />}
+            title={`Top companies${sector ? ` · ${sector}` : ""}`}
+            left="Company" right="Pay Score"
+          />
           {topCompanies.length > 0
             ? <PayIndexTable compact rows={topCompanies.map((c) => ({ company: c.company, slug: c.slug, sector: c.sector, score: c.payScore }))} />
             : <p className="text-sm text-ink-faint">No companies match.</p>}
           <PayScaleLegend className="mt-3" />
+          <p className="mt-2 text-[12px] text-ink-faint">Pay Score ranks each company&rsquo;s median base against its sector peers. Needs 3+ salaried postings.</p>
         </div>
         <div>
-          <div className="mb-2 text-[11px] text-ink-faint">Top-paying cities{loc ? ` · ${loc}` : ""} · median base</div>
+          <CardHead
+            icon={<PinIcon />}
+            title={`Top-paying cities${loc ? ` · ${loc}` : ""}`}
+            left="City" right="Median base salary"
+          />
           {filteredCities.length > 0
             ? <TopCities cities={filteredCities} emeaMedian={emeaMedian} excludeConcentrated={!loc} />
             : <p className="text-sm text-ink-faint">Not enough city data for {loc}.</p>}
+          <p className="mt-3 text-[12px] text-ink-faint">Ranked by median advertised base salary. Needs 5+ salaried postings per city.</p>
         </div>
       </div>
     </div>
+  );
+}
+
+// Card header: tinted icon chip + title (15/600) + a muted column-label row.
+function CardHead({ icon, title, left, right }: { icon: React.ReactNode; title: string; left: string; right: string }) {
+  return (
+    <div className="mb-3">
+      <div className="flex items-center gap-2.5">
+        <span className="icon-chip" aria-hidden="true">{icon}</span>
+        <span className="text-[15px] font-semibold">{title}</span>
+      </div>
+      <div className="mt-2.5 flex items-center justify-between border-b pb-2 text-[12px] text-ink-faint" style={{ borderColor: "var(--border)" }}>
+        <span>{left}</span><span>{right}</span>
+      </div>
+    </div>
+  );
+}
+
+function BuildingIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2.5" y="2.5" width="7" height="11" rx="1" /><path d="M9.5 6.5h4v7h-4" />
+      <path d="M4.5 5h1M6.5 5h1M4.5 7.5h1M6.5 7.5h1M4.5 10h1M6.5 10h1M11 9h.5M11 11h.5" />
+    </svg>
+  );
+}
+function PinIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 14.5c2.5-3 4.5-5.2 4.5-7.5a4.5 4.5 0 1 0-9 0c0 2.3 2 4.5 4.5 7.5Z" /><circle cx="8" cy="7" r="1.6" />
+    </svg>
   );
 }

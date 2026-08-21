@@ -780,6 +780,89 @@ export const getCityMapData = async (): Promise<{ cities: MapCity[]; emeaMedian:
 };
 
 // ---------------------------------------------------------------------------
+// Home hero composition — live figures for the four right-column cards. Pure
+// derivation over the already-cached getData() rows (no new query / Supabase
+// call): EMEA median + a monthly spark + trend, the top-paying city, and the
+// most in-demand role with a posting-volume delta. Any card whose gate isn't
+// met comes back null so the UI can drop it rather than invent a number.
+// ---------------------------------------------------------------------------
+export interface HomeComposition {
+  emeaMedian: number;
+  salaried: number; // usable salaried postings behind the EMEA median
+  spark: number[]; // chronological monthly medians (n>=8 each), for the sparkline
+  topCity: { city: string; slug: string; median: number; n: number } | null;
+  inDemandRole: { name: string; slug: string; activeN: number } | null;
+}
+export const getHomeComposition = async (): Promise<HomeComposition> => {
+  const all = await getData();
+  const u = usable(all);
+  const emeaMedian = u.length ? Math.round(median(u.map((r) => r.annual))) : 0;
+
+  // Monthly medians for the sparkline. active-posting posted_at skews hard to
+  // the current month (older ads get filled), so only months that clear the
+  // n>=8 median gate are trustworthy — thin months would make the line noise.
+  const byMonth = new Map<string, number[]>();
+  for (const r of u) {
+    if (!r.dateMs) continue;
+    const d = new Date(r.dateMs);
+    const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+    const a = byMonth.get(key) || []; a.push(r.annual); byMonth.set(key, a);
+  }
+  const spark = [...byMonth.entries()]
+    .filter(([, v]) => v.length >= N_MEDIAN)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .slice(-8)
+    .map(([, v]) => Math.round(median(v)));
+
+  // Top-paying city — gated at N_MEDIAN and, like the rest of the site, skips
+  // single-employer-concentrated markets (e.g. Cardiff = mostly Monzo) so the
+  // headline isn't one company's band masquerading as a city rate.
+  const byCity = new Map<string, (Posting & { annual: number })[]>();
+  for (const r of u) { if (!r.city) continue; const a = byCity.get(r.city) || []; a.push(r); byCity.set(r.city, a); }
+  let topCity: HomeComposition["topCity"] = null;
+  for (const [city, rs] of byCity) {
+    if (rs.length < N_MEDIAN) continue;
+    const conc = topCompanyShare(rs);
+    if (conc && conc.share > 0.6) continue;
+    const med = Math.round(median(rs.map((r) => r.annual)));
+    if (!topCity || med > topCity.median) topCity = { city, slug: slugify(city), median: med, n: rs.length };
+  }
+
+  // Most in-demand role by active posting volume. We deliberately show the live
+  // open-role count rather than a quarter-over-quarter delta: posted_at is too
+  // sparse in the prior window to make a QoQ % trustworthy.
+  const roleActive = new Map<string, Posting[]>();
+  for (const r of all) {
+    if (!r.roleFamily || r.roleFamily === "Other") continue;
+    const a = roleActive.get(r.roleFamily) || []; a.push(r); roleActive.set(r.roleFamily, a);
+  }
+  let inDemandRole: HomeComposition["inDemandRole"] = null;
+  for (const [name, rs] of roleActive) {
+    if (!inDemandRole || rs.length > inDemandRole.activeN) {
+      inDemandRole = { name, slug: slugify(name), activeN: rs.length };
+    }
+  }
+
+  return { emeaMedian, salaried: u.length, spark, topCity, inDemandRole };
+};
+
+// Map insight finding — the top-paying country for a role vs the EMEA median,
+// computed from the pay data (no hand-written copy). Skips concentration-gated
+// markets so the headline isn't one employer masquerading as a country.
+export interface CountryFinding { country: string; slug: string; median: number; deltaPct: number; n: number }
+export function topCountryFinding(rp: RolePay): CountryFinding | null {
+  const eligible = rp.countries
+    .filter((c) => c.median != null && c.n >= N_MEDIAN && !(c.concentration && c.concentration.share > 0.6))
+    .sort((a, b) => b.median! - a.median!);
+  const top = eligible[0];
+  if (!top || !rp.emeaMedian) return null;
+  return {
+    country: top.country, slug: slugify(top.country), median: top.median!,
+    deltaPct: Math.round(((top.median! - rp.emeaMedian) / rp.emeaMedian) * 100), n: top.n,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Sectors present (for the board chips)
 // ---------------------------------------------------------------------------
 export const getSectors = async (): Promise<Sector[]> => {

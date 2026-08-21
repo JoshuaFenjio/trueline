@@ -44,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${schibsted.variable} ${GeistMono.variable}`}>
       <body className="font-sans">
         <NavBar />
-        <main className="mx-auto max-w-6xl px-5">{children}</main>
+        <main className="container-page">{children}</main>
         <Footer />
       </body>
     </html>

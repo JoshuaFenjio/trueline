@@ -48,12 +48,8 @@ export function PayIndexTable({
                   )}
                 </span>
                 <span className="hidden w-28 md:block lg:w-44">
-                  <span className="relative block h-2 overflow-hidden rounded-full" style={{ background: "var(--surface-3)" }}>
-                    {isValue && i === 0 ? (
-                      <span className="gradient-bg absolute inset-y-0 left-0 rounded-full" style={{ width: `${barW}%` }} />
-                    ) : (
-                      <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${barW}%`, background: isValue ? "var(--border-strong)" : scoreCol }} />
-                    )}
+                  <span className="rank-track block">
+                    <span className="rank-fill" style={{ width: `${barW}%`, background: isValue ? (i === 0 ? "var(--accent)" : "var(--border-strong)") : scoreCol }} />
                   </span>
                 </span>
                 <span className="tnum w-16 shrink-0 text-right font-semibold" style={isValue ? undefined : { color: scoreCol }}>

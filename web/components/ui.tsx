@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { ReactNode } from "react";
 
+// The one card spec (see .card in globals): white, hairline, 14px radius,
+// two-layer shadow, 24px padding. `hover` adds the lift-on-hover affordance.
 export function Card({
-  children, className = "", as: Tag = "div",
-}: { children: ReactNode; className?: string; as?: any }) {
+  children, className = "", as: Tag = "div", hover = false,
+}: { children: ReactNode; className?: string; as?: any; hover?: boolean }) {
   return (
-    <Tag className={`surface rounded-card p-5 md:p-6 ${className}`}>{children}</Tag>
+    <Tag className={`card ${hover ? "card-hover" : ""} ${className}`}>{children}</Tag>
   );
 }
 

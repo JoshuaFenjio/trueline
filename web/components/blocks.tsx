@@ -87,6 +87,46 @@ export function ArrowLink({ href, children, className = "" }: { href: string; ch
   );
 }
 
+// -- Pill button: radius 999 outline, 13px, trailing arrow. "View all", "Explore".
+export function PillButton({
+  href, children, light = false, className = "",
+}: { href: string; children: ReactNode; light?: boolean; className?: string }) {
+  return (
+    <Link href={href} className={`pill-btn ${light ? "pill-btn-light" : ""} ${className}`}>
+      <span>{children}</span>
+      <span className="arw">→</span>
+    </Link>
+  );
+}
+
+// -- Icon chip: 28px tinted rounded-square holding a small glyph. -------------
+export function IconChip({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <span className={`icon-chip ${className}`} aria-hidden="true">{children}</span>;
+}
+
+// -- Stat cell: big mono value + small muted label. Building block of strips. --
+export function StatCell({ value, label, tone }: { value: ReactNode; label: string; tone?: string }) {
+  return (
+    <div>
+      <div className="tnum text-xl font-semibold leading-none md:text-2xl" style={tone ? { color: tone } : undefined}>{value}</div>
+      <div className="mt-1.5 text-[11px] text-ink-faint">{label}</div>
+    </div>
+  );
+}
+
+// -- Section band: consistent vertical rhythm; `tint` adds the full-bleed sage.
+// Content stays within the page container (applied at <main>); this only owns
+// the band tint + rhythm, never re-pads horizontally.
+export function SectionBand({
+  children, tint = false, className = "", id,
+}: { children: ReactNode; tint?: boolean; className?: string; id?: string }) {
+  return (
+    <section id={id} className={`${tint ? "band" : ""} section-y ${className}`}>
+      {children}
+    </section>
+  );
+}
+
 // -- Full-bleed ranked table with hairline rules + relative-pay underlay ------
 export interface RankVM {
   label: string;
@@ -100,25 +140,27 @@ export interface RankVM {
 export function RankTable({ rows, valueHead = "Median base" }: { rows: RankVM[]; valueHead?: string }) {
   return (
     <div className="border-y" style={{ borderColor: "var(--border)" }}>
-      <div className="flex items-center px-1 py-2 text-[11px] text-ink-faint">
+      <div className="flex items-center px-1 py-2.5 text-[12px] text-ink-faint">
         <span className="w-8 text-right">#</span>
         <span className="ml-4 flex-1">Name</span>
-        <span className="text-right">{valueHead}</span>
+        <span className="mx-4 hidden w-28 sm:block lg:w-40" />
+        <span className="w-24 text-right">{valueHead}</span>
       </div>
       <ol>
         {rows.map((r, i) => {
           const inner = (
-            <div className="relative flex items-center px-1 py-3.5 transition-colors hover:bg-[var(--band)]">
-              <div
-                className="pointer-events-none absolute inset-y-1 left-0 -z-10 rounded-r-md"
-                style={{ width: `${Math.max(2, r.barPct * 100)}%`, background: "var(--accent-soft)" }}
-              />
+            <div className="relative flex h-10 items-center px-1 transition-colors hover:bg-[var(--band)]">
               <span className="tnum w-8 text-right text-sm text-ink-faint">{i + 1}</span>
               <span className="ml-4 flex-1 truncate">
                 <span className="text-ink">{r.label}</span>
                 {r.sub && <span className="tnum ml-2 text-xs text-ink-faint">{r.sub}</span>}
               </span>
-              <span className="tnum text-right font-semibold" style={r.tone ? { color: r.tone } : undefined}>
+              <span className="mx-4 hidden w-28 sm:block lg:w-40">
+                <span className="rank-track block">
+                  <span className="rank-fill" style={{ width: `${Math.max(3, r.barPct * 100)}%`, background: r.tone ?? "var(--accent)" }} />
+                </span>
+              </span>
+              <span className="tnum w-24 text-right font-semibold tabular-nums" style={r.tone ? { color: r.tone } : undefined}>
                 {r.valueLabel}
               </span>
             </div>
