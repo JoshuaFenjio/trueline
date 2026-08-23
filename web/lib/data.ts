@@ -7,6 +7,7 @@ import {
 import { levelBucket, isTrainee, Level, LEVELS } from "./levels";
 import { sectorOf, Sector } from "./sectors";
 import { resolvePlace } from "./geo";
+import { iso2 } from "./flags";
 import { slugify } from "./format";
 
 export { isConfigured };
@@ -848,6 +849,26 @@ export const getHomeComposition = async (): Promise<HomeComposition> => {
   }
 
   return { emeaMedian, salaried: u.length, spark, topCity, inDemandRole };
+};
+
+// Hero country stat band — median base for a fixed reference slice (Software
+// Engineer, Mid level) per country, gated at N_MEDIAN, top few by median. Live
+// data only; no delta unless we can compute one from stored history (we can't
+// reliably at this slice granularity, so it's omitted rather than invented).
+export interface HeroBandCell { country: string; code: string | null; median: number; n: number }
+export interface HeroBand { role: string; level: string; cells: HeroBandCell[] }
+// level omitted => all levels (needed to clear the n>=8 gate for enough countries
+// to fill the band; a single narrow level rarely has 5 gated markets).
+export const getHeroBand = async (role = "Software Engineer", level?: Level, top = 5): Promise<HeroBand> => {
+  const rows = usable(await getData()).filter((p) => p.roleFamily === role && (!level || p.level === level) && p.country);
+  const byCountry = new Map<string, number[]>();
+  for (const r of rows) { const a = byCountry.get(r.country!) || []; a.push(r.annual); byCountry.set(r.country!, a); }
+  const cells: HeroBandCell[] = [...byCountry.entries()]
+    .filter(([, v]) => v.length >= N_MEDIAN)
+    .map(([country, v]) => ({ country, code: iso2(country), median: Math.round(median(v)), n: v.length }))
+    .sort((a, b) => b.median - a.median)
+    .slice(0, top);
+  return { role, level: level ?? "All levels", cells };
 };
 
 // Map insight finding — the top-paying country for a role vs the EMEA median,

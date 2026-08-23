@@ -1,24 +1,24 @@
 import Link from "next/link";
 import {
-  getLiveStats, getFilterOptions, getSectors, getCompaniesBoard, getLeaderboards,
-  getCityMapData, getLastRefreshed, getSectorCounts, getRecentSalaried, getRoleIndex,
-  getEuropePayData, getHomeComposition, topCountryFinding, searchSalaries, isConfigured,
+  getLiveStats, getFilterOptions, getSectors, getCompaniesBoard,
+  getCityMapData, getSectorCounts, getRoleIndex,
+  getEuropePayData, getHomeComposition, getHeroBand, topCountryFinding, searchSalaries, isConfigured,
 } from "@/lib/data";
 import type { Metadata } from "next";
 import { SearchForm } from "@/components/SearchForm";
 import { SmartSearch } from "@/components/SmartSearch";
 import { WhoPaysInteractive } from "@/components/WhoPaysInteractive";
-import { LiveSalaryCards } from "@/components/LiveSalaryCards";
 import { HeroComposition } from "@/components/HeroComposition";
+import { Flag } from "@/components/Flag";
 import { MeasureBar } from "@/components/MeasureBar";
 import { ShareButton } from "@/components/ShareButton";
-import { Card, Stat, GhostLink, LiveDot } from "@/components/ui";
+import { Card, Stat, GhostLink } from "@/components/ui";
 import { EuropePayMap } from "@/components/EuropePayMap";
-import { SectionHeader, ArrowLink, PillButton, IconChip } from "@/components/blocks";
+import { SectionHeader, ArrowLink } from "@/components/blocks";
 import { EmailCapture } from "@/components/EmailCapture";
 import { parseQuery } from "@/lib/parseQuery";
 import { WATCHLIST } from "@/lib/watchlist";
-import { eur, eurK, slugify, pct, timeAgo } from "@/lib/format";
+import { eur, eurK, slugify } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -53,13 +53,6 @@ export async function generateMetadata({
   };
 }
 
-const RULES = [
-  { k: "Source", t: "Live job boards", d: "Every figure is scraped from companies' own public job postings." },
-  { k: "Scope", t: "Base pay, not TC", d: "Advertised base salary only. No guessed bonus or equity." },
-  { k: "Geography", t: "City-level, never national", d: "Anchored to the city on the posting, not a country average." },
-  { k: "Honesty", t: "Gated at n = 8", d: "No median from a thin sample. Below the gate we say so." },
-];
-
 export default async function Home({
   searchParams,
 }: {
@@ -67,10 +60,10 @@ export default async function Home({
 }) {
   if (!isConfigured) return <NotConfigured />;
 
-  const [stats, options, sectors, board, lb, mapData, refreshed, sectorCounts, recent, roleIdx, europe, comp] = await Promise.all([
-    getLiveStats(), getFilterOptions(), getSectors(), getCompaniesBoard(), getLeaderboards(),
-    getCityMapData(), getLastRefreshed(), getSectorCounts(), getRecentSalaried(), getRoleIndex(),
-    getEuropePayData(), getHomeComposition(),
+  const [stats, options, sectors, board, mapData, sectorCounts, roleIdx, europe, comp, heroBand] = await Promise.all([
+    getLiveStats(), getFilterOptions(), getSectors(), getCompaniesBoard(),
+    getCityMapData(), getSectorCounts(), getRoleIndex(),
+    getEuropePayData(), getHomeComposition(), getHeroBand(),
   ]);
   // Per-role top-country findings for the map insight card, computed at build
   // time from the pay data (never hand-written). Keyed by role, incl. "All roles".
@@ -105,12 +98,13 @@ export default async function Home({
       <section className="grid items-center gap-10 pt-10 md:pt-14 min-[900px]:grid-cols-[1fr_1.12fr] min-[900px]:gap-12">
         <div>
           <span className="eyebrow-pill">
-            <LiveDot />
             <span className="eyebrow">
-              {stats.companies.toLocaleString()} companies · {countryNames.length} countries · live
+              Live salary data · {stats.companies.toLocaleString()} companies · {countryNames.length} countries
             </span>
           </span>
-          <h1 className="t-h1 mt-5 max-w-xl">Know what Europe actually pays.</h1>
+          <h1 className="t-h1 mt-5 max-w-xl">
+            Know what Europe <span className="font-normal italic">actually</span> pays.
+          </h1>
           <p className="mt-4 max-w-lg text-lg leading-relaxed text-ink-muted">
             Real base salaries from live job postings across Europe, the Middle East and Africa.
           </p>
@@ -118,21 +112,12 @@ export default async function Home({
           <div className="mt-7">
             <SmartSearch roles={options.roles} cities={options.cities} companies={companyList} countries={countryNames} />
           </div>
-          <p className="mt-3 text-[13px] text-ink-faint">
-            <Figure n={stats.postings} /> live roles tracked
-            <Dot /> <Figure n={stats.disclosed} /> with disclosed pay
-            <Dot /> refreshed {timeAgo(refreshed)}
-          </p>
 
-          {/* one row: top 3 sectors + top 3 roles + Browse all */}
-          <div className="mt-5 flex flex-wrap items-center gap-2">
-            {topSectors.slice(0, 3).map((s) => (
-              <Link key={s.sector} href={`/companies?sector=${encodeURIComponent(s.sector)}`} className="surface surface-hover inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm transition-colors">
-                <span>{s.sector}</span><span className="tnum text-xs text-ink-faint">{s.n}</span>
-              </Link>
-            ))}
-            {topRoles.slice(0, 3).map((r) => (
-              <Link key={r.slug} href={`/roles/${r.slug}`} className="rounded-full border px-3 py-1.5 text-[13px] text-ink-muted transition-colors hover:text-ink" style={{ background: "var(--surface-1)" }}>{r.name}</Link>
+          {/* Popular searches — real top roles by volume */}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="text-[13px] text-ink-faint">Popular searches:</span>
+            {topRoles.slice(0, 5).map((r) => (
+              <Link key={r.slug} href={`/roles/${r.slug}`} className="rounded-full border px-3 py-1.5 text-[13px] text-ink-muted transition-colors hover:border-[var(--border-strong)] hover:text-ink" style={{ background: "var(--surface-1)" }}>{r.name}</Link>
             ))}
           </div>
 
@@ -170,10 +155,38 @@ export default async function Home({
         </div>
       </section>
 
-      {/* Live salary cards — proof of life */}
-      {recent.length > 0 && (
-        <section className="mt-14">
-          <LiveSalaryCards cards={recent} />
+      {/* Country stat band — median base for a fixed reference slice, per country,
+          from live gated data. Horizontal-scroll on mobile. */}
+      {heroBand.cells.length > 0 && (
+        <section className="mt-8 md:mt-10">
+          <div className="card overflow-hidden !p-0">
+            <div className="flex flex-col md:flex-row md:items-stretch">
+              <div className="shrink-0 border-b p-5 md:w-60 md:border-b-0 md:border-r" style={{ borderColor: "var(--border)" }}>
+                <div className="text-[12px] text-ink-faint">Median base salary</div>
+                <div className="t-h3 mt-1">
+                  <Link href={`/roles/${slugify(heroBand.role)}`} className="hover:text-[var(--accent)]">{heroBand.role}</Link>
+                </div>
+                <div className="text-[13px] text-ink-muted">{heroBand.level} · gated at n = 8</div>
+              </div>
+              <div className="flex gap-0 overflow-x-auto md:flex-1">
+                {heroBand.cells.map((c) => (
+                  <Link
+                    key={c.country}
+                    href={`/locations/country/${slugify(c.country)}`}
+                    className="flex min-w-[136px] flex-1 flex-col gap-1.5 border-l p-5 transition-colors first:border-l-0 hover:bg-[var(--band)] md:border-l"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Flag country={c.country} />
+                      <span className="truncate text-sm">{c.country}</span>
+                    </span>
+                    <span className="tnum text-lg font-semibold">{eur(c.median)}</span>
+                    <span className="tnum text-[11px] text-ink-faint">n={c.n}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
         </section>
       )}
 
@@ -202,9 +215,9 @@ export default async function Home({
 
       {/* Who pays the most — interactive, on a sage band */}
       {board.length > 0 && (
-        <section className="band mt-14 py-14">
+        <section className="band mt-16 py-14">
           <div className="flex items-end justify-between gap-4">
-            <SectionHeader kicker="A first look" title="Who pays the most" />
+            <SectionHeader kicker="A first look" title="Who pays the most" sub="Discover the top-paying companies and cities across Europe." />
             <span className="hidden md:block"><ArrowLink href="/companies">View full ranking</ArrowLink></span>
           </div>
           <div className="mt-6">
@@ -231,47 +244,6 @@ export default async function Home({
         </div>
       </section>
 
-      {/* Four rules — methodology preview, editorial list on a sage band */}
-      <section className="band mt-16 py-14">
-        <div className="flex items-end justify-between gap-4">
-          <SectionHeader kicker="Method" title="Four rules. One honest number." />
-          <span className="hidden md:block"><ArrowLink href="/methodology">Read the full methodology</ArrowLink></span>
-        </div>
-        <ol className="mt-8 border-t" style={{ borderColor: "var(--border)" }}>
-          {RULES.map((r, i) => (
-            <li key={r.k} className="grid gap-1 border-b py-6 md:grid-cols-[3.5rem_13rem_1fr] md:items-baseline md:gap-6 md:py-7" style={{ borderColor: "var(--border)" }}>
-              <span className="tnum text-2xl font-semibold text-ink-faint">0{i + 1}</span>
-              <span className="text-lg font-semibold tracking-tight">{r.t}</span>
-              <p className="text-ink-muted">{r.d}</p>
-            </li>
-          ))}
-        </ol>
-        <div className="mt-6 md:hidden"><ArrowLink href="/methodology">Read the full methodology</ArrowLink></div>
-      </section>
-
-      {/* Most transparent companies */}
-      {lb.bestDisclosure.length > 0 && (
-        <section className="mt-20">
-          <div className="flex items-center justify-between">
-            <SectionHeader kicker="Transparency" title="Most transparent companies" sub="The share of each company's tracked ads that publish pay — we monitor both the disclosed and the silent." />
-            <span className="hidden md:block"><ArrowLink href="/leaderboards#transparent">See all</ArrowLink></span>
-          </div>
-          <div className="mt-6 flex gap-3 overflow-x-auto pb-2">
-            {lb.bestDisclosure.slice(0, 10).map((d) => (
-              <Link key={d.slug} href={`/companies/${d.slug}`} className="shrink-0">
-                <div className="surface surface-hover flex items-center gap-3 rounded-2xl px-4 py-3 transition-colors">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-md text-xs font-semibold" style={{ background: "var(--surface-3)", color: "var(--ink-muted)" }}>
-                    {d.company.charAt(0)}
-                  </span>
-                  <span className="whitespace-nowrap text-sm">{d.company}</span>
-                  <span className="tnum text-lg font-semibold text-ink-muted">{pct(d.pct)}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
       {/* Employer CTA — full-width dark teal band card */}
       <section className="section-y">
         <div className="band-dark flex flex-col gap-8 p-8 md:p-10 min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between">
@@ -289,13 +261,13 @@ export default async function Home({
             </p>
             <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
               {[
-                "Real market data",
-                "Directive-ready ranges",
-                "Transparency score",
+                { t: "Real market data", d: "M3 13V7M8 13V4M13 13V9" }, // bar chart
+                { t: "Directive-ready ranges", d: "M8 2v12M4 5l4-3 4 3M3.5 8.5h9M4 8.5l-1 3h3zM12 8.5l-1 3h3z" }, // scales
+                { t: "Transparency score", d: "M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8ZM8 6.2a1.8 1.8 0 100 3.6 1.8 1.8 0 000-3.6Z" }, // eye
               ].map((f) => (
-                <div key={f} className="flex items-center gap-2">
-                  <svg className="shrink-0" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--mint)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 8.5 6.5 12 13 4.5" /></svg>
-                  <span className="text-[13px] font-medium text-white">{f}</span>
+                <div key={f.t} className="flex items-center gap-2">
+                  <svg className="shrink-0" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--mint)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={f.d} /></svg>
+                  <span className="text-[13px] font-medium text-white">{f.t}</span>
                 </div>
               ))}
             </div>
@@ -434,13 +406,6 @@ function NotConfigured() {
       </p>
     </div>
   );
-}
-
-function Figure({ n }: { n: number }) {
-  return <span className="font-semibold text-ink">{n.toLocaleString()}</span>;
-}
-function Dot() {
-  return <span className="mx-1.5 text-ink-faint/60">·</span>;
 }
 
 function ordinal(n: number): string {

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { MapCity } from "@/lib/data";
 import { CONCENTRATION_GATE } from "@/lib/payScale";
+import { Flag } from "@/components/Flag";
 import { slugify, eur } from "@/lib/format";
 
 // Ranked "top paying cities" bars — dense, financial-style, light system.
@@ -18,7 +19,7 @@ export function TopCities({ cities, emeaMedian, excludeConcentrated = false }: {
   const pool = excludeConcentrated
     ? cities.filter((c) => !c.concentration || c.concentration.share <= CONCENTRATION_GATE)
     : cities;
-  const top = [...pool].sort((a, b) => b.median - a.median).slice(0, 12);
+  const top = [...pool].sort((a, b) => b.median - a.median).slice(0, 10);
   if (top.length === 0) return null;
   const max = Math.max(...top.map((c) => c.median));
 
@@ -35,8 +36,9 @@ export function TopCities({ cities, emeaMedian, excludeConcentrated = false }: {
           const col = tone(c.median, emeaMedian);
           return (
             <li key={c.slug} className="border-t" style={{ borderColor: "var(--border)" }}>
-              <Link href={`/locations/${slugify(c.city)}`} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--band)]">
+              <Link href={`/locations/${slugify(c.city)}`} className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--band)]">
                 <span className="tnum w-5 text-right text-sm text-ink-faint">{i + 1}</span>
+                <Flag country={c.country} />
                 <span className="flex-1 min-w-0">
                   <span className="truncate">
                     {c.city}
@@ -44,8 +46,8 @@ export function TopCities({ cities, emeaMedian, excludeConcentrated = false }: {
                       <span className="ml-2 text-xs text-ink-faint">mostly {c.concentration.company}</span>
                     )}
                   </span>
-                  <span className="relative mt-1.5 block h-1.5 overflow-hidden rounded-full" style={{ background: "var(--surface-3)" }}>
-                    <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${(c.median / max) * 100}%`, background: col === "var(--ink)" ? "var(--border-strong)" : col, opacity: col === "var(--ink)" ? 1 : 0.85 }} />
+                  <span className="rank-track mt-1.5 block">
+                    <span className="rank-fill" style={{ width: `${(c.median / max) * 100}%`, background: col === "var(--ink)" ? "var(--border-strong)" : col, opacity: col === "var(--ink)" ? 1 : 0.85 }} />
                   </span>
                 </span>
                 <span className="tnum w-28 text-right font-semibold" style={{ color: col }}>{eur(c.median)}</span>

@@ -7,6 +7,7 @@ import { NavBar, Footer } from "@/components/Chrome";
 const schibsted = Schibsted_Grotesk({
   subsets: ["latin"],
   weight: ["400", "500", "700", "800"],
+  style: ["normal", "italic"],
   variable: "--font-schibsted",
   display: "swap",
 });

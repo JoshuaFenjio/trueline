@@ -8,6 +8,7 @@ import type { EuropePayData, CountryPay, CountryFinding } from "@/lib/data";
 import { payColor, scoreFromRatio, NO_DATA_FILL } from "@/lib/payScale";
 import { PayScaleLegend } from "@/components/PayIndex";
 import { Sparkline } from "@/components/Sparkline";
+import { Flag } from "@/components/Flag";
 import { eur, slugify } from "@/lib/format";
 
 // topojson NAME -> our canonical country name
@@ -157,6 +158,7 @@ export function EuropePayMap({
           <li key={c.country} className="border-t" style={{ borderColor: "var(--border)" }}>
             <Link href={`/locations/country/${slugify(c.country)}`} className="flex items-center gap-3 px-4 py-2 transition-colors hover:bg-[var(--band)]" style={{ background: c.country === highlight ? "var(--accent-soft)" : undefined }}>
               <span className="tnum w-5 text-right text-sm text-ink-faint">{i + 1}</span>
+              <Flag country={c.country} />
               <span className="min-w-0 flex-1">
                 <span className="text-sm">{c.country}</span>
                 <span className="tnum ml-2 text-[11px] text-ink-faint">n={c.n}</span>
@@ -260,6 +262,7 @@ export function EuropePayMap({
               <li key={c.country} className="border-t" style={{ borderColor: "var(--border)" }}>
                 <Link href={`/locations/country/${slugify(c.country)}`} className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--band)]" style={{ background: c.country === highlight ? "var(--accent-soft)" : undefined }}>
                   <span className="tnum w-5 text-right text-sm text-ink-faint">{i + 1}</span>
+                  <Flag country={c.country} />
                   <span className="min-w-0 flex-1">
                     <span className="truncate">{c.country}</span>
                     {c.concentration && c.concentration.share > 0.6 && <span className="ml-2 text-xs text-ink-faint">mostly {c.concentration.company}</span>}
