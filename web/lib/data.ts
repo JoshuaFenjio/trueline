@@ -518,6 +518,7 @@ export interface RoleHub {
   byLevel: { level: Level; slice: Slice }[];
   topCities: RankRow[]; topCountries: RankRow[]; topCompanies: RankRow[];
   trend: Trend;
+  dist: number[]; // sorted salaried annual base values, for the distribution curve
 }
 export async function getRoleHub(role: string): Promise<RoleHub> {
   const rows = await getData();
@@ -532,6 +533,7 @@ export async function getRoleHub(role: string): Promise<RoleHub> {
     topCountries: rankCountriesBy(rows, inRole).slice(0, 10),
     topCompanies: rankCompaniesBy(rows, inRole).slice(0, 10),
     trend: computeTrend(usable(rows).filter(inRole).map((p) => ({ dateMs: p.dateMs, value: p.annual })), Date.now()),
+    dist: usable(rows).filter(inRole).map((p) => p.annual).sort((a, b) => a - b),
   };
 }
 
