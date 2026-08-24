@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Breadcrumbs, PillButton } from "@/components/blocks";
 
 export const metadata: Metadata = {
   title: "Methodology",
@@ -41,36 +42,38 @@ const SECTIONS = [
 
 export default function MethodologyPage() {
   return (
-    <div className="mx-auto max-w-2xl py-12">
-      <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-        How we know what&rsquo;s true.
-      </h1>
-      <p className="mt-3 text-ink-muted">
+    <div className="mx-auto max-w-2xl pb-4">
+      <div className="pt-8"><Breadcrumbs items={[{ label: "Methodology" }]} /></div>
+      <span className="eyebrow-pill mt-6"><span className="eyebrow">Methodology</span></span>
+      <h1 className="t-h1 mt-5">How we know <span className="font-normal italic">what&rsquo;s true.</span></h1>
+      <p className="mt-4 text-lg leading-relaxed text-ink-muted">
         Trueline is built to be honest about what it does and doesn&rsquo;t know. Here is exactly how the numbers are made.
       </p>
 
       <nav className="mt-8 flex flex-wrap gap-2">
         {SECTIONS.map((s) => (
-          <a key={s.id} href={`#${s.id}`} className="rounded-full border px-3 py-1.5 text-xs text-ink-muted transition-colors hover:text-ink" style={{ background: "var(--surface-1)" }}>
-            {s.title}
-          </a>
+          <a key={s.id} href={`#${s.id}`} className="pill-btn">{s.title}</a>
         ))}
       </nav>
 
-      <div className="mt-10 space-y-10">
+      <div className="mt-8 space-y-4">
         {SECTIONS.map((s, i) => (
-          <section key={s.id} id={s.id} className="scroll-mt-20">
-            <div className="tnum text-xs text-ink-faint">0{i + 1}</div>
-            <h2 className="mt-1 text-xl font-medium">{s.title}</h2>
-            <p className="mt-2 leading-relaxed text-ink-muted">{s.body}</p>
+          <section key={s.id} id={s.id} className="card scroll-mt-24">
+            <div className="flex items-center gap-3">
+              <span className="tnum flex h-7 w-7 items-center justify-center rounded-lg text-[13px] font-semibold" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>{i + 1}</span>
+              <h2 className="text-[17px] font-semibold">{s.title}</h2>
+            </div>
+            <p className="mt-2.5 leading-relaxed text-ink-muted">{s.body}</p>
           </section>
         ))}
       </div>
 
-      <div className="mt-12 flex flex-wrap gap-3">
-        <a href="/" className="btn-primary rounded-xl px-5 py-3 text-sm">Search the data</a>
-        <a href="/leaderboards" className="btn-ghost rounded-xl px-4 py-2.5 text-sm">See the leaderboards</a>
-      </div>
+      <section className="section-y">
+        <div className="band-dark flex flex-col gap-6 p-8 md:flex-row md:items-center md:justify-between">
+          <h2 className="text-xl font-bold text-white">See the honest numbers for yourself.</h2>
+          <div className="flex gap-3"><PillButton href="/" light>Search the data</PillButton><PillButton href="/leaderboards" light>Leaderboards</PillButton></div>
+        </div>
+      </section>
     </div>
   );
 }

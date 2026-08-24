@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { submitSalary } from "./actions";
 import { LEVELS } from "@/lib/levels";
 import { Card, PrimaryButton } from "@/components/ui";
+import { Breadcrumbs } from "@/components/blocks";
 
 export const metadata: Metadata = {
   title: "Add your salary",
@@ -23,11 +24,11 @@ export default function AddPage({ searchParams }: { searchParams: { submitted?: 
   const company = searchParams.company || "";
 
   return (
-    <div className="mx-auto max-w-xl py-12">
-      <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-        Add your salary <span>anonymously.</span>
-      </h1>
-      <p className="mt-3 text-ink-muted">
+    <div className="mx-auto max-w-xl pb-4">
+      <div className="pt-8"><Breadcrumbs items={[{ label: "Add your salary" }]} /></div>
+      <span className="eyebrow-pill mt-6"><span className="eyebrow">Add your salary</span></span>
+      <h1 className="t-h1 mt-5">Add your salary <span className="font-normal italic">anonymously.</span></h1>
+      <p className="mt-4 text-lg leading-relaxed text-ink-muted">
         Every verified number makes the benchmarks truer. Takes 30 seconds.
       </p>
 

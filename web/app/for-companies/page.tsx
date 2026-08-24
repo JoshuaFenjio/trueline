@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { EmailCapture } from "@/components/EmailCapture";
-import { Card } from "@/components/ui";
-import { SectionHeader } from "@/components/blocks";
+import { Breadcrumbs } from "@/components/blocks";
+import { Icon } from "@/components/icons";
 
 export const metadata: Metadata = {
   title: "For companies",
@@ -13,22 +13,21 @@ export const metadata: Metadata = {
 };
 
 const FEATURES = [
-  { k: "Benchmark", t: "Your pay vs your sector", d: "See where every role sits against real advertised ranges from your actual competitors, refreshed continuously." },
-  { k: "Ranges", t: "Directive-ready bands", d: "Build pay ranges that hold up under the EU Pay Transparency Directive, grounded in live market medians rather than a stale survey." },
-  { k: "Signal", t: "How candidates rate you", d: "Your Transparency score is public. See how disclosure moves the candidates who look at your roles." },
+  { icon: Icon.bars, t: "Your pay vs your sector", d: "See where every role sits against real advertised ranges from your actual competitors, refreshed continuously." },
+  { icon: Icon.scale, t: "Directive-ready bands", d: "Build pay ranges that hold up under the EU Pay Transparency Directive, grounded in live market medians rather than a stale survey." },
+  { icon: Icon.shield, t: "How candidates rate you", d: "Your Transparency score is public. See how disclosure moves the candidates who look at your roles." },
 ];
 
 export default function ForCompanies() {
   return (
-    <div className="py-16">
-      <section className="max-w-2xl">
-        <div className="text-[11px] text-ink-faint">For companies</div>
-        <h1 className="mt-3 text-4xl font-extrabold leading-[1.06] tracking-tight md:text-5xl">
-          Know exactly what the market pays, before you <span>post.</span>
-        </h1>
-        <p className="mt-5 text-lg text-ink-muted">
-          Trueline already reads the live salary market across EMEA. We&rsquo;re building the employer side:
-          benchmark your bands against your real competitors and price roles on live data.
+    <div className="pb-4">
+      <div className="pt-8"><Breadcrumbs items={[{ label: "For companies" }]} /></div>
+
+      <section className="mt-6 max-w-2xl">
+        <span className="eyebrow-pill"><span className="eyebrow">For companies</span></span>
+        <h1 className="t-h1 mt-5">Know what the market pays, <span className="font-normal italic">before you post.</span></h1>
+        <p className="mt-4 text-lg leading-relaxed text-ink-muted">
+          Trueline already reads the live salary market across EMEA. We&rsquo;re building the employer side: benchmark your bands against your real competitors and price roles on live data.
         </p>
         <div className="mt-6 max-w-lg">
           <EmailCapture source="employer" withCompany cta="Join the waitlist" />
@@ -36,25 +35,26 @@ export default function ForCompanies() {
         </div>
       </section>
 
-      <section className="mt-20">
-        <SectionHeader kicker="What you get" title="Priced on live data" />
-        <div className="mt-7 grid gap-4 md:grid-cols-3">
+      <section className="mt-14">
+        <div className="grid gap-5 md:grid-cols-3">
           {FEATURES.map((f) => (
-            <Card key={f.k} className="h-full">
-              <div className="text-[11px] text-ink-faint">{f.k}</div>
-              <div className="mt-2 text-xl font-semibold">{f.t}</div>
-              <p className="mt-2 text-sm text-ink-muted">{f.d}</p>
-            </Card>
+            <div key={f.t} className="card h-full">
+              <span className="icon-chip"><f.icon size={16} /></span>
+              <div className="mt-3 text-[15px] font-semibold">{f.t}</div>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-ink-muted">{f.d}</p>
+            </div>
           ))}
         </div>
       </section>
 
-      <section className="mt-20 max-w-2xl">
-        <Card>
-          <h2 className="text-lg font-medium">Get your company benchmarked first</h2>
-          <p className="mt-2 text-sm text-ink-muted">Leave your work email and we&rsquo;ll start with your sector.</p>
-          <div className="mt-4"><EmailCapture source="employer" withCompany cta="Join the waitlist" /></div>
-        </Card>
+      <section className="section-y">
+        <div className="band-dark flex flex-col gap-6 p-8 md:flex-row md:items-center md:justify-between">
+          <div className="md:max-w-md">
+            <h2 className="text-xl font-bold text-white">Get your company benchmarked first</h2>
+            <p className="mt-2 text-[14px]" style={{ color: "rgba(255,255,255,.72)" }}>Leave your work email and we&rsquo;ll start with your sector.</p>
+          </div>
+          <div className="w-full md:w-96"><EmailCapture source="employer" withCompany cta="Join the waitlist" /></div>
+        </div>
       </section>
     </div>
   );

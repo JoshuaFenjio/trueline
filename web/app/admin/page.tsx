@@ -19,8 +19,9 @@ export default async function Admin({ searchParams }: { searchParams: { error?: 
   if (!isAdmin()) {
     return (
       <div className="mx-auto max-w-sm py-24">
-        <h1 className="text-2xl font-extrabold tracking-tight">Admin</h1>
-        <p className="mt-2 text-sm text-ink-muted">Review submitted salaries.</p>
+        <span className="eyebrow-pill"><span className="eyebrow">Admin</span></span>
+        <h1 className="t-h2 mt-4">Submission review</h1>
+        <p className="mt-2 text-sm text-ink-muted">Sign in to review submitted salaries.</p>
         {searchParams.error === "locked" ? (
           <p className="mt-4 text-sm" style={{ color: "var(--ember)" }}>
             Too many attempts. Try again in about {searchParams.m || "15"} minute{searchParams.m === "1" ? "" : "s"}.
@@ -30,13 +31,12 @@ export default async function Admin({ searchParams }: { searchParams: { error?: 
             Wrong password.{searchParams.left ? ` ${searchParams.left} attempt${searchParams.left === "1" ? "" : "s"} left.` : ""}
           </p>
         ) : null}
-        <form action={login} className="mt-6 space-y-3">
-          <input
-            name="password" type="password" placeholder="Admin password" autoFocus
-            className="field w-full px-3 py-3"
-          />
-          <PrimaryButton className="w-full">Sign in</PrimaryButton>
-        </form>
+        <Card className="mt-6">
+          <form action={login} className="space-y-3">
+            <input name="password" type="password" placeholder="Admin password" autoFocus className="field w-full px-3 py-3" />
+            <PrimaryButton className="w-full">Sign in</PrimaryButton>
+          </form>
+        </Card>
       </div>
     );
   }
@@ -51,7 +51,7 @@ export default async function Admin({ searchParams }: { searchParams: { error?: 
     <div className="mx-auto max-w-4xl py-12">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Submission review</h1>
+          <h1 className="t-h2">Submission review</h1>
           <p className="mt-1 text-sm text-ink-muted">
             <span className="tnum">{rows.length}</span> pending. Approved rows flow into stats as verified (shown at 3+ per slice).
           </p>
