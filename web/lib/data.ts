@@ -669,6 +669,62 @@ export const getCountryDetail = async (name: string): Promise<CountryDetail> => 
   };
 };
 
+// City detail — everything the redesigned city page renders, all live.
+export interface CityDetail {
+  name: string; slug: string; country: string | null; code: string | null;
+  median: number | null; n: number; trackedN: number; disclosurePct: number; rolesBenchmarked: number;
+  countryMedian: number | null; rankInCountry: { pos: number; total: number } | null;
+  topRoles: { role: string; slug: string; median: number; n: number }[];
+  topCompanies: RankRow[];
+  history: { month: string; n: number; median: number }[];
+  related: { city: string; slug: string; median: number; n: number; code: string | null; country: string | null }[];
+}
+export const getCityDetail = async (name: string): Promise<CityDetail> => {
+  const rows = await getData();
+  const inCity = (p: Posting) => p.city === name;
+  const all = rows.filter(inCity);
+  const sal = usable(rows).filter(inCity);
+  // Home country = most common country among this city's postings.
+  const cc = new Map<string, number>();
+  for (const p of all) if (p.country) cc.set(p.country, (cc.get(p.country) || 0) + 1);
+  const country = [...cc.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  const disclosed = all.filter((p) => p.disclosed).length;
+
+  // Cities in the same country, by median (gated) — for rank + related tiles.
+  const countrySal = country ? usable(rows).filter((p) => p.country === country) : [];
+  const byCityInCountry = new Map<string, number[]>();
+  for (const p of countrySal) { if (!p.city) continue; const a = byCityInCountry.get(p.city) || []; a.push(p.annual); byCityInCountry.set(p.city, a); }
+  const rankedCities = [...byCityInCountry.entries()].filter(([, v]) => v.length >= N_MEDIAN)
+    .map(([city, v]) => ({ city, slug: slugify(city), median: Math.round(median(v)), n: v.length, code: iso2(country), country }))
+    .sort((a, b) => b.median - a.median);
+  const posIdx = rankedCities.findIndex((c) => c.city === name);
+  const rankInCountry = posIdx >= 0 ? { pos: posIdx + 1, total: rankedCities.length } : null;
+  const countryMedian = countrySal.length >= N_MEDIAN ? Math.round(median(countrySal.map((p) => p.annual))) : null;
+  const related = rankedCities.filter((c) => c.city !== name).slice(0, 4);
+
+  // Top roles (gated) in this city.
+  const byRole = new Map<string, number[]>();
+  for (const p of sal) { const a = byRole.get(p.roleFamily) || []; a.push(p.annual); byRole.set(p.roleFamily, a); }
+  const topRoles = [...byRole.entries()].filter(([, v]) => v.length >= N_MEDIAN)
+    .map(([role, v]) => ({ role, slug: slugify(role), median: Math.round(median(v)), n: v.length }))
+    .sort((a, b) => b.median - a.median).slice(0, 10);
+  const rolesBenchmarked = topRoles.length;
+
+  // Monthly history (gated).
+  const byMonth = new Map<string, number[]>();
+  for (const p of sal) { if (!p.dateMs) continue; const d = new Date(p.dateMs); const k = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`; const a = byMonth.get(k) || []; a.push(p.annual); byMonth.set(k, a); }
+  let history = [...byMonth.entries()].filter(([, v]) => v.length >= 3).map(([month, v]) => ({ month, n: v.length, median: Math.round(median(v)) })).sort((a, b) => a.month.localeCompare(b.month));
+  if (history.length < 2) history = [];
+
+  return {
+    name, slug: slugify(name), country, code: iso2(country),
+    median: sal.length >= N_MEDIAN ? Math.round(median(sal.map((p) => p.annual))) : null,
+    n: sal.length, trackedN: all.length, disclosurePct: all.length ? Math.round((disclosed / all.length) * 100) : 0,
+    rolesBenchmarked, countryMedian, rankInCountry, topRoles,
+    topCompanies: rankCompaniesBy(rows, inCity).slice(0, 8), history, related,
+  };
+};
+
 // ---------------------------------------------------------------------------
 // Company detail (upgraded)
 // ---------------------------------------------------------------------------
