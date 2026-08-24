@@ -488,6 +488,27 @@ export async function countriesForRole(role: string): Promise<RankRow[]> {
   return rankCountriesBy(rows, (p) => p.roleFamily === role);
 }
 
+// Country leaderboard — median base (gated n>=8) + transparency % (disclosed of
+// tracked, at country level) + flag code. Sorted by median. All live-derived.
+export interface CountryRank { country: string; code: string | null; median: number; n: number; disclosurePct: number; trackedN: number }
+export const getCountryLeaderboard = async (): Promise<CountryRank[]> => {
+  const rows = await getData();
+  const byCountry = new Map<string, Posting[]>();
+  for (const r of rows) { if (!r.country) continue; const a = byCountry.get(r.country) || []; a.push(r); byCountry.set(r.country, a); }
+  const out: CountryRank[] = [];
+  for (const [country, rs] of byCountry) {
+    const sal = rs.filter((p) => p.annual !== null) as (Posting & { annual: number })[];
+    if (sal.length < N_MEDIAN) continue;
+    const disclosed = rs.filter((p) => p.disclosed).length;
+    out.push({
+      country, code: iso2(country), median: Math.round(median(sal.map((r) => r.annual))),
+      n: sal.length, trackedN: rs.length,
+      disclosurePct: rs.length ? Math.round((disclosed / rs.length) * 100) : 0,
+    });
+  }
+  return out.sort((a, b) => b.median - a.median);
+};
+
 // ---------------------------------------------------------------------------
 // Role hub
 // ---------------------------------------------------------------------------
