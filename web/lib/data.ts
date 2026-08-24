@@ -285,6 +285,17 @@ function indexBy(rows: Posting[], key: (p: Posting) => string | null): IndexEnti
     .sort((a, b) => (b.median ?? 0) - (a.median ?? 0) || b.n - a.n);
 }
 export const getRoleIndex = async (): Promise<IndexEntity[]> => indexBy(await getData(), (p) => p.roleFamily);
+// Most-active roles by new postings in the last 30 days (real recency signal).
+export const getRoleActivity = async (): Promise<{ role: string; slug: string; recentN: number }[]> => {
+  const rows = await getData();
+  const now = Date.now(), cutoff = now - 30 * 24 * 60 * 60 * 1000;
+  const m = new Map<string, number>();
+  for (const p of rows) {
+    if (!p.roleFamily || p.roleFamily === "Other" || !p.dateMs || p.dateMs < cutoff || p.dateMs > now) continue;
+    m.set(p.roleFamily, (m.get(p.roleFamily) || 0) + 1);
+  }
+  return [...m.entries()].map(([role, recentN]) => ({ role, slug: slugify(role), recentN })).sort((a, b) => b.recentN - a.recentN);
+};
 export const getCountryIndex = async (): Promise<IndexEntity[]> => indexBy(await getData(), (p) => p.country);
 export const getCityIndex = async (): Promise<IndexEntity[]> => indexBy(await getData(), (p) => p.city);
 

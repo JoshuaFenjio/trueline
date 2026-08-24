@@ -23,7 +23,7 @@ export function HubExplorer({ items, placeholder, unit = "roles" }: { items: Hub
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {shown.map((i) => (
           <Link key={i.slug} href={i.href} className="card card-hover !p-4">
-            <div className="flex items-center gap-2"><Flag country={i.flagCountry} /><span className="truncate font-medium">{i.name}</span></div>
+            <div className="flex items-center gap-2">{i.flagCountry && <Flag country={i.flagCountry} />}<span className="truncate font-medium">{i.name}</span></div>
             <div className="tnum mt-2 text-lg font-semibold">{eur(i.median)}</div>
             <div className="tnum text-[12px] text-ink-faint">median base · {i.n} {unit}</div>
           </Link>
