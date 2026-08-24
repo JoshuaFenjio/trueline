@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { eur } from "@/lib/format";
 import { Sparkline } from "@/components/Sparkline";
-import { HeroSkyline } from "@/components/HeroSkyline";
 import type { HomeComposition } from "@/lib/data";
 
 // The hero's right-column composition: a soft tinted panel holding four white
@@ -69,10 +68,7 @@ export function HeroComposition({ comp }: { comp: HomeComposition }) {
   }
 
   return (
-    <div className="relative aspect-[4/3.4] w-full overflow-hidden rounded-[20px] p-6" style={{ background: "var(--panel)" }}>
-      {/* Skyline sits behind the cards, anchored to the panel floor. */}
-      <HeroSkyline className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[60%] w-full" />
-      <div className="relative z-10 grid h-full w-full grid-cols-4 grid-rows-4 gap-3">
+    <div className="grid aspect-[4/3.4] w-full grid-cols-4 grid-rows-4 gap-3 rounded-[20px] p-6" style={{ background: "var(--panel)" }}>
       {cards.slice(0, 3).map((c, i) => (
         <div key={i} style={SLOTS[i]} className="min-h-0">{c}</div>
       ))}
@@ -84,7 +80,6 @@ export function HeroComposition({ comp }: { comp: HomeComposition }) {
           <span className="w-1.5 rounded-sm" style={{ height: "82%", background: "var(--accent)" }} />
           <span className="w-1.5 rounded-sm" style={{ height: "52%", background: "var(--border-strong)" }} />
         </div>
-      </div>
       </div>
     </div>
   );
