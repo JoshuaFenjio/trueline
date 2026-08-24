@@ -4,12 +4,24 @@ import { notFound } from "next/navigation";
 import { getCompanyBySlug, getLastRefreshed } from "@/lib/data";
 import { companyMeta } from "@/lib/companyMeta";
 import { watchlistBySlug, WatchEntry } from "@/lib/watchlist";
-import { ScoreBadge, scoreColor, Stat, Card } from "@/components/ui";
-import { SectionHeader, TrendBadge, Breadcrumbs, ArrowLink } from "@/components/blocks";
+import { ScoreBadge, scoreColor, Card, Stat } from "@/components/ui";
+import { SectionHeader, Breadcrumbs, ArrowLink, PillButton } from "@/components/blocks";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { CompanyHiresMap } from "@/components/CompanyHiresMap";
+import { ShareButton } from "@/components/ShareButton";
+import { Icon } from "@/components/icons";
 import { eur, eurK, pct, timeAgo } from "@/lib/format";
 import type { CompanyDetail } from "@/lib/data";
+
+const COMPANY_TABS = [
+  { id: "overview", label: "Overview", icon: Icon.target },
+  { id: "salaries", label: "Salaries", icon: Icon.bars },
+  { id: "roles", label: "Roles", icon: Icon.briefcase },
+  { id: "locations", label: "Locations", icon: Icon.globe },
+  { id: "jobs", label: "Jobs", icon: Icon.building },
+];
+function tier(n: number, hi: number, mid: number) { return n >= hi ? "High" : n >= mid ? "Medium" : "Low"; }
+function tierColor(t: string) { return t === "High" ? "var(--mint)" : t === "Medium" ? "var(--accent)" : "var(--ink-faint)"; }
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -44,141 +56,125 @@ export default async function CompanyPage({ params }: { params: { slug: string }
     if (w) return <WatchlistCompany w={w} />;
     notFound();
   }
-  const color = scoreColor(c.payScore);
   const refreshed = await getLastRefreshed();
   const meta = companyMeta(c.company);
+  const chips = [c.sector, meta.hqCity, meta.stage].filter(Boolean) as string[];
+  const topPct = c.sectorTotal ? Math.max(1, Math.round((c.sectorRank / c.sectorTotal) * 100)) : null;
 
-  const metaBits = [
-    c.sector,
-    meta.hqCity,
-    meta.founded ? `Founded ${meta.founded}` : null,
-    meta.stage,
-  ].filter(Boolean) as string[];
+  // Transparency sub-scores — all from real fields.
+  const recentDays = c.latest.reduce((min, p) => {
+    if (!p.postedAt) return min; const d = (Date.now() - Date.parse(p.postedAt)) / 86400000;
+    return Number.isNaN(d) ? min : Math.min(min, d);
+  }, Infinity);
+  const subScores = [
+    { label: "Data volume", tier: tier(c.activeN, 30, 10), note: `${c.activeN} tracked postings` },
+    { label: "Role coverage", tier: tier(c.roles.length, 8, 4), note: `${c.roles.length} role families` },
+    { label: "Geo coverage", tier: tier(c.markets.length, 5, 2), note: `${c.markets.length} countries` },
+    { label: "Recency", tier: recentDays <= 21 ? "High" : recentDays <= 60 ? "Medium" : "Low", note: recentDays === Infinity ? "no dated ads" : `newest ${Math.round(recentDays)}d ago` },
+  ];
 
-  // "What we don't know yet" — honest gaps.
   const thinRoles = c.roles.filter((r) => r.companyMedian === null).map((r) => r.role);
   const gaps: string[] = [];
   if (c.disclosurePct < 40) gaps.push(`Most ${c.company} ads don't state pay; only ${pct(c.disclosurePct)} do, so this is a partial picture.`);
   if (thinRoles.length) gaps.push(`Not enough salaried postings yet to publish a median for: ${thinRoles.slice(0, 6).join(", ")}.`);
   if (c.latest.length === 0) gaps.push("No advertised salary ranges we could verify right now.");
+  gaps.push("No bonus, equity, benefits or headcount — we only read advertised base pay.");
+
+  const compareHref = `/compare?companies=${[c.slug, ...c.peers.map((p) => p.slug)].join(",")}`;
 
   return (
-    <div className="py-14">
-      <Breadcrumbs items={[
+    <div className="pb-4">
+      <div className="pt-8"><Breadcrumbs items={[
         { label: "Companies", href: "/companies" },
         { label: c.sector, href: `/leaderboards?sector=${encodeURIComponent(c.sector)}#by-sector` },
         { label: c.company },
-      ]} />
+      ]} /></div>
 
-      {/* Hero */}
-      <div className="mt-5 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      {/* Header */}
+      <header className="mt-6 grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
         <div className="flex items-center gap-4">
           <CompanyLogo name={c.company} size={56} rounded="rounded-2xl" />
           <div>
-            <h1 className="text-4xl font-extrabold tracking-tight md:text-5xl">{c.company}</h1>
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-muted">
-              {metaBits.map((b, i) => (
-                <span key={i} className="flex items-center gap-3">
-                  {i > 0 && <span className="text-ink-faint/60">·</span>}{b}
-                </span>
-              ))}
-              {meta.website && (
-                <>
-                  <span className="text-ink-faint/60">·</span>
-                  <a href={`https://${meta.website}`} target="_blank" rel="noopener noreferrer" className="text-brand-2 hover:underline">{meta.website} ↗</a>
-                </>
-              )}
+            <h1 className="t-h2">{c.company}</h1>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {chips.map((b) => <span key={b} className="rounded-full border px-2.5 py-0.5 text-[12px] text-ink-muted" style={{ background: "var(--surface-1)" }}>{b}</span>)}
+              {meta.website && <a href={`https://${meta.website}`} target="_blank" rel="noopener noreferrer" className="rounded-full border px-2.5 py-0.5 text-[12px] text-ink-muted hover:text-ink" style={{ background: "var(--surface-1)" }}>{meta.website} ↗</a>}
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <ScoreBadge score={c.payScore} size="lg" />
-          <div>
-            <div className="text-sm font-medium" style={{ color }}>Pay Score {c.payScore}</div>
-            <div className="max-w-[9rem] text-xs text-ink-faint">{ordinal(c.sectorRank)} of {c.sectorTotal} in {c.sector}</div>
+        <div className="grid grid-cols-3 gap-4 lg:w-[420px]">
+          <div className="card !p-4 text-center">
+            <div className="mx-auto"><ScoreBadge score={c.payScore} size="md" /></div>
+            <div className="mt-2 text-[11px] text-ink-faint">Pay Score</div>
+          </div>
+          <div className="card !p-4">
+            <div className="tnum text-2xl font-semibold">{c.sectorRank}/{c.sectorTotal}</div>
+            <div className="mt-1 text-[11px] text-ink-faint">Sector rank{topPct ? ` · Top ${topPct}%` : ""}</div>
+          </div>
+          <div className="card !p-4">
+            <div className="tnum text-2xl font-semibold" style={{ color: c.disclosurePct >= 50 ? "var(--mint)" : c.disclosurePct < 25 ? "var(--ember)" : undefined }}>{pct(c.disclosurePct)}</div>
+            <div className="mt-1 text-[11px] text-ink-faint">Transparency · {c.activeN} ads</div>
           </div>
         </div>
+      </header>
+
+      {/* Action row */}
+      <div className="mt-5 flex flex-wrap items-center gap-3">
+        <Link href={compareHref} className="pill-btn"><Icon.scale size={15} /><span>Compare</span></Link>
+        <ShareButton />
+        <span className="ml-auto text-[12px] text-ink-faint">Median base <span className="tnum text-ink">{eur(c.midpoint)}</span> · from {c.n} salaried postings · refreshed {timeAgo(refreshed)}</span>
       </div>
 
-      <div className="mt-4 text-[13px] text-ink-muted">
-        We track <span className="tnum font-medium text-ink">{c.activeN}</span> live {c.company} roles;{" "}
-        <span className="tnum font-medium text-ink">{c.disclosedN}</span> disclose pay.{" "}
-        <span className="text-ink-faint">Refreshed {timeAgo(refreshed)}.</span>
-      </div>
+      {/* Tab bar */}
+      <nav className="mt-6 flex flex-wrap gap-2 border-b pb-4" style={{ borderColor: "var(--border)" }} aria-label="Company sections">
+        {COMPANY_TABS.map((t) => <a key={t.id} href={`#${t.id}`} className="pill-btn"><t.icon size={15} /><span>{t.label}</span></a>)}
+      </nav>
 
-      <Card className="mt-6">
-        <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
-          <Stat label="Median base" value={<span className="tnum">{eur(c.midpoint)}</span>} />
-          <Stat label="Transparency" value={<span className="tnum">{pct(c.disclosurePct)}</span>} tone={c.disclosurePct >= 50 ? "var(--mint)" : c.disclosurePct < 25 ? "var(--ember)" : undefined} />
-          <Stat label="Roles tracked" value={<span className="tnum">{c.activeN}</span>} />
-          <Stat
-            label="Pay trend"
-            value={c.trend.dir === "insufficient" || c.trend.dir === "new"
-              ? <span className="text-sm font-normal text-ink-faint">Not enough history yet</span>
-              : <TrendBadge trend={c.trend} />}
-          />
+      {/* Overview */}
+      <section className="mt-10 scroll-mt-24 grid gap-6 lg:grid-cols-[1.3fr_1fr]" id="overview">
+        <div className="card">
+          <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.bars size={15} /></span><span className="text-[15px] font-semibold">Role vs {c.sector} market</span></div>
+          <div className="mt-4 space-y-2.5">
+            {c.roles.slice(0, 8).map((r) => {
+              const ratio = r.companyMedian && r.sectorMedian ? r.companyMedian / r.sectorMedian : null;
+              const w = ratio ? Math.min(100, ratio * 50) : 0;
+              const above = ratio != null && ratio >= 1;
+              return (
+                <div key={r.role} className="flex items-center gap-3">
+                  <Link href={`/roles/${r.slug}`} className="w-40 truncate text-sm hover:text-ink">{r.role}</Link>
+                  <span className="rank-track block flex-1"><span className="rank-fill" style={{ width: `${w}%`, background: r.companyMedian ? (above ? "var(--mint)" : "var(--accent)") : "var(--border-strong)" }} /></span>
+                  <span className="tnum w-24 text-right text-sm font-semibold">{r.companyMedian ? eur(r.companyMedian) : <span className="text-ink-faint">n&lt;3</span>}</span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-3 text-[12px] text-ink-faint">Bar is company median relative to the {c.sector} median. Roles need 3+ salaried postings.</p>
         </div>
-      </Card>
-      <p className="mt-3 text-xs text-ink-faint">
-        Transparency is the share of {c.company}&rsquo;s tracked ads that publish pay ({pct(c.disclosurePct)}) — we monitor both the disclosed and the silent. The median is built from {c.n} salaried posting{c.n === 1 ? "" : "s"}.
-      </p>
+        <div className="card">
+          <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.shield size={15} /></span><span className="text-[15px] font-semibold">Transparency breakdown</span></div>
+          <div className="mt-4 space-y-3">
+            {subScores.map((s) => (
+              <div key={s.label} className="flex items-center gap-3">
+                <span className="w-28 text-sm">{s.label}</span>
+                <span className="flex-1 text-[12px] text-ink-faint">{s.note}</span>
+                <span className="rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ color: tierColor(s.tier), background: `${tierColor(s.tier)}1a` }}>{s.tier}</span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-[12px] text-ink-faint">Based on {c.activeN} tracked postings. No verified employee submissions yet.</p>
+        </div>
+      </section>
 
-      {/* Compare with peers */}
       {c.peers.length > 0 && <PeerCompare c={c} />}
-
-      {/* Sector context */}
       <SectorContext c={c} />
 
-      {/* Salary history — only once we have >=2 months of it */}
-      {c.history.length >= 2 && (
-        <section className="mt-16">
-          <SectionHeader kicker="History" title="Postings and median over time" />
-          <Card className="mt-5"><Sparkline history={c.history} /></Card>
-        </section>
-      )}
-
-      {/* Where they hire */}
-      {c.markets.length > 0 && (
-        <section className="mt-16">
-          <SectionHeader kicker="Geography" title={`Where ${c.company} hires`} sub="Active postings by country. Median shown where 3+ are salaried; dots mark office cities." />
-          <div className="mt-5"><CompanyHiresMap company={c.company} markets={c.markets} offices={c.offices} /></div>
-        </section>
-      )}
-
-      {/* Latest salaried postings */}
-      {c.latest.length > 0 && (
-        <section className="mt-16">
-          <SectionHeader kicker="Live" title="Latest salaried postings" />
-          <Card className="mt-5 overflow-hidden p-0">
-            <ul>
-              {c.latest.map((p, i) => {
-                const inner = (
-                  <div className="flex items-center justify-between gap-4 px-5 py-3.5">
-                    <div className="min-w-0">
-                      <div className="truncate">{p.title}</div>
-                      <div className="tnum mt-0.5 text-xs text-ink-faint">{p.city}{p.postedAt ? ` · posted ${timeAgo(p.postedAt)}` : ""}</div>
-                    </div>
-                    <div className="tnum shrink-0 text-right text-ink">{p.lo === p.hi ? eurK(p.lo) : `${eurK(p.lo)}–${eurK(p.hi)}`}</div>
-                  </div>
-                );
-                return (
-                  <li key={i} className={i > 0 ? "border-t" : ""} style={{ borderColor: "var(--border)" }}>
-                    {p.url ? <a href={p.url} target="_blank" rel="noopener noreferrer" className="block transition-colors hover:bg-[var(--band)]">{inner}</a> : inner}
-                  </li>
-                );
-              })}
-            </ul>
-          </Card>
-        </section>
-      )}
-
-      {/* By role vs sector */}
-      <section className="mt-16">
-        <SectionHeader kicker="Pay by role" title="How each role compares" accent="vs sector." />
-        <Card className="mt-5 overflow-hidden p-0">
+      {/* Salaries */}
+      <section className="mt-16 scroll-mt-24" id="salaries">
+        <SectionHeader kicker="Salaries" title="How each role compares" accent="vs sector." />
+        <Card className="mt-5 overflow-hidden !p-0">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-ink-faint">
+              <tr className="text-left text-[12px] text-ink-faint">
                 <th className="px-5 py-3 font-normal">Role</th>
                 <th className="px-5 py-3 text-right font-normal">{c.company}</th>
                 <th className="px-5 py-3 text-right font-normal">{c.sector} median</th>
@@ -191,71 +187,77 @@ export default async function CompanyPage({ params }: { params: { slug: string }
                 const dColor = delta == null ? undefined : delta >= 0 ? "var(--mint)" : "var(--ember)";
                 return (
                   <tr key={r.role} className="border-t" style={{ borderColor: "var(--border)" }}>
-                    <td className="px-5 py-3">
-                      <Link href={`/roles/${r.slug}`} className="hover:text-ink">{r.role}</Link>
-                      <span className="tnum ml-2 text-xs text-ink-faint">{r.companyN}</span>
-                    </td>
-                    <td className="px-5 py-3 text-right tnum">
-                      {r.companyMedian
-                        ? eur(r.companyMedian)
-                        : <Link href={`/add?company=${encodeURIComponent(c.company)}`} className="text-xs font-medium hover:underline" style={{ color: "var(--accent)" }}>add yours →</Link>}
-                    </td>
+                    <td className="px-5 py-3"><Link href={`/roles/${r.slug}`} className="hover:text-ink">{r.role}</Link><span className="tnum ml-2 text-xs text-ink-faint">n={r.companyN}</span></td>
+                    <td className="px-5 py-3 text-right tnum">{r.companyMedian ? eur(r.companyMedian) : <Link href={`/add?company=${encodeURIComponent(c.company)}`} className="text-xs font-medium hover:underline" style={{ color: "var(--accent)" }}>add yours →</Link>}</td>
                     <td className="px-5 py-3 text-right tnum text-ink-muted">{r.sectorMedian ? eur(r.sectorMedian) : <span className="text-ink-faint">—</span>}</td>
-                    <td className="px-5 py-3 text-right tnum" style={{ color: dColor }}>
-                      {delta == null ? "—" : `${delta >= 0 ? "+" : "−"}${eur(Math.abs(delta))}`}
-                    </td>
+                    <td className="px-5 py-3 text-right tnum" style={{ color: dColor }}>{delta == null ? "—" : `${delta >= 0 ? "+" : "−"}${eur(Math.abs(delta))}`}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </Card>
-        <p className="mt-3 text-xs text-ink-faint">
-          Roles without a company median need 3+ salaried postings.{" "}
-          <Link href={`/add?company=${encodeURIComponent(c.company)}`} className="hover:underline" style={{ color: "var(--accent)" }}>Help complete this picture — add your salary →</Link>
-        </p>
+        {c.history.length >= 2 && <Card className="mt-5"><div className="mb-3 text-[13px] font-medium">Median &amp; postings over time</div><Sparkline history={c.history} /></Card>}
       </section>
 
-      {/* What we don't know yet */}
-      {gaps.length > 0 && (
-        <section className="mt-16">
-          <SectionHeader kicker="Honest limits" title="What we don't know yet" />
-          <Card className="mt-5">
-            <ul className="space-y-2 text-sm text-ink-muted">
-              {gaps.map((g, i) => (
-                <li key={i} className="flex gap-2"><span className="text-ink-faint">—</span><span>{g}</span></li>
-              ))}
+      {/* Roles */}
+      <section className="mt-16 scroll-mt-24" id="roles">
+        <SectionHeader kicker="Roles" title={`Roles ${c.company} hires for`} sub="Role families with live tracked postings; median shown where 3+ are salaried." />
+        <div className="mt-5 flex flex-wrap gap-2">
+          {c.roles.map((r) => (
+            <Link key={r.role} href={`/roles/${r.slug}`} className="pill-btn"><span>{r.role}</span><span className="tnum text-ink-faint">{r.companyN}</span></Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Locations */}
+      {c.markets.length > 0 && (
+        <section className="mt-16 scroll-mt-24" id="locations">
+          <SectionHeader kicker="Locations" title={`Where ${c.company} hires`} sub="Active postings by country. Median shown where 3+ are salaried; dots mark office cities." />
+          <div className="mt-5"><CompanyHiresMap company={c.company} markets={c.markets} offices={c.offices} /></div>
+        </section>
+      )}
+
+      {/* Jobs */}
+      <section className="mt-16 scroll-mt-24" id="jobs">
+        <SectionHeader kicker="Jobs" title="Latest salaried postings" />
+        {c.latest.length > 0 ? (
+          <Card className="mt-5 overflow-hidden !p-0">
+            <ul>
+              {c.latest.map((p, i) => {
+                const inner = (
+                  <div className="flex items-center justify-between gap-4 px-5 py-3">
+                    <div className="min-w-0"><div className="truncate">{p.title}</div><div className="tnum mt-0.5 text-xs text-ink-faint">{p.city}{p.postedAt ? ` · posted ${timeAgo(p.postedAt)}` : ""}</div></div>
+                    <div className="tnum shrink-0 text-right text-ink">{p.lo === p.hi ? eurK(p.lo) : `${eurK(p.lo)}–${eurK(p.hi)}`}</div>
+                  </div>
+                );
+                return <li key={i} className={i > 0 ? "border-t" : ""} style={{ borderColor: "var(--border)" }}>{p.url ? <a href={p.url} target="_blank" rel="noopener noreferrer" className="block transition-colors hover:bg-[var(--band)]">{inner}</a> : inner}</li>;
+              })}
             </ul>
           </Card>
-        </section>
-      )}
+        ) : <p className="mt-5 text-sm text-ink-faint">No salaried postings with a verifiable range right now.</p>}
+      </section>
 
-      {/* Similar + careers */}
-      {c.similar.length > 0 && (
-        <section className="mt-16">
-          <SectionHeader kicker="Similar" title="Companies like this" />
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {c.similar.map((s) => (
-              <Link key={s.slug} href={`/companies/${s.slug}`}>
-                <Card className="surface-hover h-full transition-colors">
-                  <div className="font-medium">{s.company}</div>
-                  <div className="mt-1 text-xs text-ink-faint">{s.sector}</div>
-                  <div className="tnum mt-3 text-lg font-semibold">{eur(s.midpoint)}</div>
-                </Card>
-              </Link>
-            ))}
+      {/* What we don't know */}
+      <section className="mt-16">
+        <div className="card">
+          <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.eye size={15} /></span><span className="text-[15px] font-semibold">What we don&rsquo;t know</span></div>
+          <ul className="mt-4 space-y-2 text-sm text-ink-muted">
+            {gaps.map((g, i) => <li key={i} className="flex gap-2"><span className="text-ink-faint">—</span><span>{g}</span></li>)}
+          </ul>
+        </div>
+      </section>
+
+      {/* Compare CTA band */}
+      <section className="section-y">
+        <div className="band-dark flex flex-col gap-6 p-8 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-white">See how {c.company} compares</h3>
+            <p className="mt-2 text-[14px]" style={{ color: "rgba(255,255,255,.72)" }}>Line {c.company} up against its peers on median base and transparency.</p>
           </div>
-        </section>
-      )}
-
-      <div className="mt-12 flex flex-wrap gap-3">
-        {c.careersUrl && (
-          <a href={c.careersUrl} target="_blank" rel="noopener noreferrer" className="btn-ghost inline-flex rounded-xl px-4 py-2.5 text-sm">
-            View live roles at {c.company} ↗
-          </a>
-        )}
-        <Link href="/compare" className="btn-ghost inline-flex rounded-xl px-4 py-2.5 text-sm">Compare with others</Link>
-      </div>
+          <Link href={compareHref} className="pill-btn pill-btn-light shrink-0"><span>Compare companies</span><span className="arw">→</span></Link>
+        </div>
+      </section>
     </div>
   );
 }
