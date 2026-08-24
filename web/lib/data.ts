@@ -8,7 +8,7 @@ import { levelBucket, isTrainee, Level, LEVELS } from "./levels";
 import { sectorOf, Sector } from "./sectors";
 import { resolvePlace } from "./geo";
 import { iso2 } from "./flags";
-import { slugify } from "./format";
+import { slugify, eur as eurFmt } from "./format";
 
 export { isConfigured };
 
@@ -577,6 +577,97 @@ async function locationHub(name: string, kind: "city" | "country"): Promise<Loca
 }
 export const getCityHub = (name: string) => locationHub(name, "city");
 export const getCountryHub = (name: string) => locationHub(name, "country");
+
+// Country detail — everything the redesigned country page renders, all live.
+// Cities in-country (gated), by-level, role distribution, neighbour comparison
+// by median, and computed insight findings (dropped when they don't compute).
+export interface CountryDetail {
+  name: string; slug: string; code: string | null;
+  median: number | null; n: number; trackedN: number; disclosurePct: number;
+  rolesBenchmarked: number; medianRank: number | null; total: number;
+  companyCount: number;
+  companies: RankRow[];
+  cities: { city: string; slug: string; median: number; n: number }[];
+  byLevel: { level: Level; median: number | null; n: number }[];
+  roleDist: { role: string; n: number; pct: number }[];
+  compare: { country: string; code: string | null; median: number; isSelf: boolean }[];
+  insights: { icon: string; text: string }[];
+}
+export const getCountryDetail = async (name: string): Promise<CountryDetail> => {
+  const rows = await getData();
+  const board = await getCountryLeaderboard();
+  const inC = (p: Posting) => p.country === name;
+  const all = rows.filter(inC);
+  const sal = usable(rows).filter(inC);
+  const self = board.find((c) => c.country === name);
+  const rankIdx = board.findIndex((c) => c.country === name);
+  const disclosed = all.filter((p) => p.disclosed).length;
+
+  // Cities in-country (gated).
+  const byCity = new Map<string, number[]>();
+  for (const r of sal) { if (!r.city) continue; const a = byCity.get(r.city) || []; a.push(r.annual); byCity.set(r.city, a); }
+  const cities = [...byCity.entries()].filter(([, v]) => v.length >= N_MEDIAN)
+    .map(([city, v]) => ({ city, slug: slugify(city), median: Math.round(median(v)), n: v.length }))
+    .sort((a, b) => b.median - a.median).slice(0, 8);
+
+  // By level.
+  const byLevel = LEVELS.map((level) => {
+    const v = sal.filter((p) => p.level === level).map((p) => p.annual);
+    return { level, median: v.length >= N_MEDIAN ? Math.round(median(v)) : null, n: v.length };
+  });
+
+  // Role distribution (by tracked count).
+  const roleCount = new Map<string, number>();
+  for (const r of all) roleCount.set(r.roleFamily, (roleCount.get(r.roleFamily) || 0) + 1);
+  const roleDist = [...roleCount.entries()].map(([role, n]) => ({ role, n, pct: all.length ? Math.round((n / all.length) * 100) : 0 }))
+    .sort((a, b) => b.n - a.n);
+
+  // Gated role families (roles benchmarked).
+  const roleSal = new Map<string, number>();
+  for (const r of sal) roleSal.set(r.roleFamily, (roleSal.get(r.roleFamily) || 0) + 1);
+  const rolesBenchmarked = [...roleSal.values()].filter((n) => n >= N_MEDIAN).length;
+
+  // Neighbour comparison: window of 5 around this country by median.
+  let compare: CountryDetail["compare"] = [];
+  if (rankIdx >= 0) {
+    const start = Math.max(0, Math.min(rankIdx - 2, board.length - 5));
+    compare = board.slice(start, start + 5).map((c) => ({ country: c.country, code: c.code, median: c.median, isSelf: c.country === name }));
+  }
+
+  // Computed insights (drop any that don't compute).
+  const insights: { icon: string; text: string }[] = [];
+  const natMed = self?.median ?? null;
+  if (cities.length && natMed) {
+    const top = cities[0];
+    const d = Math.round(((top.median - natMed) / natMed) * 100);
+    if (d > 0) insights.push({ icon: "pin", text: `${top.city} leads ${name} at ${eurFmt(top.median)}, ${d}% above the national median.` });
+  }
+  if (roleDist.length) {
+    const topRole = roleDist.find((r) => r.role !== "Other") ?? roleDist[0];
+    insights.push({ icon: "briefcase", text: `Most tracked roles are ${topRole.role} (${topRole.pct}% of postings).` });
+  }
+  {
+    const compCount = new Map<string, number>();
+    for (const r of all) compCount.set(r.company, (compCount.get(r.company) || 0) + 1);
+    const top = [...compCount.entries()].sort((a, b) => b[1] - a[1])[0];
+    if (top && all.length) insights.push({ icon: "building", text: `${top[0]} accounts for ${Math.round((top[1] / all.length) * 100)}% of tracked postings here.` });
+  }
+  if (self) {
+    const tRank = [...board].sort((a, b) => b.disclosurePct - a.disclosurePct).findIndex((c) => c.country === name) + 1;
+    insights.push({ icon: "shield", text: `${self.disclosurePct}% of ads disclose pay — #${tRank} of ${board.length} for transparency.` });
+  }
+
+  return {
+    name, slug: slugify(name), code: iso2(name),
+    median: self?.median ?? (sal.length >= N_MEDIAN ? Math.round(median(sal.map((r) => r.annual))) : null),
+    n: sal.length, trackedN: all.length,
+    disclosurePct: all.length ? Math.round((disclosed / all.length) * 100) : 0,
+    rolesBenchmarked, medianRank: rankIdx >= 0 ? rankIdx + 1 : null, total: board.length,
+    companyCount: new Set(all.map((p) => p.company)).size,
+    companies: rankCompaniesBy(rows, inC).slice(0, 8),
+    cities, byLevel, roleDist, compare, insights,
+  };
+};
 
 // ---------------------------------------------------------------------------
 // Company detail (upgraded)
