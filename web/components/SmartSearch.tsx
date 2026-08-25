@@ -113,10 +113,11 @@ export function SmartSearch({ roles, cities, companies, countries = [], compact 
   return (
     <div ref={boxRef} className="relative">
       {/* One instrument: bare role input | hairline | bare location | button.
-          Below sm there isn't room for all three on a line without clipping the
-          role placeholder, so it stacks: role on top, location + button under. */}
+          Below xl the hero's 45% column can't fit all three on one line without
+          clipping the role placeholder, so it stacks: role on top, location +
+          button under. */}
       <div
-        className="surface flex flex-col gap-2 rounded-xl p-2 sm:flex-row sm:items-center sm:gap-0 sm:p-1.5 sm:pl-4"
+        className="surface flex flex-col gap-2 rounded-xl p-2 xl:flex-row xl:items-center xl:gap-0 xl:p-1.5 xl:pl-4"
         style={{ borderColor: "var(--border-strong)" }}
       >
         <input
@@ -126,12 +127,12 @@ export function SmartSearch({ roles, cities, companies, countries = [], compact 
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           placeholder="Search a role or company…"
-          className="w-full min-w-0 bg-transparent px-2 py-2.5 text-[15px] outline-none placeholder:text-ink-faint sm:flex-1 sm:px-0"
+          className="w-full min-w-0 bg-transparent px-2 py-2.5 text-[15px] outline-none placeholder:text-ink-faint xl:flex-1 xl:px-0"
           aria-label="Search roles or companies"
         />
-        <span className="mx-1 hidden h-7 w-px shrink-0 sm:block" style={{ background: "var(--border)" }} />
-        {/* sm:contents dissolves this row back into the bar's flex line. */}
-        <div className="flex items-center gap-2 sm:contents">
+        <span className="mx-1 hidden h-7 w-px shrink-0 xl:block" style={{ background: "var(--border)" }} />
+        {/* xl:contents dissolves this row back into the bar's flex line. */}
+        <div className="flex items-center gap-2 xl:contents">
           {/* Same size and family as the role input so the two segments read as
               one instrument; 8.5rem fits "All locations" and leaves the role
               placeholder room to render in full at the hero's 45% column. */}
@@ -140,10 +141,10 @@ export function SmartSearch({ roles, cities, companies, countries = [], compact 
             value={location}
             onChange={setLocation}
             placeholder="All locations"
-            className="min-w-0 flex-1 sm:w-[8.5rem] sm:flex-none sm:shrink-0"
+            className="min-w-0 flex-1 xl:w-[8.5rem] xl:flex-none xl:shrink-0"
             inputClassName="w-full border-0 bg-transparent py-2.5 pl-2 pr-1 text-[15px] text-ink-muted outline-none placeholder:text-ink-faint"
           />
-          <button onClick={submit} className="btn-primary shrink-0 rounded-lg px-5 py-2.5 text-sm font-semibold sm:ml-1.5">Search</button>
+          <button onClick={submit} className="btn-primary shrink-0 rounded-lg px-5 py-2.5 text-sm font-semibold xl:ml-1.5">Search</button>
         </div>
       </div>
       {dropdown}
