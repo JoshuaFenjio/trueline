@@ -17,3 +17,13 @@ web/next-env.d.ts
 
 # OS
 .DS_Store
+
+# Local reference/scratch artifacts (design mockups, brand ref, scrub outputs,
+# census snapshots) — kept on disk, never committed. App images live in web/public/.
+/mockup*.png
+/brand-reference.png
+/current.png
+/hero-*.png
+/salary-radar-hero.png
+/census*.json
+/scrub_hero.py
