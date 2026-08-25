@@ -1235,14 +1235,30 @@ def main():
     #   ONLY_ATS=smartrecruiters  -> scrape only that ATS's companies
     #   SR_BACKFILL=1             -> fetch SmartRecruiters detail for ALL postings
     #                                (one-time backfill; default is new-only)
+    #   SHARD_INDEX / SHARD_COUNT -> scrape only every Nth company, so CI can
+    #                                run the list as parallel jobs
     only_ats = os.environ.get("ONLY_ATS")
     sr_backfill = os.environ.get("SR_BACKFILL") == "1"
     only_companies = os.environ.get("ONLY_COMPANIES")  # comma-separated names
     only_set = {s.strip() for s in only_companies.split(",")} if only_companies else None
+    shard_count = int(os.environ.get("SHARD_COUNT") or 1)
+    shard_index = int(os.environ.get("SHARD_INDEX") or 0)
 
     companies = [c for c in COMPANIES
                  if (not only_ats or c["ats"] == only_ats)
                  and (not only_set or c["name"] in only_set)]
+
+    if shard_count > 1:
+        # Group by ATS, then stride. Shards must be balanced by COST, not just
+        # by count: a SmartRecruiters company needs an extra detail fetch per
+        # posting, so it is far slower than a Greenhouse one. Striding the raw
+        # list left one shard with 9 SmartRecruiters and another with 2 —
+        # sorting by ATS first spreads each ATS evenly by construction.
+        # (sorted() is stable and the key is deterministic, so a given company
+        # always lands in the same shard for a given companies.py.)
+        companies = sorted(companies, key=lambda c: (c["ats"], c["name"]))[shard_index::shard_count]
+        log("Shard {}/{}: {} companies".format(shard_index + 1, shard_count, len(companies)))
+
     if only_ats or only_set:
         log("Scoped run: {} companies{}{}".format(
             len(companies),

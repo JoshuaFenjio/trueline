@@ -1,9 +1,20 @@
 # Runs the Trueline scraper every 6 hours and writes fresh data to Supabase.
 #
-# Why GitHub Actions and not a Vercel cron: the scraper is a multi-minute Python
-# job (~150 companies, polite delays, thousands of postings upserted to Supabase).
-# Vercel's free serverless functions time out long before it finishes. GitHub
-# Actions is free for public repos, so it's the right home for the refresh.
+# Why GitHub Actions and not a Vercel cron: the scraper is a multi-hour Python
+# job (1,000+ companies, polite delays, tens of thousands of postings upserted
+# to Supabase). Vercel's free serverless functions time out long before it
+# finishes. GitHub Actions is free for public repos, so it's the right home.
+#
+# WHY SHARDED: measured across 11 runs, the sequential pass costs ~20s/company.
+# At 312 companies that was ~105 min (min 83, max 133). At 1,000+ it would be
+# ~5.5 HOURS — past any timeout we could set, past the 6-hour gap between
+# scheduled runs (so runs would pile up), and past GitHub's own 360-minute job
+# ceiling. Raising timeout-minutes alone could not fix that. So the list is
+# split across 4 parallel jobs (~85 min each) via SHARD_INDEX / SHARD_COUNT.
+#
+# Shards are safe to run concurrently: each one touches a disjoint set of
+# companies, and every Supabase write (upsert_posting / expire_unseen) is
+# scoped to one company at a time.
 #
 # SETUP (once): in the GitHub repo -> Settings -> Secrets and variables ->
 # Actions, add two repository secrets:
@@ -16,19 +27,30 @@ on:
     - cron: "0 */6 * * *" # every 6 hours (UTC)
   workflow_dispatch: {} # lets you run it manually from the Actions tab
 
+# A scheduled run must never start while the previous one is still going —
+# overlapping shards would double the write load on Supabase for no benefit.
+concurrency:
+  group: refresh-salary-data
+  cancel-in-progress: false
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    # 312 companies + SmartRecruiters per-posting detail fetches overrun the old
-    # 60-minute cap (scheduled runs were being cancelled mid-list, so later
-    # companies never got scraped). 150 gives the full pass room to finish.
-    timeout-minutes: 150
+    # ~85 min expected per shard at 1,000 companies. 240 is deliberate slack for
+    # a slow ATS or a retry storm; a shard that hits it was hung, not just busy.
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false # one bad shard must not cancel the other three
+      matrix:
+        shard: [0, 1, 2, 3]
+    name: refresh (shard ${{ matrix.shard }}/4)
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -37,4 +59,6 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: python pipeline.py
+          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_COUNT: 4
+        run: python -u pipeline.py
