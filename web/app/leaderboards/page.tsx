@@ -133,7 +133,7 @@ export default async function Leaderboards({
                 <Link href={`/locations/country/${slugify(c.country)}`} className="flex h-12 items-center gap-3 px-4 transition-colors hover:bg-[var(--band)]">
                   <span className="tnum w-6 text-right text-sm text-ink-faint">{i + 1}</span>
                   <Flag country={c.country} />
-                  <span className="flex-1 truncate">{c.country} <span className="tnum ml-1 text-[11px] text-ink-faint">n={c.n}</span></span>
+                  <span className="min-w-0 flex-1 truncate">{c.country} <span className="tnum ml-1 text-[11px] text-ink-faint">n={c.n}</span></span>
                   <span className="mx-4 hidden w-40 sm:block"><span className="rank-track block"><span className="rank-fill" style={{ width: `${(c.median / maxMed) * 100}%`, background: "var(--accent)" }} /></span></span>
                   <span className="tnum w-24 text-right font-semibold">{eur(c.median)}</span>
                   <span className="ml-4 hidden w-28 items-center justify-end gap-2 md:flex">
@@ -182,16 +182,23 @@ export default async function Leaderboards({
         <SectionHeader kicker="Transparency" title="Most transparent employers" sub="What share of each company's tracked ads publish pay — we monitor the disclosed and the silent. Companies with 10+ live postings." />
         <div className="mt-6 card overflow-hidden !p-0">
           <ol>
-            {lb.bestDisclosure.map((d, i) => (
-              <li key={d.slug} className="border-t first:border-t-0" style={{ borderColor: "var(--border)" }}>
-                <Link href={`/companies/${d.slug}`} className="flex h-12 items-center gap-3 px-4 transition-colors hover:bg-[var(--band)]">
+            {lb.bestDisclosure.map((d, i) => {
+              const inner = (
+                <div className="flex h-12 items-center gap-3 px-4">
                   <span className="tnum w-6 text-right text-sm text-ink-faint">{i + 1}</span>
-                  <span className="flex-1 truncate">{d.company} <span className="tnum ml-1 text-[11px] text-ink-faint">{d.activeN} ads</span></span>
+                  <span className="min-w-0 flex-1 truncate">{d.company} <span className="tnum ml-1 text-[11px] text-ink-faint">{d.activeN} ads</span></span>
                   <span className="mx-4 hidden w-40 sm:block"><span className="rank-track block"><span className="rank-fill" style={{ width: `${d.pct}%`, background: transparencyTone(d.pct) }} /></span></span>
                   <span className="tnum w-16 text-right font-semibold" style={{ color: transparencyTone(d.pct) }}>{pct(d.pct)}</span>
-                </Link>
-              </li>
-            ))}
+                </div>
+              );
+              return (
+                <li key={d.slug} className="border-t first:border-t-0" style={{ borderColor: "var(--border)" }}>
+                  {d.hasPage
+                    ? <Link href={`/companies/${d.slug}`} className="block transition-colors hover:bg-[var(--band)]">{inner}</Link>
+                    : inner}
+                </li>
+              );
+            })}
           </ol>
         </div>
       </section>
@@ -199,7 +206,7 @@ export default async function Leaderboards({
       {/* Three-column band. #cities is the anchor the homepage's "Top-paying
           cities" header links to. */}
       <section className="band section-y mt-16 scroll-mt-24" id="cities">
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="card">
             <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.pin size={15} /></span><span className="text-[15px] font-semibold">Top paying cities</span></div>
             <div className="mt-4"><TopCities cities={mapData.cities} emeaMedian={mapData.emeaMedian} excludeConcentrated /></div>
@@ -210,7 +217,7 @@ export default async function Leaderboards({
               {topTransparency.map((c, i) => (
                 <li key={c.country} className="flex h-10 items-center gap-3 border-t first:border-t-0" style={{ borderColor: "var(--border)" }}>
                   <span className="tnum w-5 text-right text-sm text-ink-faint">{i + 1}</span>
-                  <Flag country={c.country} /><span className="flex-1 truncate text-sm">{c.country}</span>
+                  <Flag country={c.country} /><span className="min-w-0 flex-1 truncate text-sm">{c.country}</span>
                   <span className="tnum text-sm font-semibold" style={{ color: transparencyTone(c.disclosurePct) }}>{pct(c.disclosurePct)}</span>
                 </li>
               ))}
@@ -241,7 +248,7 @@ export default async function Leaderboards({
 
       {/* Dual CTA band */}
       <section className="section-y">
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <div className="card flex flex-col gap-3">
             <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.search size={15} /></span><span className="text-[15px] font-semibold">For job seekers</span></div>
             <p className="text-[14px] text-ink-muted">Find the real range for your role and city, and see where your pay lands.</p>

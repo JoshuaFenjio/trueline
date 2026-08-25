@@ -32,7 +32,7 @@ export default async function RolesIndex() {
       <div className="pt-8"><Breadcrumbs items={[{ label: "Salaries", href: "/roles" }, { label: "Roles" }]} /></div>
 
       {/* Hero */}
-      <section className="mt-6 grid items-center gap-8 lg:grid-cols-[1fr_.9fr]">
+      <section className="mt-6 grid grid-cols-1 items-center gap-8 lg:grid-cols-[1fr_.9fr]">
         <div>
           <span className="eyebrow-pill"><span className="eyebrow">{ranked.length} roles benchmarked</span></span>
           <h1 className="t-h1 mt-5">Explore roles.<br /><span className="font-normal italic">Benchmark pay.</span></h1>
@@ -81,7 +81,7 @@ export default async function RolesIndex() {
       )}
 
       {/* Top by median + volume */}
-      <section className="mt-12 grid gap-6 lg:grid-cols-2">
+      <section className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="card">
           <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.trophy size={15} /></span><span className="text-[15px] font-semibold">Highest-paying roles</span></div>
           <div className="mt-4">{ranked.length ? <RankTable rows={toPayVMs(ranked.slice(0, 10).map((r) => ({ label: r.name, slug: r.slug, value: r.median!, n: r.n })), (s) => `/roles/${s}`)} /> : <p className="text-sm text-ink-faint">No role clears the gate yet.</p>}</div>
@@ -99,7 +99,7 @@ export default async function RolesIndex() {
       </section>
 
       {/* CTA */}
-      <section className="section-y grid gap-5 md:grid-cols-2">
+      <section className="section-y grid grid-cols-1 gap-5 md:grid-cols-2">
         <div className="card flex flex-col gap-3"><div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.scale size={15} /></span><span className="text-[15px] font-semibold">Compare companies</span></div><p className="text-[14px] text-ink-muted">See who pays a given role the most across employers.</p><div className="mt-1"><PillButton href="/leaderboards#by-role">By-role leaderboard</PillButton></div></div>
         <div className="card flex flex-col gap-3"><div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.users size={15} /></span><span className="text-[15px] font-semibold">Add your salary</span></div><p className="text-[14px] text-ink-muted">Help sharpen role benchmarks — anonymously, in a minute.</p><div className="mt-1"><PillButton href="/add">Add your salary</PillButton></div></div>
       </section>

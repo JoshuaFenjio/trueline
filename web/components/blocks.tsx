@@ -171,8 +171,8 @@ export function RankTable({ rows, valueHead = "Median base" }: { rows: RankVM[];
         {rows.map((r, i) => {
           const inner = (
             <div className="relative flex h-10 items-center px-1 transition-colors hover:bg-[var(--band)]">
-              <span className="tnum w-8 text-right text-sm text-ink-faint">{i + 1}</span>
-              <span className="ml-4 flex-1 truncate">
+              <span className="tnum w-8 shrink-0 text-right text-sm text-ink-faint">{i + 1}</span>
+              <span className="ml-4 min-w-0 flex-1 truncate">
                 <span className="text-ink">{r.label}</span>
                 {r.sub && <span className="tnum ml-2 text-xs text-ink-faint">{r.sub}</span>}
               </span>
@@ -181,14 +181,14 @@ export function RankTable({ rows, valueHead = "Median base" }: { rows: RankVM[];
                   <span className="rank-fill" style={{ width: `${Math.max(3, r.barPct * 100)}%`, background: r.tone ?? "var(--accent)" }} />
                 </span>
               </span>
-              <span className="tnum w-24 text-right font-semibold tabular-nums" style={r.tone ? { color: r.tone } : undefined}>
+              <span className="tnum w-24 shrink-0 text-right font-semibold tabular-nums" style={r.tone ? { color: r.tone } : undefined}>
                 {r.valueLabel}
               </span>
             </div>
           );
           return (
             <li key={r.label + i} className="border-t" style={{ borderColor: "var(--border)" }}>
-              {r.href ? <Link href={r.href}>{inner}</Link> : inner}
+              {r.href ? <Link href={r.href} className="block">{inner}</Link> : inner}
             </li>
           );
         })}

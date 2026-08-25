@@ -67,7 +67,7 @@ export async function NavBar() {
       <div className="container-page flex h-16 items-center justify-between gap-4">
         <div className="flex items-center gap-1">
           <Logo className="mr-2" />
-          <nav className="hidden items-center gap-0.5 text-sm md:flex">
+          <nav className="hidden items-center gap-0.5 text-sm lg:flex">
             <Menu label="Salaries" items={SALARIES} />
             <Menu label="Companies" items={COMPANIES} />
             <Link href="/leaderboards" className="rounded-lg px-3 py-2 text-ink-muted transition-colors hover:text-ink">Leaderboards</Link>
@@ -75,7 +75,7 @@ export async function NavBar() {
           </nav>
         </div>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-3 lg:flex">
           {navSearch}
           <Link
             href="/add"
@@ -87,7 +87,7 @@ export async function NavBar() {
         </div>
 
         {/* Mobile menu */}
-        <details data-navmenu className="group relative md:hidden">
+        <details data-navmenu className="group relative lg:hidden">
           <summary className="flex cursor-pointer list-none items-center rounded-lg px-2 py-2 text-ink-muted [&::-webkit-details-marker]:hidden">
             <span className="text-xl leading-none">≡</span>
           </summary>

@@ -459,13 +459,17 @@ export interface Leaderboards {
   topCompanies: RankRow[];
   bySector: { sector: Sector; rows: RankRow[] }[];
   byRole: { role: string; rows: RankRow[] }[];
-  bestDisclosure: { company: string; slug: string; pct: number; activeN: number }[];
+  bestDisclosure: { company: string; slug: string; pct: number; activeN: number; hasPage: boolean }[];
   roles: string[];
 }
 
 export const getLeaderboards = async (): Promise<Leaderboards> => {
   const rows = await getData();
   const roles = await getRoleFamilies();
+  // Companies that actually have a detail page (clear the board's 3-salaried
+  // gate). Transparency ranks by active-ad count, which can include companies
+  // with no usable median (e.g. USD-only pay) — those must not link to a 404.
+  const pageSlugs = new Set((await getCompaniesBoard()).map((c) => c.slug));
 
   const topCompanies = rankCompaniesBy(rows, () => true).slice(0, 20);
 
@@ -485,7 +489,7 @@ export const getLeaderboards = async (): Promise<Leaderboards> => {
     .map(([company, v]) => ({
       company, slug: slugify(company),
       pct: Math.round((v.filter((p) => p.disclosed).length / v.length) * 100),
-      activeN: v.length,
+      activeN: v.length, hasPage: pageSlugs.has(slugify(company)),
     }))
     .sort((a, b) => b.pct - a.pct)
     .slice(0, 15);

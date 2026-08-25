@@ -66,8 +66,8 @@ export default async function ComparePage({ searchParams }: { searchParams: { co
         <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-muted">Line up to three companies side by side on median base, transparency and role-by-role pay — live from job boards.</p>
       </header>
 
-      <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_300px]">
-        <div>
+      <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="min-w-0">
           {cos.length < 2 ? (
             <div className="card">
               <p className="text-sm text-ink-muted">Add two or three companies from the panel. Popular comparisons:</p>
