@@ -41,10 +41,10 @@ export async function generateMetadata({
   const r = await searchSalaries({ role: searchParams.role, level: searchParams.level, city: searchParams.city });
   const slice = sliceLabel(r.role, r.level, r.city);
   if (!r.enough || !r.spread) {
-    return { title: `${slice} salary · Trueline` };
+    return { title: `${slice} salary · SalaryRadar` };
   }
   const figure = `${eurK(r.spread.median)} median`;
-  const title = `${slice}: ${figure} · Trueline`;
+  const title = `${slice}: ${figure} · SalaryRadar`;
   const og = `/og?kicker=${encodeURIComponent(slice)}&title=${encodeURIComponent(figure)}&value=${encodeURIComponent(`${r.n} salaried postings`)}`;
   return {
     title,
@@ -434,7 +434,7 @@ function NotEnough({ result }: { result: Awaited<ReturnType<typeof searchSalarie
 function NotConfigured() {
   return (
     <div className="py-24 text-center">
-      <h1 className="text-2xl font-semibold">Trueline</h1>
+      <h1 className="text-2xl font-semibold">SalaryRadar</h1>
       <p className="mx-auto mt-3 max-w-md text-ink-muted">
         Supabase isn&rsquo;t configured. Set <code className="tnum">SUPABASE_URL</code> and <code className="tnum">SUPABASE_ANON_KEY</code> in <code className="tnum">web/.env.local</code>.
       </p>

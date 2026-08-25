@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "For companies",
   description: "Benchmark your pay against your sector with live market data, set directive-ready ranges, and see how candidates rate your transparency. Join the waitlist.",
   openGraph: {
-    title: "Trueline for companies",
+    title: "SalaryRadar for companies",
     images: ["/og?kicker=For%20companies&title=Benchmark%20your%20pay&value=Live%20EMEA%20market%20data"],
   },
 };
@@ -27,7 +27,7 @@ export default function ForCompanies() {
         <span className="eyebrow-pill"><span className="eyebrow">For companies</span></span>
         <h1 className="t-h1 mt-5">Know what the market pays, <span className="font-normal italic">before you post.</span></h1>
         <p className="mt-4 text-lg leading-relaxed text-ink-muted">
-          Trueline already reads the live salary market across EMEA. We&rsquo;re building the employer side: benchmark your bands against your real competitors and price roles on live data.
+          SalaryRadar already reads the live salary market across EMEA. We&rsquo;re building the employer side: benchmark your bands against your real competitors and price roles on live data.
         </p>
         <div className="mt-6 max-w-lg">
           <EmailCapture source="employer" withCompany cta="Join the waitlist" />

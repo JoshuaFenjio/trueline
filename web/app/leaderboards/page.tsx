@@ -25,7 +25,7 @@ export async function generateMetadata({
   else if (searchParams.crole) { kicker = "By country · " + searchParams.crole; title = "Which countries pay most"; value = searchParams.crole; }
   const og = `/og?kicker=${encodeURIComponent(kicker)}&title=${encodeURIComponent(title)}&value=${encodeURIComponent(value)}`;
   return {
-    title: `${title} · EMEA salary leaderboards · Trueline`,
+    title: `${title} · EMEA salary leaderboards · SalaryRadar`,
     description: "Live leaderboards of the top-paying tech companies in EMEA, by sector, role and country, plus the most transparent employers.",
     openGraph: { title, images: [og] },
     twitter: { card: "summary_large_image", images: [og] },
@@ -115,7 +115,7 @@ export default async function Leaderboards({
           <a key={t.id} href={`#${t.id}`} className="pill-btn"><t.icon size={15} /><span>{t.label}</span></a>
         ))}
       </nav>
-      <p className="mt-3 text-[12px] text-ink-faint">View: <span className="text-ink">Median base salary</span> · Source: Trueline data · Updated {timeAgo(refreshed)}</p>
+      <p className="mt-3 text-[12px] text-ink-faint">View: <span className="text-ink">Median base salary</span> · Source: SalaryRadar data · Updated {timeAgo(refreshed)}</p>
 
       {/* Countries — primary */}
       <section className="mt-10 scroll-mt-24" id="countries">
@@ -144,7 +144,7 @@ export default async function Leaderboards({
               </li>
             ))}
           </ol>
-          <div className="border-t px-4 py-2.5 text-[12px] text-ink-faint" style={{ borderColor: "var(--border)" }}>Source: Trueline data · Updated {timeAgo(refreshed)}</div>
+          <div className="border-t px-4 py-2.5 text-[12px] text-ink-faint" style={{ borderColor: "var(--border)" }}>Source: SalaryRadar data · Updated {timeAgo(refreshed)}</div>
         </div>
       </section>
 

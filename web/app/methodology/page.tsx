@@ -4,7 +4,7 @@ import { Breadcrumbs, PillButton } from "@/components/blocks";
 export const metadata: Metadata = {
   title: "Methodology",
   description:
-    "How Trueline builds its salary benchmarks: sources, base pay vs total comp, city-level data, sample gates, advertised vs offered, and how Pay Score works.",
+    "How SalaryRadar builds its salary benchmarks: sources, base pay vs total comp, city-level data, sample gates, advertised vs offered, and how Pay Score works.",
 };
 
 const SECTIONS = [
@@ -47,7 +47,7 @@ export default function MethodologyPage() {
       <span className="eyebrow-pill mt-6"><span className="eyebrow">Methodology</span></span>
       <h1 className="t-h1 mt-5">How we know <span className="font-normal italic">what&rsquo;s true.</span></h1>
       <p className="mt-4 text-lg leading-relaxed text-ink-muted">
-        Trueline is built to be honest about what it does and doesn&rsquo;t know. Here is exactly how the numbers are made.
+        SalaryRadar is built to be honest about what it does and doesn&rsquo;t know. Here is exactly how the numbers are made.
       </p>
 
       <nav className="mt-8 flex flex-wrap gap-2">

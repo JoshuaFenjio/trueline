@@ -26,7 +26,7 @@ export async function generateMetadata({ searchParams }: { searchParams: { compa
   const names = cos.map((c) => c.company);
   const title = `${names.join(" vs ")}: who pays more?`;
   const og = `/og?kicker=${encodeURIComponent("Compare · EMEA")}&title=${encodeURIComponent(names.join(" vs "))}&value=${encodeURIComponent("Pay, transparency and role medians")}`;
-  return { title, description: `${names.join(", ")} compared on Pay Score, median base, transparency and role-by-role pay.`, openGraph: { title: `${title} · Trueline`, images: [og] }, twitter: { card: "summary_large_image", images: [og] } };
+  return { title, description: `${names.join(", ")} compared on Pay Score, median base, transparency and role-by-role pay.`, openGraph: { title: `${title} · SalaryRadar`, images: [og] }, twitter: { card: "summary_large_image", images: [og] } };
 }
 
 function recencyDays(c: CompanyDetail): number | null {

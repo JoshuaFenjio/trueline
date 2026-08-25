@@ -20,21 +20,21 @@ const SITE = SITE_URL;
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
   title: {
-    default: "Trueline: know what Europe actually pays you",
-    template: "%s · Trueline",
+    default: "SalaryRadar: know what Europe actually pays you",
+    template: "%s · SalaryRadar",
   },
   description:
     "Real salary benchmarks from public job postings across Europe, the Middle East and Africa. Search by role, level and city. Advertised base pay, honest sample sizes.",
   openGraph: {
     type: "website",
-    siteName: "Trueline",
-    title: "Trueline: know what Europe actually pays you",
+    siteName: "SalaryRadar",
+    title: "SalaryRadar: know what Europe actually pays you",
     description: "Real EMEA salary benchmarks from live job postings. Base pay, by role, level and city.",
     url: SITE,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Trueline: know what Europe actually pays you",
+    title: "SalaryRadar: know what Europe actually pays you",
     description: "Real EMEA salary benchmarks from live job postings.",
   },
 };

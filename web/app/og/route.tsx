@@ -37,12 +37,18 @@ export async function GET(req: Request) {
           fontFamily: ff,
         }}
       >
-        {/* Wordmark */}
+        {/* Wordmark — compass mark + SalaryRadar */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 9, backgroundColor: "#171614", display: "flex" }}>
-            <div style={{ width: 30, height: 30, backgroundColor: "#0F766E", clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
-          </div>
-          <div style={{ color: "#171614", fontSize: 32, fontWeight: 700, letterSpacing: -1 }}>Trueline</div>
+          <svg width="40" height="40" viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="9" fill="#171614" />
+            <circle cx="16" cy="16" r="9" fill="none" stroke="#0F766E" strokeWidth="2" />
+            <g transform="rotate(45 16 16)">
+              <path d="M16 7 L18.2 16 L16 25 L13.8 16 Z" fill="#0F766E" />
+              <path d="M7 16 L16 13.8 L25 16 L16 18.2 Z" fill="#0F766E" fillOpacity="0.5" />
+            </g>
+            <circle cx="16" cy="16" r="1.6" fill="#171614" />
+          </svg>
+          <div style={{ color: "#171614", fontSize: 32, fontWeight: 700, letterSpacing: -1 }}>SalaryRadar</div>
         </div>
 
         {/* Headline stat */}
@@ -61,7 +67,7 @@ export async function GET(req: Request) {
 
         {/* Footer */}
         <div style={{ display: "flex", color: "#98A1AD", fontSize: 24 }}>
-          Advertised base salaries · live from company job boards · trueline
+          Advertised base salaries · live from company job boards · salaryradar
         </div>
       </div>
     ),
