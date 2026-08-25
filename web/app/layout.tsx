@@ -3,6 +3,7 @@ import { Schibsted_Grotesk } from "next/font/google";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { NavBar, Footer } from "@/components/Chrome";
+import { SITE_URL } from "@/lib/site";
 
 const schibsted = Schibsted_Grotesk({
   subsets: ["latin"],
@@ -12,11 +13,9 @@ const schibsted = Schibsted_Grotesk({
   display: "swap",
 });
 
-// Prefer an explicit site URL, else the Vercel deployment URL, else a placeholder.
-// This makes OG image URLs absolute against the real host so LinkedIn can fetch them.
-const SITE =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://trueline.vercel.app");
+// metadataBase resolves every relative OG/twitter image to an absolute URL, so
+// it has to be the real public origin — see lib/site.
+const SITE = SITE_URL;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),

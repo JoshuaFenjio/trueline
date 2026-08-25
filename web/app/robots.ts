@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
+import { absoluteUrl } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: { userAgent: "*", allow: "/" },
-    sitemap: "https://trueline.vercel.app/sitemap.xml",
+    sitemap: absoluteUrl("/sitemap.xml"),
   };
 }

@@ -3,8 +3,7 @@ import {
   getRoleFamilies, getCityList, getCountryList, getAllCompanySlugs, isConfigured,
 } from "@/lib/data";
 import { slugify } from "@/lib/format";
-
-const BASE = "https://trueline.vercel.app";
+import { SITE_URL as BASE } from "@/lib/site";
 
 export const revalidate = 3600;
 

@@ -11,10 +11,9 @@ import { Breadcrumbs } from "@/components/blocks";
 import { Icon } from "@/components/icons";
 import { scoreColor } from "@/components/ui";
 import { eur, pct } from "@/lib/format";
+import { SITE_URL as SITE } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
-
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://trueline-azure.vercel.app";
 
 function parseSlugs(sp: { companies?: string }): string[] {
   return (sp.companies || "").split(",").map((s) => s.trim()).filter(Boolean).slice(0, 3);

@@ -198,7 +198,7 @@ h2 {
   position: fixed;
   inset: 0;
   z-index: -20;
-  background: #fbfbf9; /* mockup-home.png canvas cream (sampled) */
+  background: #fcfaf7; /* measured from hero-cityscape's own border pixels */
   pointer-events: none;
 }
 
