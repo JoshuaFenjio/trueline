@@ -82,6 +82,19 @@ export default async function CompanyPage({ params }: { params: { slug: string }
 
   const compareHref = `/compare?companies=${[c.slug, ...c.peers.map((p) => p.slug)].join(",")}`;
 
+  // Tabs mirror the sections that actually render — no anchors to nowhere.
+  // Overview/Salaries/Roles/Jobs are always present; Locations is gated on markets.
+  const sectionIds = new Set(["overview", "salaries", "roles", "jobs"]);
+  if (c.markets.length > 0) sectionIds.add("locations");
+  const tabs = COMPANY_TABS.filter((t) => sectionIds.has(t.id));
+
+  // "Thin" pages: the companies board floor is n>=3, so a literal n<3 never renders,
+  // and low-n pages (e.g. 3 of 45 ads disclose) still publish a median — flagging those
+  // would contradict the header. The real "lonely" signal is a sparse body: <=2 role
+  // families means the page has almost nothing below the fold. Give those one honest,
+  // deliberate module inviting contributions.
+  const earlyCoverage = c.roles.length <= 2;
+
   return (
     <div className="pb-4">
       <div className="pt-8"><Breadcrumbs items={[
@@ -127,7 +140,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
 
       {/* Tab bar */}
       <nav className="mt-6 flex flex-wrap gap-2 border-b pb-4" style={{ borderColor: "var(--border)" }} aria-label="Company sections">
-        {COMPANY_TABS.map((t) => <a key={t.id} href={`#${t.id}`} className="pill-btn"><t.icon size={15} /><span>{t.label}</span></a>)}
+        {tabs.map((t) => <a key={t.id} href={`#${t.id}`} className="pill-btn"><t.icon size={15} /><span>{t.label}</span></a>)}
       </nav>
 
       {/* Overview */}
@@ -164,6 +177,25 @@ export default async function CompanyPage({ params }: { params: { slug: string }
           <p className="mt-3 text-[12px] text-ink-faint">Based on {c.activeN} tracked postings. No verified employee submissions yet.</p>
         </div>
       </section>
+
+      {earlyCoverage && (
+        <section className="mt-6">
+          <div className="card flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-2.5">
+              <span className="icon-chip"><Icon.spark size={15} /></span>
+              <div>
+                <div className="text-[15px] font-semibold">Early coverage</div>
+                <p className="mt-1 max-w-prose text-[14px] text-ink-muted">
+                  We track {c.activeN} live posting{c.activeN === 1 ? "" : "s"} at {c.company}
+                  {c.n > 0 && c.n < c.activeN ? <>, {c.n} disclosing pay</> : null}, across just {c.roles.length} role famil{c.roles.length === 1 ? "y" : "ies"}.
+                  Coverage is still early here — help us sharpen it. Know a number?
+                </p>
+              </div>
+            </div>
+            <Link href={`/add?company=${encodeURIComponent(c.company)}`} className="pill-btn shrink-0"><span>Add yours</span><span className="arw">→</span></Link>
+          </div>
+        </section>
+      )}
 
       {c.peers.length > 0 && <PeerCompare c={c} />}
       <SectorContext c={c} />

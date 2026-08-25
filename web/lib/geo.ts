@@ -113,8 +113,38 @@ const CITY_DISPLAY: Record<string, string> = {
 
 const REMOTE_TOKENS = ["remote", "europe", "emea", "anywhere", "worldwide", "global"];
 
+// Lowercased connectors/elisions that stay lowercase mid-name across EU spellings
+// ("Frankfurt am Main", "Bourg-en-Bresse", "Cerdanyola del Vallès", "Gonfreville-l'Orcher").
+const NAME_LOWER = new Set([
+  "am", "an", "auf", "im", "ob", "zur", "zum", "vor",
+  "de", "des", "du", "da", "di", "del", "della", "der", "den",
+  "la", "le", "les", "el", "en", "et", "aux", "à", "y",
+  "of", "on", "the", "upon", "and", "und", "aan", "sur", "van", "von", "ter", "te",
+  "d", "l", // French elision: l'Orcher, d'Orgon
+]);
+
+// Diacritic-aware proper-casing for place names. The old ASCII \b\w version broke
+// on non-ASCII letters ("gdańsk" -> "GdańSk", "zürich" -> "ZüRich"): \w never
+// matches ń/ü, so the following letter looked like a new word start. Here we split
+// on real separators (space, hyphen, slash, apostrophe), lowercase connectors when
+// they are not the first token, leave already-well-formed tokens untouched (so
+// "München", "İstanbul", "McMahon"-style names survive), and otherwise capitalize
+// the first letter with locale-aware casing.
 function titleCase(s: string): string {
-  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+  let wordIdx = 0;
+  return s
+    .split(/(\s+|[-/’'])/u)
+    .map((part) => {
+      if (part === "" || /^(\s+|[-/’'])$/u.test(part)) return part;
+      const isFirst = wordIdx === 0;
+      wordIdx++;
+      const lower = part.toLocaleLowerCase();
+      if (!isFirst && NAME_LOWER.has(lower)) return lower;
+      // Already well-formed (one leading capital, no other capitals) → leave as-is.
+      if (/^\p{Lu}[^\p{Lu}]*$/u.test(part)) return part;
+      return lower.charAt(0).toLocaleUpperCase() + lower.slice(1);
+    })
+    .join("");
 }
 
 // Strip office/HQ suffixes, parentheticals, and everything after " - ".
