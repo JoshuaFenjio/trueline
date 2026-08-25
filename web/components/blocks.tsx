@@ -18,6 +18,27 @@ export function SectionHeader({
   );
 }
 
+// -- Linked section header: icon chip + kicker + title, all one link ----------
+// Used by the homepage ranking sections, where the whole header is the way
+// through to the matching leaderboard.
+export function LinkedSectionHeader({
+  href, icon, kicker, title, sub,
+}: { href: string; icon: ReactNode; kicker: string; title: string; sub?: string }) {
+  return (
+    <Link href={href} className="group block w-max max-w-full">
+      <div className="flex items-center gap-2.5">
+        <span className="icon-chip transition-colors group-hover:bg-[var(--accent)] group-hover:text-white" aria-hidden="true">{icon}</span>
+        <span className="kicker">{kicker}</span>
+      </div>
+      <h2 className="mt-2 flex items-baseline gap-2 text-3xl font-extrabold leading-[1.04] tracking-tight transition-colors group-hover:text-[var(--accent)] md:text-4xl">
+        {title}
+        <span className="arw text-2xl font-normal text-ink-faint transition-transform group-hover:translate-x-1 group-hover:text-[var(--accent)]">→</span>
+      </h2>
+      {sub && <p className="mt-3 max-w-2xl text-ink-muted">{sub}</p>}
+    </Link>
+  );
+}
+
 // -- Breadcrumbs: mono trail, last crumb is the current page ------------------
 export function Breadcrumbs({ items }: { items: { label: string; href?: string }[] }) {
   return (

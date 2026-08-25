@@ -25,7 +25,7 @@ export default async function RolesIndex() {
   const floating = ranked.slice(0, 4);
   const mostActive = activity.slice(0, 8);
   const items: HubItem[] = ranked.map((r) => ({ name: r.name, slug: r.slug, median: r.median!, n: r.n, flagCountry: null, href: `/roles/${r.slug}` }));
-  const topSectors = sectors.filter((s) => s.sector !== "Other").slice(0, 8);
+  const topSectors = sectors.filter((s) => s.sector !== "Other");
 
   return (
     <div className="pb-4">

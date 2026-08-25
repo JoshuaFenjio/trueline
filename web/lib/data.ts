@@ -46,71 +46,71 @@ const EMEA_CURRENCIES = new Set([
   "NGN", "KES", "MAD", "TND", "TRY", "UAH", "GEL", "RSD",
 ]);
 
-const _fetch = unstable_cache(
-  async (): Promise<Posting[]> => {
+function mapRow(r: any): Posting | null {
+  // region / multi_market are tagged by the pipeline (see classify_region)
+  // and stored in Supabase — read them directly, no recompute.
+  const multiMarket = r.multi_market === true;
+  // Non-EMEA rows (e.g. "Lake Zurich, Illinois") are excluded entirely.
+  if (r.region === "NONEMEA") return null;
+
+  // 'parsed_suspect' rows disclosed a number our parser couldn't trust
+  // (OTE-as-base, inverted, or digit-grouping misparse) — treat as if no
+  // salary was stated: excluded from medians AND from transparency %.
+  const disclosed = r.salary_source && r.salary_source !== "none" && r.salary_source !== "parsed_suspect";
+  let annual = disclosed ? annualMidpointEur(r) : null;
+  // Reject non-EMEA-currency salaries as EMEA base pay.
+  if (annual !== null && !EMEA_CURRENCIES.has((r.currency || "EUR").toUpperCase())) annual = null;
+  // Intern / working-student / apprentice pay is a stipend — keep the row
+  // (still counts as disclosed) but exclude it from salary medians.
+  if (annual !== null && isTrainee(r.title)) annual = null;
+
+  const place = resolvePlace(r.city || r.location, r.country);
+  return {
+    company: r.company, sector: sectorOf(r.company), roleFamily: r.role_family || "Other",
+    level: levelBucket(r.title), city: place.city, country: place.country,
+    remote: place.remote || !!r.remote, annual, disclosed: !!disclosed, multiMarket,
+    url: r.url || null, dateMs: parseDate(r.posted_at),
+  };
+}
+
+// Cache is SHARDED. The full Posting[] (~2.9MB) exceeds Next's 2MB
+// unstable_cache item limit, so caching it whole silently no-ops and every
+// request re-fetched Supabase. Each shard is a bounded row window (~2k rows,
+// well under 2MB) cached independently and keyed by shard index; getData()
+// stitches them. SHARDS gives ample headroom above the current ~9.3k rows.
+const SHARD_ROWS = 2000;
+const SHARDS = 14; // 28k-row capacity; ~15.3k active today. Bump if the count nears this.
+const SELECT_COLS =
+  "company,role_family,title,city,location,country,remote,salary_eur_min,salary_eur_max,salary_period,salary_source,currency,url,posted_at,region,multi_market";
+
+const _fetchShard = unstable_cache(
+  async (shard: number): Promise<Posting[]> => {
     const sb = getSupabase();
     if (!sb) return [];
-    const all: any[] = [];
+    const base = shard * SHARD_ROWS;
+    const out: Posting[] = [];
     const PAGE = 1000;
-    for (let from = 0; from < 10000; from += PAGE) {
+    for (let from = base; from < base + SHARD_ROWS; from += PAGE) {
       const { data, error } = await sb
-        .from("job_postings")
-        .select(
-          "company,role_family,title,city,location,country,remote,salary_eur_min,salary_eur_max,salary_period,salary_source,currency,url,posted_at,region,multi_market"
-        )
-        .eq("status", "active")
+        .from("job_postings").select(SELECT_COLS).eq("status", "active")
+        .order("company", { ascending: true }).order("url", { ascending: true })
         .range(from, from + PAGE - 1);
       if (error || !data || data.length === 0) break;
-      all.push(...data);
+      for (const r of data) { const p = mapRow(r); if (p) out.push(p); }
       if (data.length < PAGE) break;
     }
-    return all
-      .map((r): Posting | null => {
-        // region / multi_market are tagged by the pipeline (see classify_region)
-        // and stored in Supabase — read them directly, no recompute.
-        const multiMarket = r.multi_market === true;
-        // Non-EMEA rows (e.g. "Lake Zurich, Illinois") are excluded entirely.
-        if (r.region === "NONEMEA") return null;
-
-        // 'parsed_suspect' rows disclosed a number our parser couldn't trust
-        // (OTE-as-base, inverted, or digit-grouping misparse) — treat as if no
-        // salary was stated: excluded from medians AND from transparency %.
-        const disclosed = r.salary_source && r.salary_source !== "none" && r.salary_source !== "parsed_suspect";
-        let annual = disclosed ? annualMidpointEur(r) : null;
-        // Reject non-EMEA-currency salaries as EMEA base pay. Applies to every
-        // posting, not just multi-market ones: a single-location Athens role
-        // priced in USD is a US band leaking onto a European posting, so it must
-        // not enter medians/Pay Scores. Null currency defaults to EUR (kept).
-        if (annual !== null && !EMEA_CURRENCIES.has((r.currency || "EUR").toUpperCase()))
-          annual = null;
-        // Intern / working-student / apprentice pay is a stipend — keep the row
-        // (still counts as disclosed) but exclude it from salary medians.
-        if (annual !== null && isTrainee(r.title)) annual = null;
-
-        const place = resolvePlace(r.city || r.location, r.country);
-        return {
-          company: r.company,
-          sector: sectorOf(r.company),
-          roleFamily: r.role_family || "Other",
-          level: levelBucket(r.title),
-          city: place.city,
-          country: place.country,
-          remote: place.remote || !!r.remote,
-          annual,
-          disclosed: !!disclosed,
-          multiMarket,
-          url: r.url || null,
-          dateMs: parseDate(r.posted_at),
-        };
-      })
-      .filter((p): p is Posting => p !== null);
+    return out;
   },
-  ["trueline-active-v11"],
+  ["trueline-shard-v12"],
   { revalidate: 3600 }
 );
 
 export async function getData(): Promise<Posting[]> {
-  return _fetch();
+  // Parallel cached shards, stitched. Warm requests hit N small cache entries
+  // (no Supabase round-trip); a stable company/url ordering keeps shard windows
+  // deterministic across requests so the same rows land in the same shard.
+  const shards = await Promise.all(Array.from({ length: SHARDS }, (_, i) => _fetchShard(i)));
+  return shards.flat();
 }
 
 const usable = (rows: Posting[]) => rows.filter((r) => r.annual !== null) as (Posting & { annual: number })[];
@@ -1073,9 +1073,11 @@ export function topCountryFinding(rp: RolePay): CountryFinding | null {
 // ---------------------------------------------------------------------------
 // Sectors present (for the board chips)
 // ---------------------------------------------------------------------------
+// Every sector that has any tracked posting (not just companies that clear the
+// board's 3-posting gate), so sector filters show the full set, sorted.
 export const getSectors = async (): Promise<Sector[]> => {
-  const board = await getCompaniesBoard();
-  return [...new Set(board.map((c) => c.sector))].sort() as Sector[];
+  const rows = await getData();
+  return [...new Set(rows.map((r) => r.sector))].filter((s) => s !== "Other").sort() as Sector[];
 };
 
 // ---------------------------------------------------------------------------

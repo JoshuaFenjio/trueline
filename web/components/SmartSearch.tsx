@@ -2,6 +2,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { parseQuery, parsedHref } from "@/lib/parseQuery";
+import { Combobox } from "@/components/Combobox";
 import { slugify } from "@/lib/format";
 
 interface Props {
@@ -20,6 +21,7 @@ export function SmartSearch({ roles, cities, companies, countries = [], compact 
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const boxRef = useRef<HTMLDivElement>(null);
+  const locationOptions = useMemo(() => [...cities.map((c) => c.label), ...countries], [cities, countries]);
 
   // Type-ahead: companies first (jump straight to the page), then roles. The
   // compact nav variant also suggests cities since it has no location select.
@@ -110,8 +112,13 @@ export function SmartSearch({ roles, cities, companies, countries = [], compact 
 
   return (
     <div ref={boxRef} className="relative">
-      {/* One instrument: bare role input | hairline | bare location | button */}
-      <div className="surface flex items-center gap-0 rounded-xl p-1.5 pl-4" style={{ borderColor: "var(--border-strong)" }}>
+      {/* One instrument: bare role input | hairline | bare location | button.
+          Below sm there isn't room for all three on a line without clipping the
+          role placeholder, so it stacks: role on top, location + button under. */}
+      <div
+        className="surface flex flex-col gap-2 rounded-xl p-2 sm:flex-row sm:items-center sm:gap-0 sm:p-1.5 sm:pl-4"
+        style={{ borderColor: "var(--border-strong)" }}
+      >
         <input
           value={q}
           onChange={(e) => { setQ(e.target.value); setOpen(true); setActive(-1); }}
@@ -119,29 +126,25 @@ export function SmartSearch({ roles, cities, companies, countries = [], compact 
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           placeholder="Search a role or company…"
-          className="min-w-0 flex-1 bg-transparent py-2.5 text-[17px] outline-none placeholder:text-ink-faint"
+          className="w-full min-w-0 bg-transparent px-2 py-2.5 text-[15px] outline-none placeholder:text-ink-faint sm:flex-1 sm:px-0"
           aria-label="Search roles or companies"
         />
-        <span className="mx-1 h-7 w-px shrink-0" style={{ background: "var(--border)" }} />
-        <select
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          className="shrink-0 cursor-pointer border-0 bg-transparent py-2.5 pl-2 pr-1 text-sm text-ink-muted outline-none"
-          aria-label="Location"
-        >
-          <option value="">All locations</option>
-          {cities.length > 0 && (
-            <optgroup label="Cities">
-              {cities.map((c) => <option key={"c" + c.label} value={c.label}>{c.label}</option>)}
-            </optgroup>
-          )}
-          {countries.length > 0 && (
-            <optgroup label="Countries">
-              {countries.map((c) => <option key={"n" + c} value={c}>{c}</option>)}
-            </optgroup>
-          )}
-        </select>
-        <button onClick={submit} className="btn-primary ml-1.5 shrink-0 rounded-lg px-5 py-2.5 text-sm font-semibold">Search</button>
+        <span className="mx-1 hidden h-7 w-px shrink-0 sm:block" style={{ background: "var(--border)" }} />
+        {/* sm:contents dissolves this row back into the bar's flex line. */}
+        <div className="flex items-center gap-2 sm:contents">
+          {/* Same size and family as the role input so the two segments read as
+              one instrument; 8.5rem fits "All locations" and leaves the role
+              placeholder room to render in full at the hero's 45% column. */}
+          <Combobox
+            options={locationOptions}
+            value={location}
+            onChange={setLocation}
+            placeholder="All locations"
+            className="min-w-0 flex-1 sm:w-[8.5rem] sm:flex-none sm:shrink-0"
+            inputClassName="w-full border-0 bg-transparent py-2.5 pl-2 pr-1 text-[15px] text-ink-muted outline-none placeholder:text-ink-faint"
+          />
+          <button onClick={submit} className="btn-primary shrink-0 rounded-lg px-5 py-2.5 text-sm font-semibold sm:ml-1.5">Search</button>
+        </div>
       </div>
       {dropdown}
     </div>

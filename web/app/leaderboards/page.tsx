@@ -196,8 +196,9 @@ export default async function Leaderboards({
         </div>
       </section>
 
-      {/* Three-column band */}
-      <section className="band section-y mt-16">
+      {/* Three-column band. #cities is the anchor the homepage's "Top-paying
+          cities" header links to. */}
+      <section className="band section-y mt-16 scroll-mt-24" id="cities">
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="card">
             <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.pin size={15} /></span><span className="text-[15px] font-semibold">Top paying cities</span></div>

@@ -8,6 +8,7 @@ import type { EuropePayData, CountryPay, CountryFinding } from "@/lib/data";
 import { payColor, scoreFromRatio, NO_DATA_FILL } from "@/lib/payScale";
 import { PayScaleLegend } from "@/components/PayIndex";
 import { Sparkline } from "@/components/Sparkline";
+import { Combobox } from "@/components/Combobox";
 import { Flag } from "@/components/Flag";
 import { eur, slugify } from "@/lib/format";
 
@@ -39,10 +40,7 @@ export function EuropePayMap({
   const controls = (
     <div className="mb-5 flex flex-wrap items-center gap-3">
       <label className="text-[11px] text-ink-faint">Role</label>
-      <select value={role} onChange={(e) => setRole(e.target.value)} className="filter-pill">
-        <option>All roles</option>
-        {data.roles.map((r) => <option key={r}>{r}</option>)}
-      </select>
+      <Combobox options={data.roles} value={role} onChange={(v) => setRole(v || "All roles")} placeholder="All roles" clearValue="All roles" className="w-52" inputClassName="filter-pill w-full" />
       <button
         onClick={() => setShowTop((v) => !v)}
         className="filter-pill"

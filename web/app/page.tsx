@@ -7,14 +7,15 @@ import {
 import type { Metadata } from "next";
 import { SearchForm } from "@/components/SearchForm";
 import { SmartSearch } from "@/components/SmartSearch";
-import { WhoPaysInteractive } from "@/components/WhoPaysInteractive";
-import { HeroComposition } from "@/components/HeroComposition";
+import { TopCompaniesRanking, TopCitiesRanking } from "@/components/HomeRankings";
+import { HeroIllustration } from "@/components/HeroIllustration";
 import { Flag } from "@/components/Flag";
 import { MeasureBar } from "@/components/MeasureBar";
 import { ShareButton } from "@/components/ShareButton";
 import { Card, Stat, GhostLink } from "@/components/ui";
 import { EuropePayMap } from "@/components/EuropePayMap";
-import { SectionHeader, ArrowLink } from "@/components/blocks";
+import { SectionHeader, LinkedSectionHeader, ArrowLink } from "@/components/blocks";
+import { Icon } from "@/components/icons";
 import { EmailCapture } from "@/components/EmailCapture";
 import { parseQuery } from "@/lib/parseQuery";
 import { WATCHLIST } from "@/lib/watchlist";
@@ -93,9 +94,16 @@ export default async function Home({
 
   return (
     <div className="pb-4">
-      {/* Hero — two columns: search-led text left, live composition right. The
-          composition panel is hidden below 900px (hero becomes text-only). */}
-      <section className="grid items-center gap-10 pt-10 md:pt-14 min-[900px]:grid-cols-[1fr_1.12fr] min-[900px]:gap-12">
+      {/* Page canvas matched to the hero artwork's cream — see .home-canvas. */}
+      <div className="home-canvas" aria-hidden="true" />
+
+      {/* Hero — two columns: search-led text left (45%), illustration right
+          (55%). The illustration is hidden below 1024px and the hero falls back
+          to a single text column. */}
+      {/* grid-cols-1 / minmax(0,…) rather than bare auto tracks: an auto track
+          sizes to max-content, which let the eyebrow pill and the search
+          selects push the column past the viewport at 375. */}
+      <section className="grid grid-cols-1 items-center gap-10 pt-10 md:pt-14 lg:grid-cols-[minmax(0,45fr)_minmax(0,55fr)] lg:gap-12">
         <div>
           <span className="eyebrow-pill">
             <span className="eyebrow">
@@ -103,7 +111,8 @@ export default async function Home({
             </span>
           </span>
           <h1 className="t-h1 mt-5 max-w-xl">
-            Know what Europe <span className="font-normal italic">actually</span> pays.
+            Know what Europe{" "}
+            <span className="font-normal italic" style={{ color: "var(--accent)" }}>actually</span> pays.
           </h1>
           <p className="mt-4 max-w-lg text-lg leading-relaxed text-ink-muted">
             Real base salaries from live job postings across Europe, the Middle East and Africa.
@@ -149,9 +158,11 @@ export default async function Home({
           </details>
         </div>
 
-        {/* Right column — live-data composition. Reserve height to avoid CLS. */}
-        <div className="hidden min-[900px]:block">
-          <HeroComposition comp={comp} />
+        {/* Right column — the artwork with live stat cards floating over it.
+            Sits directly on the page background (no card, border or shadow) so
+            its cream edge blends into --bg. Hidden below 1024px. */}
+        <div className="hidden lg:block">
+          <HeroIllustration comp={comp} />
         </div>
       </section>
 
@@ -213,23 +224,46 @@ export default async function Home({
         </section>
       )}
 
-      {/* Who pays the most — interactive, on a sage band */}
+      {/* Top companies — interactive, on a sage band */}
       {board.length > 0 && (
         <section className="band mt-16 py-14">
           <div className="flex items-end justify-between gap-4">
-            <SectionHeader kicker="A first look" title="Who pays the most" sub="Discover the top-paying companies and cities across Europe." />
+            <LinkedSectionHeader
+              href="/leaderboards#overall"
+              icon={<Icon.building size={15} />}
+              kicker="Employers"
+              title="Top companies"
+              sub="Who pays above their sector peers, ranked by Pay Score across Europe."
+            />
             <span className="hidden md:block"><ArrowLink href="/companies">View full ranking</ArrowLink></span>
           </div>
           <div className="mt-6">
-            <WhoPaysInteractive
+            <TopCompaniesRanking
               companies={board.map((c) => ({ company: c.company, slug: c.slug, sector: c.sector, payScore: c.payScore }))}
-              cities={mapData.cities}
               sectors={sectors}
-              countries={countryNames}
-              emeaMedian={mapData.emeaMedian}
             />
           </div>
           <div className="mt-6 md:hidden"><ArrowLink href="/companies">View full ranking</ArrowLink></div>
+        </section>
+      )}
+
+      {/* Top-paying cities */}
+      {mapData.cities.length > 0 && (
+        <section className="mt-16 py-14">
+          <div className="flex items-end justify-between gap-4">
+            <LinkedSectionHeader
+              href="/leaderboards#cities"
+              icon={<Icon.pin size={15} />}
+              kicker="Cities"
+              title="Top-paying cities"
+              sub="Median advertised base salary, city by city, against the EMEA median."
+            />
+            <span className="hidden md:block"><ArrowLink href="/locations">Explore cities</ArrowLink></span>
+          </div>
+          <div className="mt-6">
+            <TopCitiesRanking cities={mapData.cities} countries={countryNames} emeaMedian={mapData.emeaMedian} />
+          </div>
+          <div className="mt-6 md:hidden"><ArrowLink href="/locations">Explore cities</ArrowLink></div>
         </section>
       )}
 
