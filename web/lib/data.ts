@@ -4,7 +4,7 @@ import { getSupabase, isConfigured } from "./supabase";
 import {
   annualMidpointEur, spread, percentileRank, median, Spread, computeTrend, Trend,
 } from "./stats";
-import { levelBucket, isTrainee, Level, LEVELS } from "./levels";
+import { levelBucket, isTrainee, Level, LEVELS, levelSlug } from "./levels";
 import { sectorOf, Sector } from "./sectors";
 import { resolvePlace } from "./geo";
 import { iso2 } from "./flags";
@@ -101,7 +101,7 @@ const _fetchShard = unstable_cache(
     }
     return out;
   },
-  ["trueline-shard-v13"],
+  ["trueline-shard-v14"],
   { revalidate: 3600 }
 );
 
@@ -551,6 +551,52 @@ export async function getRoleHub(role: string): Promise<RoleHub> {
     dist: usable(rows).filter(inRole).map((p) => p.annual).sort((a, b) => a - b),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Role × level hub — one family at one seniority band. Same N_MEDIAN gate, so
+// thin combinations render an honest empty state rather than an invented number.
+// ---------------------------------------------------------------------------
+export interface RoleLevelHub {
+  role: string; slug: string; level: Level;
+  overall: Slice; trackedN: number; disclosedN: number;
+  topCountries: RankRow[]; topCompanies: RankRow[]; dist: number[];
+  siblings: { level: Level; median: number | null; n: number; gated: boolean }[];
+}
+export async function getRoleLevelHub(role: string, level: Level): Promise<RoleLevelHub> {
+  const rows = await getData();
+  const match = (p: Posting) => p.roleFamily === role && p.level === level;
+  return {
+    role, slug: slugify(role), level,
+    overall: sliceOf(rows, match),
+    trackedN: rows.filter(match).length,
+    disclosedN: rows.filter((p) => match(p) && p.disclosed).length,
+    topCountries: rankCountriesBy(rows, match).slice(0, 8),
+    topCompanies: rankCompaniesBy(rows, match).slice(0, 8),
+    dist: usable(rows).filter(match).map((p) => p.annual).sort((a, b) => a - b),
+    siblings: LEVELS.map((l) => {
+      const s = sliceOf(rows, (p) => p.roleFamily === role && p.level === l);
+      return { level: l, median: s.spread?.median ?? null, n: s.n, gated: s.gated };
+    }),
+  };
+}
+
+// Every role × level combination with its posting count and whether it clears
+// the median gate — drives the sitemap (only gate-clearing pages are listed) and
+// role-hub level links.
+export const getRoleLevelIndex = async (): Promise<
+  { role: string; level: Level; slug: string; levelSlug: string; n: number; hasMedian: boolean }[]
+> => {
+  const rows = await getData();
+  const roles = [...new Set(usable(rows).map((r) => r.roleFamily))];
+  const out: { role: string; level: Level; slug: string; levelSlug: string; n: number; hasMedian: boolean }[] = [];
+  for (const role of roles) {
+    for (const level of LEVELS) {
+      const s = sliceOf(rows, (p) => p.roleFamily === role && p.level === level);
+      out.push({ role, level, slug: slugify(role), levelSlug: levelSlug(level), n: s.n, hasMedian: !s.gated });
+    }
+  }
+  return out;
+};
 
 // ---------------------------------------------------------------------------
 // Location hubs (city + country)

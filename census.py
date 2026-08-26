@@ -59,6 +59,30 @@ _geo_src = open(GEO_TS, encoding="utf-8").read()
 COUNTRY_ALIASES = _parse_ts_map(_geo_src, "COUNTRY_ALIASES")
 CITY_COUNTRY = _parse_ts_map(_geo_src, "CITY_COUNTRY")
 
+SECTORS_TS = "web/lib/sectors.ts"
+
+
+def _parse_sector_map():
+    """Pull SECTOR_BY_COMPANY out of sectors.ts so the census buckets sectors the
+    same way sectorOf() does on the site. Keys are a mix of "Quoted Names" and
+    bareIdentifiers; values are Sector strings."""
+    src = open(SECTORS_TS, encoding="utf-8").read()
+    m = re.search(r"SECTOR_BY_COMPANY[^=]*=\s*\{(.*?)\n\};", src, re.S)
+    if not m:
+        raise SystemExit("census: could not find SECTOR_BY_COMPANY in {}".format(SECTORS_TS))
+    out = {}
+    for quoted, bare, value in re.findall(
+            r'(?:"([^"]+)"|([A-Za-z][\w]*))\s*:\s*"([A-Za-z]+)"', m.group(1)):
+        out[quoted or bare] = value
+    return out
+
+
+SECTOR_BY_COMPANY = _parse_sector_map()
+
+
+def sector_of(company):
+    return SECTOR_BY_COMPANY.get(company, "Other")
+
 
 def clean_city_raw(raw):
     s = (raw or "").strip()
@@ -95,7 +119,9 @@ def fetch_all():
         r = requests.get(url, headers=dict(h, **{"Range-Unit": "items",
                                                  "Range": "{}-{}".format(offset, offset + PAGE - 1)}),
                          params={"status": "eq.active",
-                                 "select": "company,country,city,role_family,"
+                                 "order": "id.asc",  # stable order — Range paging is
+                                 # otherwise non-deterministic and silently drops/dupes rows
+                                 "select": "company,country,city,title,role_family,"
                                            "salary_eur_min,salary_eur_max,salary_source"},
                          timeout=60)
         r.raise_for_status()
@@ -126,7 +152,25 @@ def census(rows):
     by_city = Counter(p["city"] for p in rows if p.get("city"))
     sal_by_city = Counter(p["city"] for p in sal if p.get("city"))
 
+    for p in rows:
+        p["_sector"] = sector_of(p["company"])
+    by_sector = Counter(p["_sector"] for p in rows)
+    sal_by_sector = Counter(p["_sector"] for p in sal)
+    companies_by_sector = defaultdict(set)
+    for p in rows:
+        companies_by_sector[p["_sector"]].add(p["company"])
+
+    distinct_titles = len({(p.get("title") or "").strip().lower() for p in rows if p.get("title")})
+    other_titles = Counter((p.get("title") or "").strip() for p in rows
+                           if p.get("role_family") == "Other" and (p.get("title") or "").strip())
+
     return {
+        "distinct_titles": distinct_titles,
+        "sector_counts": dict(by_sector),
+        "sector_salaried": dict(sal_by_sector),
+        "companies_by_sector": {s: len(v) for s, v in companies_by_sector.items()},
+        "other_share_pct": round(by_role.get("Other", 0) / total * 100, 1) if total else 0,
+        "other_titles_top30": other_titles.most_common(30),
         "companies_with_postings": len(by_company),
         "companies_disclosing": sum(1 for c, n in sal_by_company.items() if n > 0),
         "postings_total": total,
@@ -177,6 +221,16 @@ def render(c, ats):
     L.append("active postings              : {}".format(c["postings_total"]))
     L.append("...with a salary             : {} ({}%)".format(
         c["postings_salaried"], c["disclosure_pct"]))
+    L.append("distinct job titles          : {}".format(c["distinct_titles"]))
+    L.append("'Other' role share           : {}%".format(c["other_share_pct"]))
+    L.append("")
+    L.append("SECTOR COVERAGE")
+    L.append("{:<12} {:>6} {:>8} {:>9}  {}".format("sector", "cos", "active", "salaried", "gate"))
+    L.append("-" * 72)
+    for s in sorted(c["sector_counts"], key=lambda k: -c["sector_salaried"].get(k, 0)):
+        n, sl, co = c["sector_counts"][s], c["sector_salaried"].get(s, 0), c["companies_by_sector"].get(s, 0)
+        L.append("{:<12} {:>6} {:>8} {:>9}  {}".format(
+            s, co, n, sl, "median" if sl >= N_MEDIAN else "—"))
     L.append("")
     L.append("COUNTRY GATES")
     L.append("{:<6} {:>8} {:>9}  {}".format("cc", "active", "salaried", "gates cleared"))
@@ -199,6 +253,11 @@ def render(c, ats):
         n, s = c["role_counts"][r], c["role_salaried"].get(r, 0)
         L.append("{:<22} {:>8} {:>9}  {}".format(
             r, n, s, "median" if s >= N_MEDIAN else "—"))
+    L.append("")
+    L.append("TOP 30 RAW TITLES INSIDE 'Other'  (what the taxonomy is missing)")
+    L.append("-" * 72)
+    for title, n in c["other_titles_top30"]:
+        L.append("{:>5}  {}".format(n, title[:62]))
     L.append("")
     L.append("PER-ATS DISCLOSURE")
     L.append("{:<18} {:>6} {:>11} {:>8} {:>9} {:>7}".format(

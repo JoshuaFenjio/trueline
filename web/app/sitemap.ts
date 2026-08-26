@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import {
-  getRoleFamilies, getCityList, getCountryList, getAllCompanySlugs, isConfigured,
+  getRoleFamilies, getCityList, getCountryList, getAllCompanySlugs, getRoleLevelIndex, isConfigured,
 } from "@/lib/data";
 import { slugify } from "@/lib/format";
 import { SITE_URL as BASE } from "@/lib/site";
@@ -21,13 +21,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
   if (!isConfigured) return staticPages;
 
-  const [roles, cities, countries, companySlugs] = await Promise.all([
-    getRoleFamilies(), getCityList(), getCountryList(), getAllCompanySlugs(),
+  const [roles, cities, countries, companySlugs, roleLevels] = await Promise.all([
+    getRoleFamilies(), getCityList(), getCountryList(), getAllCompanySlugs(), getRoleLevelIndex(),
   ]);
 
   const roleUrls: MetadataRoute.Sitemap = roles.map((r) => ({
     url: `${BASE}/roles/${slugify(r)}`, changeFrequency: "daily", priority: 0.8,
   }));
+  // Role × level pages — only the combinations that clear the median gate, so we
+  // never point search engines at an honest empty state.
+  const roleLevelUrls: MetadataRoute.Sitemap = roleLevels
+    .filter((rl) => rl.hasMedian)
+    .map((rl) => ({
+      url: `${BASE}/roles/${rl.slug}/${rl.levelSlug}`, changeFrequency: "weekly", priority: 0.6,
+    }));
   const cityUrls: MetadataRoute.Sitemap = cities.map((c) => ({
     url: `${BASE}/locations/${slugify(c.city)}`, changeFrequency: "weekly", priority: 0.6,
   }));
@@ -50,5 +57,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  return [...staticPages, ...roleUrls, ...cityUrls, ...countryUrls, ...companyUrls, ...roleCity];
+  return [...staticPages, ...roleUrls, ...roleLevelUrls, ...cityUrls, ...countryUrls, ...companyUrls, ...roleCity];
 }

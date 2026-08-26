@@ -11,10 +11,16 @@ export const metadata: Metadata = {
 
 const ROLE_FAMILIES = [
   "Software Engineer", "Frontend", "Backend", "Mobile", "ML/AI Engineer",
-  "Data Engineer", "Data Scientist", "Data Analyst", "DevOps/Platform",
-  "Security Engineer", "QA/Test", "Engineering Manager", "Product Manager",
-  "Designer", "Sales/AE", "Customer Success", "Marketing", "Finance",
-  "People/HR", "Legal", "Operations", "Other",
+  "Research Scientist", "Data Engineer", "Data Scientist", "Data Analyst",
+  "DevOps/Platform", "Security Engineer", "SecOps", "Hardware/Embedded",
+  "QA/Test", "Engineering Manager", "Solutions Engineer", "Product Manager",
+  "Product Marketing", "Designer",
+  "Account Executive", "Account Manager", "SDR/BDR", "BizDev/Partnerships",
+  "Marketing", "Content", "Brand", "Performance Marketing",
+  "Customer Success", "Support",
+  "Operations", "BizOps", "Strategy", "Consultant", "Office/EA",
+  "Finance", "FP&A", "Accounting", "Payroll",
+  "Legal", "Compliance", "People/HR", "Recruiter/TA", "Other",
 ];
 const PROOF = ["Offer letter", "Payslip", "Contract", "Verbal offer", "Prefer not to say"];
 

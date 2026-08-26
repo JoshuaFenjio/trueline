@@ -3,6 +3,15 @@ export type Level = "Junior" | "Mid" | "Senior" | "Staff+";
 // Ladder order, junior -> staff+.
 export const LEVELS: Level[] = ["Junior", "Mid", "Senior", "Staff+"];
 
+// URL slug for a level ("Staff+" -> "staff") and the inverse. Used by the
+// /roles/[role]/[level] pages.
+export function levelSlug(l: Level): string {
+  return l === "Staff+" ? "staff" : l.toLowerCase();
+}
+export function levelFromSlug(s: string): Level | null {
+  return LEVELS.find((l) => levelSlug(l) === s.toLowerCase()) ?? null;
+}
+
 // Internship / working-student / apprentice / trainee roles. Their pay is a
 // stipend, not a professional base — keep the row but exclude it from medians.
 const TRAINEE_RE =

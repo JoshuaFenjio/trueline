@@ -290,13 +290,22 @@ def normalize_period(raw: Optional[str]) -> Optional[str]:
 # ROLE FAMILY classifier
 # -----------------------------------------------------------------------------
 def classify_role(title: str) -> str:
-    # Pad with spaces so " ml "/" pm "/" ae " word checks work at the edges.
+    # Pad with spaces (and space out slashes) so " ml "/" ae "/" hr " edge checks
+    # work. ~43 families. Order matters: first match wins, so the most specific
+    # family is tested before any broader catch that could also match its title
+    # (e.g. Solutions Engineer before the generic "engineer" -> Software Engineer,
+    # Product Marketing before Product Manager, SDR/BDR before BizDev, Payroll /
+    # FP&A / Accounting before Finance).
     t = " " + (title or "").lower().replace("/", " / ") + " "
 
     def has(*words):
         return any(w in t for w in words)
 
-    # --- Management / product (before IC engineering) -----------------------
+    # --- Product marketing (before Product Manager / Marketing) -------------
+    if has("product marketing", "product marketer", " pmm ", " pmm,"):
+        return "Product Marketing"
+
+    # --- Management: engineering / product ----------------------------------
     if has("engineering manager", "eng manager", "manager, engineering",
            "manager of engineering", "head of engineering", "director of engineering",
            "vp of engineering", "vp engineering", "engineering director",
@@ -304,42 +313,61 @@ def classify_role(title: str) -> str:
         return "Engineering Manager"
     if has("product manager", "product owner", "head of product", "director of product",
            "vp of product", "group product manager", "chief product", " cpo ",
-           "principal product manager", "technical product manager"):
+           "principal product manager", "technical product manager", "product lead"):
         return "Product Manager"
 
+    # --- Research science (before Data Scientist / ML) ----------------------
+    if has("research scientist", "applied scientist", "research fellow", "postdoc",
+           "post-doc", "phd researcher", "principal scientist", "senior scientist",
+           "staff scientist", "scientist, research", "member of technical staff"):
+        return "Research Scientist"
+
     # --- Specialised engineering (most specific first) ----------------------
-    if has("machine learning", "ml engineer", " ml ", "ml/ai", "ai engineer",
+    if has("machine learning", "ml engineer", " ml ", "ml / ai", "ai engineer",
            "a.i. engineer", "deep learning", "nlp", "natural language",
            "computer vision", "research engineer", "llm", "genai", "gen ai",
-           "applied ai", "applied ml", " ml/", "mlops", "ml ops", "ml platform",
-           "prompt engineer"):
+           "applied ai", "applied ml", " ml / ", "mlops", "ml ops", "ml platform",
+           "prompt engineer", "ai / ml", "ai researcher"):
         return "ML/AI Engineer"
     if has("data engineer", "analytics engineer", "data platform", "etl ",
            "data infrastructure", "big data", "data warehouse", "data governance"):
         return "Data Engineer"
-    if has("data scientist", "data science", "applied scientist",
-           "research scientist", "decision scientist", "quantitative", " quant ",
-           "quant researcher"):
+    if has("data scientist", "data science", "decision scientist", "quantitative",
+           " quant ", "quant researcher"):
         return "Data Scientist"
     if has("data analyst", "business analyst", "bi analyst", "insights analyst",
            "reporting analyst", "business intelligence", "bi developer",
            "analytics manager", "web analyst", "product analyst", "growth analyst"):
         return "Data Analyst"
+
+    # --- Security: SecOps before Security Engineer --------------------------
+    if has("security operations", "secops", "soc analyst", "soc engineer",
+           "incident response", "threat intel", "threat detection", "blue team",
+           "detection engineer", "security operations center"):
+        return "SecOps"
     if has("security engineer", "application security", "appsec", "infosec",
-           "information security", "security analyst", "security operations",
-           "soc analyst", "penetration test", "pentest", "cyber", "security architect",
-           "product security", "cloud security", "security specialist"):
+           "information security", "security analyst", "penetration test", "pentest",
+           "cyber", "security architect", "product security", "cloud security",
+           "security specialist", "iam engineer"):
         return "Security Engineer"
-    if has("devops", "sre", "site reliability", "platform engineer", "infrastructure",
-           "cloud engineer", "reliability engineer", "systems engineer",
-           "platform team", "solutions architect", "cloud architect",
-           "kubernetes", "observability"):
+
+    # --- Hardware / embedded (before generic SWE) ---------------------------
+    if has("embedded", "firmware", "fpga", "hardware engineer", "electrical engineer",
+           "electronics engineer", " pcb ", "rf engineer", "mechatronic",
+           "mechanical engineer", "robotics engineer", "hardware design", "silicon",
+           "chip design", "vhdl", "verilog"):
+        return "Hardware/Embedded"
+
+    # --- Infra / QA / mobile / web ------------------------------------------
+    if has("devops", " sre ", "site reliability", "platform engineer", "infrastructure",
+           "cloud engineer", "reliability engineer", "systems engineer", "platform team",
+           "cloud architect", "enterprise architect", "kubernetes", "observability"):
         return "DevOps/Platform"
     if has("qa ", "quality assurance", "test engineer", "sdet", "qa engineer",
            "test automation", "quality engineer", "tester", "in test"):
         return "QA/Test"
     if has(" ios ", "android", "mobile engineer", "mobile developer", "react native",
-           "flutter", "mobile app", " ios/"):
+           "flutter", "mobile app", " ios / "):
         return "Mobile"
     if has("frontend", "front-end", "front end", "ui engineer", "ui developer",
            "react developer", "web developer", "javascript engineer"):
@@ -347,51 +375,118 @@ def classify_role(title: str) -> str:
     if has("backend", "back-end", "back end", "api engineer", "server engineer"):
         return "Backend"
 
+    # --- Solutions/sales engineering (pre-sales technical) — before generic SWE
+    if has("solutions engineer", "solution engineer", "sales engineer", "pre-sales",
+           "presales", "solutions architect", "solution architect", "solutions consultant",
+           "field engineer", "deployment strategist", "forward deployed",
+           "implementation engineer", "engagement manager", "customer engineer",
+           "technical account manager"):
+        return "Solutions Engineer"
+
     # --- Generic engineering / design ---------------------------------------
     if has("software", "full stack", "fullstack", "full-stack", "swe", "developer",
            "programmer", "engineer"):
         return "Software Engineer"
-    if has("designer", "design lead", "ux", "ui/", "user experience",
-           "product design", "graphic design", "motion design", "design system"):
+    if has("designer", "design lead", " ux ", "ui / ", "user experience",
+           "product design", "graphic design", "motion design", "design system",
+           "ux researcher", "ui designer"):
         return "Designer"
 
-    # --- Business functions -------------------------------------------------
-    if has("account executive", " ae ", " ae,", "sales", "business development",
-           "sales development", " sdr ", " bdr ", "account manager", "revenue",
-           "commercial", "commerciale", "new business", "key account", "field sales",
-           "solutions engineer", "sales engineer", "pre-sales", "presales",
-           "partnerships", "partner manager", "channel sales", "go-to-market",
-           " gtm ", "inside sales"):
-        return "Sales/AE"
-    if has("customer success", "customer support", "customer experience",
-           "customer care", "client success", "customer service", "support specialist",
-           "support agent", "technical support", "support engineer", "onboarding",
-           "implementation", "solutions consultant"):
-        return "Customer Success"
-    if has("marketing", "growth", "seo", "content", "brand", "communications",
-           "public relations", " pr ", "demand generation", "social media",
-           "copywriter", "campaign", "community", "developer advocate",
-           "developer relations", "devrel", "product marketing", "lifecycle"):
+    # --- Go-to-market: BizOps before the commercial split, so "sales operations"
+    #     / "revenue operations" aren't swept up by the broad " sales " AE check --
+    if has("business operations", "biz ops", "bizops", "revops", "rev ops",
+           "revenue operations", "sales operations", "marketing operations",
+           "gtm operations"):
+        return "BizOps"
+
+    # --- Go-to-market: commercial split -------------------------------------
+    if has(" sdr ", " bdr ", " sdr,", " bdr,", "sales development",
+           "business development representative", "sales development representative",
+           "inside sales", "lead generation", "outbound rep"):
+        return "SDR/BDR"
+    if has("business development", "partnerships", "partnership", "partner manager",
+           "channel sales", "channel partner", "alliances", "strategic partnerships"):
+        return "BizDev/Partnerships"
+    if has("account manager", "key account", "account director", "client manager",
+           "relationship manager", "account management"):
+        return "Account Manager"
+    if has("account executive", " ae ", " ae,", "sales representative", "sales manager",
+           "sales rep", "field sales", "new business", "enterprise sales", "commercial",
+           "commerciale", "closing", " sales ", "sales specialist", "sales lead"):
+        return "Account Executive"
+
+    # --- Marketing split ----------------------------------------------------
+    if has("content", "copywriter", "copywriting", " editor ", "editorial",
+           "technical writer", "content strategist"):
+        return "Content"
+    if has("performance marketing", "paid ", " ppc", " sem ", "paid social",
+           "paid search", "growth marketing", "user acquisition", " seo", " sea ",
+           "digital marketing", "media buyer", "paid media", "demand generation",
+           "demand gen", "growth hacker", "growth lead"):
+        return "Performance Marketing"
+    if has("brand", "communications", "public relations", " pr ", "social media",
+           "community", " comms", "influencer", "events", "event manager", "creative director"):
+        return "Brand"
+    if has("marketing", "growth", "campaign", "lifecycle", "field marketing",
+           "developer advocate", "developer relations", "devrel", "go-to-market",
+           "product evangelist"):
         return "Marketing"
-    if has("finance", "financial", "accountant", "accounting", "controller", "fp&a",
-           "treasury", " tax ", "tax ", "audit", "bookkeeper", "payroll",
-           "accounts payable", "accounts receivable", "procure to pay", " risk ",
-           "actuary", "actuarial", "underwrit", "financial analyst"):
+
+    # --- Customer: Support before Customer Success --------------------------
+    if has("customer support", "technical support", "support engineer", "support specialist",
+           "support agent", "helpdesk", "help desk", "service desk", "customer service",
+           "customer care", "support team", "support representative"):
+        return "Support"
+    if has("customer success", "customer experience", "client success", "onboarding",
+           "implementation", "csm", "account health", "customer onboarding"):
+        return "Customer Success"
+
+    # --- Finance split ------------------------------------------------------
+    if has("payroll"):
+        return "Payroll"
+    if has("fp&a", "fp & a", "financial planning", "finance business partner",
+           "financial analyst", "business finance"):
+        return "FP&A"
+    if has("accountant", "accounting", "controller", "bookkeeper", "accounts payable",
+           "accounts receivable", "audit", "auditor", " tax ", "tax ", "general ledger",
+           "procure to pay", "financial controller"):
+        return "Accounting"
+    if has("finance", "financial", "treasury", "investor relations", "corporate finance",
+           "actuary", "actuarial", "underwrit", "controlling"):
         return "Finance"
-    if has("people ", "human resources", " hr ", "recruiter", "recruiting",
-           "talent acquisition", "talent ", "people operations", "people partner",
-           "hrbp", "people & culture", "compensation & benefits",
-           "learning & development", " l&d ", "hr business partner"):
+
+    # --- People split -------------------------------------------------------
+    if has("recruiter", "recruiting", "talent acquisition", "sourcer", "talent partner",
+           "technical recruiter", "talent scout", "recruitment"):
+        return "Recruiter/TA"
+    if has("people ", "human resources", " hr ", "people operations", "people partner",
+           "hrbp", "people & culture", "compensation & benefits", "learning & development",
+           " l&d ", "hr business partner", "total rewards", "people & talent"):
         return "People/HR"
+
+    # --- Legal / risk -------------------------------------------------------
+    if has("compliance", "regulatory", "aml", " kyc", "financial crime", "sanctions",
+           "risk & compliance", "regulatory affairs", " risk ", "risk manager",
+           "risk analyst", "money laundering"):
+        return "Compliance"
     if has("legal", "counsel", "lawyer", "paralegal", "attorney", "privacy",
-           "compliance", "regulatory"):
+           "contracts manager", "data protection"):
         return "Legal"
+
+    # --- Operations split (BizOps handled earlier, before the commercial split) -
+    if has("strategy", "strategic", "chief of staff", "corporate development", "corp dev",
+           "business strategy", " m&a "):
+        return "Strategy"
+    if has("consultant", "consulting", "advisory", "advisor", "consultancy"):
+        return "Consultant"
+    if has("office manager", "executive assistant", " ea ", "personal assistant",
+           "administrative assistant", "receptionist", "workplace", "facilities",
+           "office coordinator", "admin assistant", "office administrator", "front desk"):
+        return "Office/EA"
     if has("operations", "operational", " ops ", "program manager", "project manager",
-           "supply chain", "logistics", "warehouse", "procurement", "office manager",
-           "chief of staff", "revops", "revenue operations", "fulfil", "facilities",
-           "general manager", "country manager", "workplace", "scrum master",
-           "agile coach", "delivery manager", "business operations", "biz ops",
-           "strategy & operations"):
+           "supply chain", "logistics", "warehouse", "procurement", "fulfil",
+           "general manager", "country manager", "scrum master", "agile coach",
+           "delivery manager", "order management", "inventory"):
         return "Operations"
     return "Other"
 

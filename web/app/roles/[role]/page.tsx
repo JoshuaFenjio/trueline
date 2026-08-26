@@ -9,6 +9,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/icons";
 import { roleBlurb, roleIconName } from "@/lib/roleBlurbs";
+import { levelSlug } from "@/lib/levels";
 import { eur, eurK, slugify, timeAgo } from "@/lib/format";
 
 export const revalidate = 3600;
@@ -33,9 +34,15 @@ export async function generateMetadata({ params }: { params: { role: string } })
 const CATEGORY: Record<string, string> = {
   "Software Engineer": "Engineering", Backend: "Engineering", Frontend: "Engineering", Mobile: "Engineering",
   "DevOps/Platform": "Engineering", "QA/Test": "Engineering", "Engineering Manager": "Engineering", "Security Engineer": "Engineering",
-  "Data Engineer": "Data", "Data Scientist": "Data", "Data Analyst": "Data", "ML/AI Engineer": "Data",
-  "Product Manager": "Product", Designer: "Design", "Sales/AE": "Go-to-market", Marketing: "Go-to-market",
-  "Customer Success": "Go-to-market", Operations: "Operations", Finance: "Operations", Legal: "Operations", "People/HR": "Operations",
+  SecOps: "Engineering", "Hardware/Embedded": "Engineering", "Solutions Engineer": "Engineering",
+  "Data Engineer": "Data", "Data Scientist": "Data", "Data Analyst": "Data", "ML/AI Engineer": "Data", "Research Scientist": "Data",
+  "Product Manager": "Product", "Product Marketing": "Product", Designer: "Design",
+  "Account Executive": "Go-to-market", "Account Manager": "Go-to-market", "SDR/BDR": "Go-to-market",
+  "BizDev/Partnerships": "Go-to-market", Marketing: "Go-to-market", Content: "Go-to-market", Brand: "Go-to-market",
+  "Performance Marketing": "Go-to-market", "Customer Success": "Go-to-market", Support: "Go-to-market",
+  Operations: "Operations", BizOps: "Operations", Strategy: "Operations", Consultant: "Operations", "Office/EA": "Operations",
+  Finance: "Finance", "FP&A": "Finance", Accounting: "Finance", Payroll: "Finance",
+  Legal: "Legal & People", Compliance: "Legal & People", "People/HR": "Legal & People", "Recruiter/TA": "Legal & People",
 };
 
 function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: React.ReactNode; sub?: string }) {
@@ -98,6 +105,13 @@ export default async function RolePage({ params }: { params: { role: string } })
             <div className="card">
               <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.bars size={15} /></span><span className="text-[15px] font-semibold">Salary by experience level</span></div>
               <div className="mt-5"><LevelLadder items={hub.byLevel.map((b) => ({ level: b.level, median: b.slice.spread?.median ?? null, n: b.slice.n }))} /></div>
+              <div className="mt-4 flex flex-wrap gap-2 border-t pt-4" style={{ borderColor: "var(--border)" }}>
+                {hub.byLevel.map((b) => (
+                  <Link key={b.level} href={`/roles/${slugify(role)}/${levelSlug(b.level)}`} className="rounded-full border px-3 py-1 text-[12px] text-ink-muted transition-colors hover:border-[var(--border-strong)] hover:text-ink" style={{ background: "var(--surface-1)" }}>
+                    {b.level} <span className="tnum ml-1 text-ink-faint">{b.slice.spread ? eurK(b.slice.spread.median) : `${b.slice.n}·thin`}</span>
+                  </Link>
+                ))}
+              </div>
             </div>
             <div className="card">
               <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.spark size={15} /></span><span className="text-[15px] font-semibold">Salary distribution</span></div>
