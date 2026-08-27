@@ -95,16 +95,30 @@ def clean_city_raw(raw):
 
 REMOTE_TOKENS = {"remote", "europe", "emea", "anywhere", "worldwide", "global"}
 
+# Mirrors CURRENCY_COUNTRY in web/lib/geo.ts — country-specific currencies as a
+# last-resort country signal when the location text is blank/unparseable.
+CURRENCY_COUNTRY = {
+    "GBP": "United Kingdom", "SEK": "Sweden", "NOK": "Norway", "DKK": "Denmark",
+    "PLN": "Poland", "CHF": "Switzerland", "CZK": "Czechia", "HUF": "Hungary",
+    "RON": "Romania", "BGN": "Bulgaria", "ISK": "Iceland", "TRY": "Turkey",
+    "ILS": "Israel", "ZAR": "South Africa", "AED": "United Arab Emirates",
+    "SAR": "Saudi Arabia", "EGP": "Egypt", "MAD": "Morocco", "UAH": "Ukraine",
+    "RSD": "Serbia", "GEL": "Georgia",
+}
 
-def resolve_country(raw_city, raw_country):
-    """Port of resolvePlace() in web/lib/geo.ts — city first, then country field."""
+
+def resolve_country(raw_city, raw_country, raw_currency=None):
+    """Port of resolvePlace() in web/lib/geo.ts — city, then country field, then
+    the country-specific currency as a last resort."""
     from_field = COUNTRY_ALIASES.get((raw_country or "").strip().lower())
+    from_currency = CURRENCY_COUNTRY.get((raw_currency or "").strip().upper())
+    fallback = from_field or from_currency
     key = clean_city_raw(raw_city or "").lower()
     if not key or key in REMOTE_TOKENS:
-        return from_field
+        return fallback
     if key in COUNTRY_ALIASES:
         return COUNTRY_ALIASES[key]
-    return CITY_COUNTRY.get(key) or from_field
+    return CITY_COUNTRY.get(key) or fallback
 
 
 def fetch_all():
@@ -121,7 +135,7 @@ def fetch_all():
                          params={"status": "eq.active",
                                  "order": "id.asc",  # stable order — Range paging is
                                  # otherwise non-deterministic and silently drops/dupes rows
-                                 "select": "company,country,city,title,role_family,"
+                                 "select": "company,country,city,title,role_family,currency,"
                                            "salary_eur_min,salary_eur_max,salary_source"},
                          timeout=60)
         r.raise_for_status()
@@ -141,7 +155,7 @@ def census(rows):
     sal = [p for p in rows if salaried(p)]
 
     for p in rows:
-        p["_cc"] = resolve_country(p.get("city"), p.get("country"))
+        p["_cc"] = resolve_country(p.get("city"), p.get("country"), p.get("currency"))
 
     by_country = Counter(p["_cc"] for p in rows if p["_cc"])
     sal_by_country = Counter(p["_cc"] for p in sal if p["_cc"])

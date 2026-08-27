@@ -107,7 +107,7 @@ export default async function Home({
         <div>
           <span className="eyebrow-pill">
             <span className="eyebrow">
-              Live salary data · {stats.companies.toLocaleString()} companies · {countryNames.length} countries
+              Live salary data · {stats.companies.toLocaleString()} companies · {stats.titles.toLocaleString()} job titles tracked · {countryNames.length} countries
             </span>
           </span>
           <h1 className="t-h1 mt-5 max-w-xl">

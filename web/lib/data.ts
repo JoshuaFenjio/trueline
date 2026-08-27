@@ -19,6 +19,7 @@ export interface Posting {
   company: string;
   sector: Sector;
   roleFamily: string;
+  title: string; // raw advertised title (for distinct-title counts)
   level: Level;
   city: string | null;
   country: string | null;
@@ -64,10 +65,10 @@ function mapRow(r: any): Posting | null {
   // (still counts as disclosed) but exclude it from salary medians.
   if (annual !== null && isTrainee(r.title)) annual = null;
 
-  const place = resolvePlace(r.city || r.location, r.country);
+  const place = resolvePlace(r.city || r.location, r.country, r.currency);
   return {
     company: r.company, sector: sectorOf(r.company), roleFamily: r.role_family || "Other",
-    level: levelBucket(r.title), city: place.city, country: place.country,
+    title: r.title || "", level: levelBucket(r.title), city: place.city, country: place.country,
     remote: place.remote || !!r.remote, annual, disclosed: !!disclosed, multiMarket,
     url: r.url || null, dateMs: parseDate(r.posted_at),
   };
@@ -101,7 +102,7 @@ const _fetchShard = unstable_cache(
     }
     return out;
   },
-  ["trueline-shard-v14"],
+  ["trueline-shard-v15"],
   { revalidate: 3600 }
 );
 
@@ -181,6 +182,7 @@ export const getLiveStats = async () => {
     disclosed: rows.filter((r) => r.disclosed).length, // published a salary
     salaried: u.length, // disclosed AND usable for a median
     cities: new Set(u.map((r) => r.city).filter(Boolean)).size,
+    titles: new Set(rows.map((r) => r.title.trim().toLowerCase()).filter(Boolean)).size, // distinct job titles tracked
   };
 };
 
@@ -376,7 +378,7 @@ export const getRecentSalaried = unstable_cache(
       if (!lo || lo <= 0) continue;
       if (seen.has(r.company)) continue; // one card per company for variety
       seen.add(r.company);
-      const place = resolvePlace(r.city || r.location, r.country);
+      const place = resolvePlace(r.city || r.location, r.country, r.currency);
       out.push({
         company: r.company, slug: slugify(r.company),
         role: r.role_family || "Role", city: place.city || place.country || "Remote",

@@ -163,24 +163,41 @@ export interface Place {
   remote: boolean;
 }
 
+// Country-specific currencies — each pins a posting to exactly one EMEA country,
+// so they are a reliable *last-resort* country signal when the location text
+// (city/country field) is blank or unparseable. Excludes EUR (many countries)
+// and USD (not EMEA-specific). Used only as a fallback, never overriding a
+// city- or country-field match, so it can add attribution but never move a row.
+const CURRENCY_COUNTRY: Record<string, string> = {
+  GBP: "United Kingdom", SEK: "Sweden", NOK: "Norway", DKK: "Denmark",
+  PLN: "Poland", CHF: "Switzerland", CZK: "Czechia", HUF: "Hungary",
+  RON: "Romania", BGN: "Bulgaria", ISK: "Iceland", TRY: "Turkey",
+  ILS: "Israel", ZAR: "South Africa", AED: "United Arab Emirates",
+  SAR: "Saudi Arabia", EGP: "Egypt", MAD: "Morocco", UAH: "Ukraine",
+  RSD: "Serbia", GEL: "Georgia",
+};
+
 // Resolve a posting's raw city/location/country into canonical { city, country }.
-export function resolvePlace(rawCity: string | null, rawCountry: string | null): Place {
+// rawCurrency is an optional country-of-last-resort: many EMEA postings arrive
+// with no parseable city and a blank country field but a country-specific
+// currency (SEK, GBP, PLN…) that alone identifies the market.
+export function resolvePlace(rawCity: string | null, rawCountry: string | null, rawCurrency: string | null = null): Place {
   const cleaned = cleanCityRaw(rawCity || "");
   const key = cleaned.toLowerCase();
 
-  // Country field fallback (ISO code or name).
-  const countryFromField = rawCountry
-    ? COUNTRY_ALIASES[rawCountry.trim().toLowerCase()] || null
-    : null;
+  // Country fallback: the country field first, then the currency.
+  const fromField = rawCountry ? COUNTRY_ALIASES[rawCountry.trim().toLowerCase()] || null : null;
+  const fromCurrency = rawCurrency ? CURRENCY_COUNTRY[rawCurrency.trim().toUpperCase()] || null : null;
+  const fallbackCountry = fromField || fromCurrency;
 
   if (!cleaned || REMOTE_TOKENS.includes(key)) {
-    return { city: null, country: countryFromField, remote: true };
+    return { city: null, country: fallbackCountry, remote: true };
   }
   // The "city" is actually a country name.
   if (COUNTRY_ALIASES[key]) {
     return { city: null, country: COUNTRY_ALIASES[key], remote: false };
   }
-  const country = CITY_COUNTRY[key] || countryFromField || null;
+  const country = CITY_COUNTRY[key] || fallbackCountry || null;
   const city = CITY_DISPLAY[key] || titleCase(cleaned);
   return { city, country, remote: false };
 }
