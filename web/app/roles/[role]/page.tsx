@@ -43,6 +43,7 @@ const CATEGORY: Record<string, string> = {
   Operations: "Operations", BizOps: "Operations", Strategy: "Operations", Consultant: "Operations", "Office/EA": "Operations",
   Finance: "Finance", "FP&A": "Finance", Accounting: "Finance", Payroll: "Finance",
   Legal: "Legal & People", Compliance: "Legal & People", "People/HR": "Legal & People", "Recruiter/TA": "Legal & People",
+  "Real Estate": "Other sectors", Healthcare: "Other sectors", "Skilled Trades": "Other sectors", Retail: "Other sectors",
 };
 
 function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: React.ReactNode; sub?: string }) {

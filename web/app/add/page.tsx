@@ -20,7 +20,8 @@ const ROLE_FAMILIES = [
   "Customer Success", "Support",
   "Operations", "BizOps", "Strategy", "Consultant", "Office/EA",
   "Finance", "FP&A", "Accounting", "Payroll",
-  "Legal", "Compliance", "People/HR", "Recruiter/TA", "Other",
+  "Legal", "Compliance", "People/HR", "Recruiter/TA",
+  "Real Estate", "Healthcare", "Skilled Trades", "Retail", "Other",
 ];
 const PROOF = ["Offer letter", "Payslip", "Contract", "Verbal offer", "Prefer not to say"];
 

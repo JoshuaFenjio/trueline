@@ -313,7 +313,8 @@ def classify_role(title: str) -> str:
         return "Engineering Manager"
     if has("product manager", "product owner", "head of product", "director of product",
            "vp of product", "group product manager", "chief product", " cpo ",
-           "principal product manager", "technical product manager", "product lead"):
+           "principal product manager", "technical product manager", "product lead",
+           "product director", "director, product"):
         return "Product Manager"
 
     # --- Research science (before Data Scientist / ML) ----------------------
@@ -348,7 +349,7 @@ def classify_role(title: str) -> str:
     if has("security engineer", "application security", "appsec", "infosec",
            "information security", "security analyst", "penetration test", "pentest",
            "cyber", "security architect", "product security", "cloud security",
-           "security specialist", "iam engineer"):
+           "security specialist", "iam engineer", "security researcher"):
         return "Security Engineer"
 
     # --- Hardware / embedded (before generic SWE) ---------------------------
@@ -385,7 +386,7 @@ def classify_role(title: str) -> str:
 
     # --- Generic engineering / design ---------------------------------------
     if has("software", "full stack", "fullstack", "full-stack", "swe", "developer",
-           "programmer", "engineer"):
+           "programmer", "engineer", "technical lead", "tech lead"):
         return "Software Engineer"
     if has("designer", "design lead", " ux ", "ui / ", "user experience",
            "product design", "graphic design", "motion design", "design system",
@@ -425,11 +426,12 @@ def classify_role(title: str) -> str:
            "demand gen", "growth hacker", "growth lead"):
         return "Performance Marketing"
     if has("brand", "communications", "public relations", " pr ", "social media",
-           "community", " comms", "influencer", "events", "event manager", "creative director"):
+           "community", " comms", "influencer", "events", "event manager", "creative director",
+           "creative strategist", "creative lead"):
         return "Brand"
     if has("marketing", "growth", "campaign", "lifecycle", "field marketing",
            "developer advocate", "developer relations", "devrel", "go-to-market",
-           "product evangelist"):
+           "product evangelist", "crm manager", " crm ", "crm specialist"):
         return "Marketing"
 
     # --- Customer: Support before Customer Success --------------------------
@@ -438,7 +440,7 @@ def classify_role(title: str) -> str:
            "customer care", "support team", "support representative"):
         return "Support"
     if has("customer success", "customer experience", "client success", "onboarding",
-           "implementation", "csm", "account health", "customer onboarding"):
+           "implementation", "csm", "account health", "customer onboarding", "client value"):
         return "Customer Success"
 
     # --- Finance split ------------------------------------------------------
@@ -461,7 +463,8 @@ def classify_role(title: str) -> str:
         return "Recruiter/TA"
     if has("people ", "human resources", " hr ", "people operations", "people partner",
            "hrbp", "people & culture", "compensation & benefits", "learning & development",
-           " l&d ", "hr business partner", "total rewards", "people & talent"):
+           " l&d ", "hr business partner", "total rewards", "people & talent",
+           "workday", "hris", "hr systems"):
         return "People/HR"
 
     # --- Legal / risk -------------------------------------------------------
@@ -483,11 +486,35 @@ def classify_role(title: str) -> str:
            "administrative assistant", "receptionist", "workplace", "facilities",
            "office coordinator", "admin assistant", "office administrator", "front desk"):
         return "Office/EA"
-    if has("operations", "operational", " ops ", "program manager", "project manager",
-           "supply chain", "logistics", "warehouse", "procurement", "fulfil",
-           "general manager", "country manager", "scrum master", "agile coach",
-           "delivery manager", "order management", "inventory"):
+    if has("operations", "operational", " ops ", "program manager", "programme manager",
+           "project manager", "supply chain", "logistics", "warehouse", "procurement",
+           "fulfil", "general manager", "country manager", "scrum master", "agile coach",
+           "delivery manager", "order management", "inventory", "demand planner",
+           "supply planner", "production planner"):
         return "Operations"
+
+    # --- Non-tech clusters that otherwise dominate "Other". Naming them keeps the
+    #     bucket honest and their (often commission/hourly) pay out of the tech
+    #     medians — each still faces the same n>=8 gate. Placed last so no tech or
+    #     business title is ever swept in by a broad trade/retail keyword.
+    if has("estate agent", "real estate", "immobilien", "makler", "agente immobiliare",
+           "agente di commercio", "property consultant", "letting negotiator",
+           "property manager", "real-estate"):
+        return "Real Estate"
+    if has("physical therap", "physiotherap", "occupational therap", " nurse", "nursing",
+           "physician", "medical assistant", "clinician", "pharmacist", "dental",
+           "praxismanager", "care assistant", "healthcare assistant", "midwife",
+           "radiographer", "paramedic", "therapy technician", "therapist assistant"):
+        return "Healthcare"
+    if has("electrician", "elektriker", "elektromonteur", "electromécanicien", "monteur",
+           "mechanic", "fitter", "welder", "plumber", "hvac", "robinetier", "tuyauteur",
+           "lokführer", "kabeltiefbau", "field technician", "service technician",
+           "maintenance technician", "installer"):
+        return "Skilled Trades"
+    if has("grocery", "cashier", "store associate", "store manager", "store supervisor",
+           "retail assistant", "merchandiser", "shop assistant", "category manager",
+           "supermarket", "retail grocery"):
+        return "Retail"
     return "Other"
 
 

@@ -48,6 +48,11 @@ export const ROLE_BLURBS: Record<string, string> = {
   Compliance: "Manages regulatory, risk and financial-crime controls.",
   "People/HR": "Develops and supports the workforce.",
   "Recruiter/TA": "Sources and hires talent across the business.",
+  // Non-tech clusters (named for honesty; often commission/hourly pay).
+  "Real Estate": "Sells, lets and manages property.",
+  Healthcare: "Delivers clinical and patient care.",
+  "Skilled Trades": "Installs, maintains and repairs on site.",
+  Retail: "Runs the shop floor, stock and store.",
 };
 
 export function roleBlurb(role: string): string {
@@ -75,6 +80,7 @@ export function roleIconName(role: string): string {
     Finance: "bars", "FP&A": "bars", Accounting: "bars", Payroll: "bars",
     // Legal / people
     Legal: "scale", Compliance: "shield", "People/HR": "users", "Recruiter/TA": "users",
+    "Real Estate": "building", Healthcare: "users", "Skilled Trades": "layers", Retail: "building",
   };
   return map[role] ?? "briefcase";
 }

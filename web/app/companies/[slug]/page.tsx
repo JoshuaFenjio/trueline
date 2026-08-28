@@ -8,9 +8,10 @@ import { ScoreBadge, scoreColor, Card, Stat } from "@/components/ui";
 import { SectionHeader, Breadcrumbs, ArrowLink, PillButton } from "@/components/blocks";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { CompanyHiresMap } from "@/components/CompanyHiresMap";
+import { GpgModule } from "@/components/GpgModule";
 import { ShareButton } from "@/components/ShareButton";
 import { Icon } from "@/components/icons";
-import { eur, eurK, pct, timeAgo } from "@/lib/format";
+import { eur, eurK, pct, timeAgo, slugify } from "@/lib/format";
 import type { CompanyDetail } from "@/lib/data";
 
 const COMPANY_TABS = [
@@ -280,6 +281,9 @@ export default async function CompanyPage({ params }: { params: { slug: string }
         </div>
       </section>
 
+      {/* UK Gender Pay Gap context (employer-reported; never in our medians) */}
+      <GpgModule slug={c.slug} />
+
       {/* Compare CTA band */}
       <section className="section-y">
         <div className="band-dark flex flex-col gap-6 p-8 md:flex-row md:items-center md:justify-between">
@@ -332,6 +336,10 @@ function WatchlistCompany({ w }: { w: WatchEntry }) {
           <Link href="/companies" className="btn-ghost inline-flex rounded-xl px-4 py-2.5 text-sm">Browse The Pay Index</Link>
         </div>
       </section>
+
+      {/* UK Gender Pay Gap context — often the only real pay-adjacent public data
+          for these household-name watchlist employers. Clearly sourced, separate. */}
+      <GpgModule slug={slugify(w.name)} />
     </div>
   );
 }
