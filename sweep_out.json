@@ -1,0 +1,948 @@
+{
+  "resolved": [
+    {
+      "name": "Nebius",
+      "country": "Netherlands",
+      "ats": "greenhouse",
+      "token": "nebius",
+      "count": 368
+    },
+    {
+      "name": "Smartly.io",
+      "country": "Finland",
+      "ats": "greenhouse",
+      "token": "smartlyio",
+      "count": 72
+    },
+    {
+      "name": "Lendable",
+      "country": "UK",
+      "ats": "ashby",
+      "token": "lendable",
+      "count": 66
+    },
+    {
+      "name": "Ivalua",
+      "country": "France",
+      "ats": "greenhouse",
+      "token": "ivalua",
+      "count": 43
+    },
+    {
+      "name": "Allica Bank",
+      "country": "UK",
+      "ats": "ashby",
+      "token": "allica-bank",
+      "count": 41
+    },
+    {
+      "name": "Idealista",
+      "country": "Spain",
+      "ats": "teamtailor",
+      "token": "idealista",
+      "count": 35
+    },
+    {
+      "name": "Egym",
+      "country": "Germany",
+      "ats": "ashby",
+      "token": "egym",
+      "count": 31
+    },
+    {
+      "name": "NavVis",
+      "country": "Germany",
+      "ats": "greenhouse",
+      "token": "navvis",
+      "count": 30
+    },
+    {
+      "name": "Anchorage",
+      "country": "Portugal",
+      "ats": "lever",
+      "token": "anchorage",
+      "count": 30
+    },
+    {
+      "name": "Polestar",
+      "country": "Sweden",
+      "ats": "teamtailor",
+      "token": "polestar",
+      "count": 26
+    },
+    {
+      "name": "Pasqal",
+      "country": "France",
+      "ats": "teamtailor",
+      "token": "pasqal",
+      "count": 24
+    },
+    {
+      "name": "IQM",
+      "country": "Finland",
+      "ats": "teamtailor",
+      "token": "iqm",
+      "count": 24
+    },
+    {
+      "name": "Crisp",
+      "country": "Netherlands",
+      "ats": "ashby",
+      "token": "crisp",
+      "count": 22
+    },
+    {
+      "name": "Gymshark",
+      "country": "UK",
+      "ats": "greenhouse",
+      "token": "gymshark",
+      "count": 20
+    },
+    {
+      "name": "Cazoo",
+      "country": "UK",
+      "ats": "teamtailor",
+      "token": "cazoo",
+      "count": 13
+    },
+    {
+      "name": "Omnisend",
+      "country": "Baltics",
+      "ats": "lever",
+      "token": "omnisend",
+      "count": 13
+    },
+    {
+      "name": "Lyst",
+      "country": "UK",
+      "ats": "smartrecruiters",
+      "token": "Lyst",
+      "count": 10
+    },
+    {
+      "name": "Payplug",
+      "country": "France",
+      "ats": "teamtailor",
+      "token": "payplug",
+      "count": 10
+    },
+    {
+      "name": "Multiverse Computing",
+      "country": "Spain",
+      "ats": "teamtailor",
+      "token": "multiversecomputing",
+      "count": 10
+    },
+    {
+      "name": "MyTomorrows",
+      "country": "Netherlands",
+      "ats": "ashby",
+      "token": "mytomorrows",
+      "count": 9
+    },
+    {
+      "name": "OVO Energy",
+      "country": "UK",
+      "ats": "greenhouse",
+      "token": "ovoenergy",
+      "count": 8
+    },
+    {
+      "name": "Attest",
+      "country": "UK",
+      "ats": "teamtailor",
+      "token": "attest",
+      "count": 7
+    },
+    {
+      "name": "Signal AI",
+      "country": "UK",
+      "ats": "ashby",
+      "token": "signal-ai",
+      "count": 5
+    },
+    {
+      "name": "Recharge",
+      "country": "Netherlands",
+      "ats": "ashby",
+      "token": "recharge",
+      "count": 5
+    },
+    {
+      "name": "Tourlane",
+      "country": "Germany",
+      "ats": "ashby",
+      "token": "tourlane",
+      "count": 4
+    },
+    {
+      "name": "Mynt",
+      "country": "Sweden",
+      "ats": "teamtailor",
+      "token": "mynt",
+      "count": 3
+    },
+    {
+      "name": "Fnatic",
+      "country": "UK",
+      "ats": "ashby",
+      "token": "fnatic",
+      "count": 1
+    },
+    {
+      "name": "The Mobility House",
+      "country": "Germany",
+      "ats": "smartrecruiters",
+      "token": "TheMobilityHouse",
+      "count": 1
+    },
+    {
+      "name": "Circ",
+      "country": "Germany",
+      "ats": "greenhouse",
+      "token": "circ",
+      "count": 1
+    },
+    {
+      "name": "Lightyear",
+      "country": "Netherlands",
+      "ats": "teamtailor",
+      "token": "lightyear",
+      "count": 1
+    }
+  ],
+  "unresolved": [
+    {
+      "name": "Revolut",
+      "country": "UK"
+    },
+    {
+      "name": "Starling Bank",
+      "country": "UK"
+    },
+    {
+      "name": "Checkout.com",
+      "country": "UK"
+    },
+    {
+      "name": "Rapyd",
+      "country": "UK"
+    },
+    {
+      "name": "Moneybox",
+      "country": "UK"
+    },
+    {
+      "name": "Curve",
+      "country": "UK"
+    },
+    {
+      "name": "ClearScore",
+      "country": "UK"
+    },
+    {
+      "name": "Modulr",
+      "country": "UK"
+    },
+    {
+      "name": "Yapily",
+      "country": "UK"
+    },
+    {
+      "name": "Kroo",
+      "country": "UK"
+    },
+    {
+      "name": "Darktrace",
+      "country": "UK"
+    },
+    {
+      "name": "Snyk",
+      "country": "UK"
+    },
+    {
+      "name": "Onfido",
+      "country": "UK"
+    },
+    {
+      "name": "Builder.ai",
+      "country": "UK"
+    },
+    {
+      "name": "Cinch",
+      "country": "UK"
+    },
+    {
+      "name": "ManyPets",
+      "country": "UK"
+    },
+    {
+      "name": "Habito",
+      "country": "UK"
+    },
+    {
+      "name": "Octopus Energy",
+      "country": "UK"
+    },
+    {
+      "name": "THG",
+      "country": "UK"
+    },
+    {
+      "name": "Olio",
+      "country": "UK"
+    },
+    {
+      "name": "Tessian",
+      "country": "UK"
+    },
+    {
+      "name": "Privitar",
+      "country": "UK"
+    },
+    {
+      "name": "Five AI",
+      "country": "UK"
+    },
+    {
+      "name": "Bud",
+      "country": "UK"
+    },
+    {
+      "name": "Depop",
+      "country": "UK"
+    },
+    {
+      "name": "Bloom & Wild",
+      "country": "UK"
+    },
+    {
+      "name": "Peppy",
+      "country": "UK"
+    },
+    {
+      "name": "Fenergo",
+      "country": "Ireland"
+    },
+    {
+      "name": "Manna",
+      "country": "Ireland"
+    },
+    {
+      "name": "Nuritas",
+      "country": "Ireland"
+    },
+    {
+      "name": "Cubic Telecom",
+      "country": "Ireland"
+    },
+    {
+      "name": "TransferMate",
+      "country": "Ireland"
+    },
+    {
+      "name": "Ding",
+      "country": "Ireland"
+    },
+    {
+      "name": "Global Shares",
+      "country": "Ireland"
+    },
+    {
+      "name": "Spendesk",
+      "country": "France"
+    },
+    {
+      "name": "Lydia",
+      "country": "France"
+    },
+    {
+      "name": "Holistic AI",
+      "country": "France"
+    },
+    {
+      "name": "Exotec",
+      "country": "France"
+    },
+    {
+      "name": "Ynsect",
+      "country": "France"
+    },
+    {
+      "name": "Electra",
+      "country": "France"
+    },
+    {
+      "name": "Alice & Bob",
+      "country": "France"
+    },
+    {
+      "name": "Getaround",
+      "country": "France"
+    },
+    {
+      "name": "Lucca",
+      "country": "France"
+    },
+    {
+      "name": "ManoMano",
+      "country": "France"
+    },
+    {
+      "name": "Withings",
+      "country": "France"
+    },
+    {
+      "name": "Qair",
+      "country": "France"
+    },
+    {
+      "name": "Alma",
+      "country": "France"
+    },
+    {
+      "name": "Luko",
+      "country": "France"
+    },
+    {
+      "name": "Kyutai",
+      "country": "France"
+    },
+    {
+      "name": "Wefox",
+      "country": "Germany"
+    },
+    {
+      "name": "Solaris",
+      "country": "Germany"
+    },
+    {
+      "name": "Scalable Capital",
+      "country": "Germany"
+    },
+    {
+      "name": "Taxfix",
+      "country": "Germany"
+    },
+    {
+      "name": "Sennder",
+      "country": "Germany"
+    },
+    {
+      "name": "1Komma5Grad",
+      "country": "Germany"
+    },
+    {
+      "name": "McMakler",
+      "country": "Germany"
+    },
+    {
+      "name": "CoachHub",
+      "country": "Germany"
+    },
+    {
+      "name": "Volocopter",
+      "country": "Germany"
+    },
+    {
+      "name": "Lilium",
+      "country": "Germany"
+    },
+    {
+      "name": "Agile Robots",
+      "country": "Germany"
+    },
+    {
+      "name": "Pitch",
+      "country": "Germany"
+    },
+    {
+      "name": "Ada Health",
+      "country": "Germany"
+    },
+    {
+      "name": "Backbase",
+      "country": "Netherlands"
+    },
+    {
+      "name": "Mambu",
+      "country": "Netherlands"
+    },
+    {
+      "name": "Framer",
+      "country": "Netherlands"
+    },
+    {
+      "name": "WeTransfer",
+      "country": "Netherlands"
+    },
+    {
+      "name": "Otrium",
+      "country": "Netherlands"
+    },
+    {
+      "name": "Studocu",
+      "country": "Netherlands"
+    },
+    {
+      "name": "Silverfin",
+      "country": "Netherlands"
+    },
+    {
+      "name": "Felyx",
+      "country": "Netherlands"
+    },
+    {
+      "name": "Swapfiets",
+      "country": "Netherlands"
+    },
+    {
+      "name": "Castor",
+      "country": "Netherlands"
+    },
+    {
+      "name": "Dyme",
+      "country": "Netherlands"
+    },
+    {
+      "name": "Klarna",
+      "country": "Sweden"
+    },
+    {
+      "name": "Northvolt",
+      "country": "Sweden"
+    },
+    {
+      "name": "Einride",
+      "country": "Sweden"
+    },
+    {
+      "name": "Tink",
+      "country": "Sweden"
+    },
+    {
+      "name": "Juni",
+      "country": "Sweden"
+    },
+    {
+      "name": "Budbee",
+      "country": "Sweden"
+    },
+    {
+      "name": "Mathem",
+      "country": "Sweden"
+    },
+    {
+      "name": "Normative",
+      "country": "Sweden"
+    },
+    {
+      "name": "Sana Labs",
+      "country": "Sweden"
+    },
+    {
+      "name": "Fortnox",
+      "country": "Sweden"
+    },
+    {
+      "name": "Sinch",
+      "country": "Sweden"
+    },
+    {
+      "name": "Volta Trucks",
+      "country": "Sweden"
+    },
+    {
+      "name": "Dixa",
+      "country": "Denmark"
+    },
+    {
+      "name": "Planday",
+      "country": "Denmark"
+    },
+    {
+      "name": "Forecast",
+      "country": "Denmark"
+    },
+    {
+      "name": "Queue-it",
+      "country": "Denmark"
+    },
+    {
+      "name": "Airtame",
+      "country": "Denmark"
+    },
+    {
+      "name": "Pento",
+      "country": "Denmark"
+    },
+    {
+      "name": "Ageras",
+      "country": "Denmark"
+    },
+    {
+      "name": "Monta",
+      "country": "Denmark"
+    },
+    {
+      "name": "Zenegy",
+      "country": "Denmark"
+    },
+    {
+      "name": "Cardlay",
+      "country": "Denmark"
+    },
+    {
+      "name": "Kahoot",
+      "country": "Norway"
+    },
+    {
+      "name": "Oda",
+      "country": "Norway"
+    },
+    {
+      "name": "Huddly",
+      "country": "Norway"
+    },
+    {
+      "name": "Xeneta",
+      "country": "Norway"
+    },
+    {
+      "name": "Unacast",
+      "country": "Norway"
+    },
+    {
+      "name": "Zwipe",
+      "country": "Norway"
+    },
+    {
+      "name": "Rovio",
+      "country": "Finland"
+    },
+    {
+      "name": "RELEX Solutions",
+      "country": "Finland"
+    },
+    {
+      "name": "Varjo",
+      "country": "Finland"
+    },
+    {
+      "name": "Wirepas",
+      "country": "Finland"
+    },
+    {
+      "name": "Silo AI",
+      "country": "Finland"
+    },
+    {
+      "name": "Enfuce",
+      "country": "Finland"
+    },
+    {
+      "name": "Framery",
+      "country": "Finland"
+    },
+    {
+      "name": "Swappie",
+      "country": "Finland"
+    },
+    {
+      "name": "TravelPerk",
+      "country": "Spain"
+    },
+    {
+      "name": "Factorial",
+      "country": "Spain"
+    },
+    {
+      "name": "Wallbox",
+      "country": "Spain"
+    },
+    {
+      "name": "Fever",
+      "country": "Spain"
+    },
+    {
+      "name": "Red Points",
+      "country": "Spain"
+    },
+    {
+      "name": "Cobee",
+      "country": "Spain"
+    },
+    {
+      "name": "Payflow",
+      "country": "Spain"
+    },
+    {
+      "name": "Bit2Me",
+      "country": "Spain"
+    },
+    {
+      "name": "Devo",
+      "country": "Spain"
+    },
+    {
+      "name": "Copado",
+      "country": "Spain"
+    },
+    {
+      "name": "Genially",
+      "country": "Spain"
+    },
+    {
+      "name": "Holaluz",
+      "country": "Spain"
+    },
+    {
+      "name": "Exoticca",
+      "country": "Spain"
+    },
+    {
+      "name": "Colvin",
+      "country": "Spain"
+    },
+    {
+      "name": "Scalapay",
+      "country": "Italy"
+    },
+    {
+      "name": "Bending Spoons",
+      "country": "Italy"
+    },
+    {
+      "name": "Casavo",
+      "country": "Italy"
+    },
+    {
+      "name": "Moneyfarm",
+      "country": "Italy"
+    },
+    {
+      "name": "Young Platform",
+      "country": "Italy"
+    },
+    {
+      "name": "Cortilia",
+      "country": "Italy"
+    },
+    {
+      "name": "Everli",
+      "country": "Italy"
+    },
+    {
+      "name": "Newcleo",
+      "country": "Italy"
+    },
+    {
+      "name": "D-Orbit",
+      "country": "Italy"
+    },
+    {
+      "name": "Soldo",
+      "country": "Italy"
+    },
+    {
+      "name": "Fabrick",
+      "country": "Italy"
+    },
+    {
+      "name": "Credimi",
+      "country": "Italy"
+    },
+    {
+      "name": "Talkdesk",
+      "country": "Portugal"
+    },
+    {
+      "name": "Unbabel",
+      "country": "Portugal"
+    },
+    {
+      "name": "OutSystems",
+      "country": "Portugal"
+    },
+    {
+      "name": "Defined.ai",
+      "country": "Portugal"
+    },
+    {
+      "name": "Barkyn",
+      "country": "Portugal"
+    },
+    {
+      "name": "Cleverly",
+      "country": "Portugal"
+    },
+    {
+      "name": "Kitch",
+      "country": "Portugal"
+    },
+    {
+      "name": "Booksy",
+      "country": "Poland"
+    },
+    {
+      "name": "Packhelp",
+      "country": "Poland"
+    },
+    {
+      "name": "Vue Storefront",
+      "country": "Poland"
+    },
+    {
+      "name": "Sundose",
+      "country": "Poland"
+    },
+    {
+      "name": "Tidio",
+      "country": "Poland"
+    },
+    {
+      "name": "Brand24",
+      "country": "Poland"
+    },
+    {
+      "name": "Infermedica",
+      "country": "Poland"
+    },
+    {
+      "name": "CallPage",
+      "country": "Poland"
+    },
+    {
+      "name": "Ramp Network",
+      "country": "Poland"
+    },
+    {
+      "name": "Skeleton Technologies",
+      "country": "Baltics"
+    },
+    {
+      "name": "Starship Technologies",
+      "country": "Baltics"
+    },
+    {
+      "name": "Salv",
+      "country": "Baltics"
+    },
+    {
+      "name": "Montonio",
+      "country": "Baltics"
+    },
+    {
+      "name": "Xolo",
+      "country": "Baltics"
+    },
+    {
+      "name": "CGTrader",
+      "country": "Baltics"
+    },
+    {
+      "name": "Kilo Health",
+      "country": "Baltics"
+    },
+    {
+      "name": "Interactio",
+      "country": "Baltics"
+    },
+    {
+      "name": "Whatagraph",
+      "country": "Baltics"
+    },
+    {
+      "name": "Trafi",
+      "country": "Baltics"
+    },
+    {
+      "name": "On",
+      "country": "Switzerland"
+    },
+    {
+      "name": "Yokoy",
+      "country": "Switzerland"
+    },
+    {
+      "name": "Flyability",
+      "country": "Switzerland"
+    },
+    {
+      "name": "Beekeeper",
+      "country": "Switzerland"
+    },
+    {
+      "name": "Unique",
+      "country": "Switzerland"
+    },
+    {
+      "name": "LatticeFlow",
+      "country": "Switzerland"
+    },
+    {
+      "name": "Sophia Genetics",
+      "country": "Switzerland"
+    },
+    {
+      "name": "TourRadar",
+      "country": "Austria"
+    },
+    {
+      "name": "Adverity",
+      "country": "Austria"
+    },
+    {
+      "name": "Prewave",
+      "country": "Austria"
+    },
+    {
+      "name": "Anyline",
+      "country": "Austria"
+    },
+    {
+      "name": "Blockpit",
+      "country": "Austria"
+    },
+    {
+      "name": "Kern Tec",
+      "country": "Austria"
+    },
+    {
+      "name": "Odoo",
+      "country": "Belgium"
+    },
+    {
+      "name": "Teamleader",
+      "country": "Belgium"
+    },
+    {
+      "name": "Sentiance",
+      "country": "Belgium"
+    },
+    {
+      "name": "Henchman",
+      "country": "Belgium"
+    },
+    {
+      "name": "Wiz",
+      "country": "Israel"
+    },
+    {
+      "name": "Monday.com",
+      "country": "Israel"
+    },
+    {
+      "name": "Papaya Global",
+      "country": "Israel"
+    },
+    {
+      "name": "Aidoc",
+      "country": "Israel"
+    },
+    {
+      "name": "Deel",
+      "country": "Israel"
+    }
+  ]
+}
