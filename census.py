@@ -136,7 +136,7 @@ def fetch_all():
                                  "order": "id.asc",  # stable order — Range paging is
                                  # otherwise non-deterministic and silently drops/dupes rows
                                  "select": "company,country,city,title,role_family,currency,"
-                                           "salary_eur_min,salary_eur_max,salary_source"},
+                                           "salary_eur_min,salary_eur_max,salary_period,salary_source"},
                          timeout=60)
         r.raise_for_status()
         batch = r.json()
@@ -146,13 +146,69 @@ def fetch_all():
         offset += PAGE
 
 
-def salaried(p):
+# EMEA currencies (mirrors web/lib/data.ts EMEA_CURRENCIES) — a salary in any
+# other currency is not counted as EMEA base pay.
+EMEA_CUR = {"EUR", "GBP", "CHF", "SEK", "DKK", "NOK", "PLN", "CZK", "HUF", "RON",
+            "BGN", "HRK", "ISK", "ILS", "AED", "SAR", "QAR", "KWD", "BHD", "OMR",
+            "EGP", "ZAR", "NGN", "KES", "MAD", "TND", "TRY", "UAH", "GEL", "RSD"}
+_TRAINEE = re.compile(
+    r"\b(intern|interns|internship|working[- ]student|werkstudent|apprentice|"
+    r"apprenticeship|trainee|traineeship|praktik|stagiaire|alternance|alternant|"
+    r"dual study|duales studium|placement (?:year|student)|graduate scheme)\b", re.I)
+
+
+def annual_midpoint_eur(lo, hi, period):
+    """Direct port of annualMidpointEur() in web/lib/stats.ts, so the census
+    counts a posting as salaried iff the site would use it in a median."""
+    if isinstance(lo, (int, float)) and isinstance(hi, (int, float)) and lo > 0 and hi > 0 and lo > hi:
+        lo, hi = hi, lo
+    if isinstance(lo, (int, float)) and lo > 0 and isinstance(hi, (int, float)) and hi > 0:
+        if lo < 1000 and hi >= 10_000:
+            return None
+        annual = (period or "year").lower() == "year"
+        if hi / lo > (4 if annual else 3):
+            return None
+    vals = [v for v in (lo, hi) if isinstance(v, (int, float)) and v > 0]
+    if not vals:
+        return None
+    mid = sum(vals) / len(vals)
+    p = (period or "year").lower()
+    if p == "month":
+        if mid <= 25_000:
+            mid *= 12
+            if mid < 35_000:
+                return None
+    elif p == "hour":
+        if mid <= 400:
+            mid *= 1720
+    if mid < 20_000 or mid > 500_000:
+        return None
+    return round(mid)
+
+
+def disclosed(p):
+    """Raw: the ad states some pay (broad — includes non-EMEA currency, stipends)."""
     return p.get("salary_source") not in (None, "none") and p.get("salary_eur_min")
+
+
+def salaried(p):
+    """Median-eligible — the SITE's definition (usable()): disclosed AND
+    EMEA-currency AND non-trainee AND a plausible annualised midpoint. This is
+    the one number the site shows everywhere; the census now matches it."""
+    if not disclosed(p):
+        return False
+    if (p.get("currency") or "EUR").upper() not in EMEA_CUR:
+        return False
+    if _TRAINEE.search(p.get("title") or ""):
+        return False
+    return annual_midpoint_eur(p.get("salary_eur_min"), p.get("salary_eur_max"),
+                               p.get("salary_period")) is not None
 
 
 def census(rows):
     total = len(rows)
     sal = [p for p in rows if salaried(p)]
+    disc = [p for p in rows if disclosed(p)]
 
     for p in rows:
         p["_cc"] = resolve_country(p.get("city"), p.get("country"), p.get("currency"))
@@ -188,7 +244,8 @@ def census(rows):
         "companies_with_postings": len(by_company),
         "companies_disclosing": sum(1 for c, n in sal_by_company.items() if n > 0),
         "postings_total": total,
-        "postings_salaried": len(sal),
+        "postings_salaried": len(sal),       # median-eligible (site definition)
+        "postings_disclosed": len(disc),     # raw: any pay stated (broader)
         "disclosure_pct": round(len(sal) / total * 100, 1) if total else 0,
         "countries_present": sorted(c for c, n in by_country.items() if n >= PRESENCE),
         "countries_median_gate": sorted(c for c, n in sal_by_country.items() if n >= N_MEDIAN),
@@ -233,8 +290,9 @@ def render(c, ats):
     L.append("companies disclosing pay     : {}".format(c["companies_disclosing"]))
     L.append("companies ranked (n>={})      : {}".format(N_COMPANY, c["companies_ranked"]))
     L.append("active postings              : {}".format(c["postings_total"]))
-    L.append("...with a salary             : {} ({}%)".format(
+    L.append("...salaried (median-eligible): {} ({}%)  <- the number the site shows".format(
         c["postings_salaried"], c["disclosure_pct"]))
+    L.append("...disclose any pay (raw)    : {}".format(c.get("postings_disclosed", "—")))
     L.append("distinct job titles          : {}".format(c["distinct_titles"]))
     L.append("'Other' role share           : {}%".format(c["other_share_pct"]))
     L.append("")
