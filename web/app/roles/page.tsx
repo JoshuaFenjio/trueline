@@ -35,7 +35,7 @@ export default async function RolesIndex() {
       <section className="mt-6 grid grid-cols-1 items-center gap-8 lg:grid-cols-[1fr_.9fr]">
         <div>
           <span className="eyebrow-pill"><span className="eyebrow">{ranked.length} roles benchmarked</span></span>
-          <h1 className="t-h1 mt-5">Explore roles.<br /><span className="font-normal italic">Benchmark pay.</span></h1>
+          <h1 className="t-h1 mt-5">Explore roles.<br /><span className="accent-italic">Benchmark pay.</span></h1>
           <p className="mt-4 max-w-lg text-lg leading-relaxed text-ink-muted">Median advertised base for every tech role we track across EMEA, live from company job boards. A median needs 8 salaried postings.</p>
         </div>
         <div className="grid grid-cols-2 gap-3">

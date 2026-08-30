@@ -45,7 +45,7 @@ export default function MethodologyPage() {
     <div className="mx-auto max-w-2xl pb-4">
       <div className="pt-8"><Breadcrumbs items={[{ label: "Methodology" }]} /></div>
       <span className="eyebrow-pill mt-6"><span className="eyebrow">Methodology</span></span>
-      <h1 className="t-h1 mt-5">How we know <span className="font-normal italic">what&rsquo;s true.</span></h1>
+      <h1 className="t-h1 mt-5">How we know <span className="accent-italic">what&rsquo;s true.</span></h1>
       <p className="mt-4 text-lg leading-relaxed text-ink-muted">
         SalaryRadar is built to be honest about what it does and doesn&rsquo;t know. Here is exactly how the numbers are made.
       </p>

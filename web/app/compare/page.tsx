@@ -62,7 +62,7 @@ export default async function ComparePage({ searchParams }: { searchParams: { co
 
       <header className="mt-6">
         <span className="eyebrow-pill"><span className="eyebrow">Company comparison</span></span>
-        <h1 className="t-h1 mt-5">Compare. Decide. <span className="font-normal italic">Confidently.</span></h1>
+        <h1 className="t-h1 mt-5">Compare. Decide. <span className="accent-italic">Confidently.</span></h1>
         <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-muted">Line up to three companies side by side on median base, transparency and role-by-role pay — live from job boards.</p>
       </header>
 

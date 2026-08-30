@@ -29,7 +29,7 @@ export default async function CountriesIndex() {
       <section className="mt-6 grid items-center gap-8 lg:grid-cols-[1fr_.7fr]">
         <div>
           <span className="eyebrow-pill"><span className="eyebrow">{countries.length} countries · live</span></span>
-          <h1 className="t-h1 mt-5">Explore pay<br /><span className="font-normal italic">by country across Europe.</span></h1>
+          <h1 className="t-h1 mt-5">Explore pay<br /><span className="accent-italic">by country across Europe.</span></h1>
           <p className="mt-4 max-w-lg text-lg leading-relaxed text-ink-muted">How tech pay compares across EMEA markets, live from company job boards. A country median needs 8 salaried postings before it shows.</p>
         </div>
         <div className="card-float p-6">

@@ -91,7 +91,7 @@ export default async function Leaderboards({
         <div>
           <span className="eyebrow-pill"><span className="eyebrow">Live pay rankings · {countries.length} countries</span></span>
           <h1 className="t-h1 mt-5">
-            Europe&rsquo;s real pay.<br /><span className="font-normal italic">Ranked with transparency.</span>
+            Europe&rsquo;s real pay.<br /><span className="accent-italic">Ranked with transparency.</span>
           </h1>
           <p className="mt-4 max-w-lg text-lg leading-relaxed text-ink-muted">
             Live rankings from real EMEA job-board data. Every company, role and country here is a link. Medians need 8+ postings; company midpoints need 3+.

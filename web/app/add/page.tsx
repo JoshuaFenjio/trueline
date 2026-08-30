@@ -34,7 +34,7 @@ export default function AddPage({ searchParams }: { searchParams: { submitted?: 
     <div className="mx-auto max-w-xl pb-4">
       <div className="pt-8"><Breadcrumbs items={[{ label: "Add your salary" }]} /></div>
       <span className="eyebrow-pill mt-6"><span className="eyebrow">Add your salary</span></span>
-      <h1 className="t-h1 mt-5">Add your salary <span className="font-normal italic">anonymously.</span></h1>
+      <h1 className="t-h1 mt-5">Add your salary <span className="accent-italic">anonymously.</span></h1>
       <p className="mt-4 text-lg leading-relaxed text-ink-muted">
         Every verified number makes the benchmarks truer. Takes 30 seconds.
       </p>

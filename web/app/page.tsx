@@ -105,14 +105,15 @@ export default async function Home({
           selects push the column past the viewport at 375. */}
       <section className="grid grid-cols-1 items-center gap-10 pt-10 md:pt-14 lg:grid-cols-[minmax(0,45fr)_minmax(0,55fr)] lg:gap-12">
         <div>
-          <span className="eyebrow-pill">
-            <span className="eyebrow">
-              Live salary data · {stats.companies.toLocaleString()} companies · {stats.titles.toLocaleString()} job titles tracked · {countryNames.length} countries
-            </span>
-          </span>
+          <p className="text-[13px] leading-relaxed text-ink-faint">
+            <span className="font-medium text-ink-muted">Live salary data</span>
+            {" · "}<span className="font-semibold text-ink">{stats.companies.toLocaleString()}</span> companies
+            {" · "}<span className="font-semibold text-ink">{stats.titles.toLocaleString()}</span> job titles
+            {" · "}<span className="font-semibold text-ink">{countryNames.length}</span> countries
+          </p>
           <h1 className="t-h1 mt-5 max-w-xl">
             Know what Europe{" "}
-            <span className="font-normal italic" style={{ color: "var(--accent)" }}>actually</span> pays.
+            <span className="accent-italic">actually</span> pays.
           </h1>
           <p className="mt-4 max-w-lg text-lg leading-relaxed text-ink-muted">
             Real base salaries from live job postings across Europe, the Middle East and Africa.
@@ -224,9 +225,20 @@ export default async function Home({
         </section>
       )}
 
-      {/* Top companies — interactive, on a sage band */}
+      {/* Europe pay map — moved above Top companies. Three columns: table · map · insight */}
+      <section className="band section-y mt-16">
+        <div className="flex items-end justify-between gap-4">
+          <SectionHeader kicker="Geography" title="The Europe pay map" />
+          <span className="hidden md:block"><ArrowLink href="/locations/countries">Explore countries</ArrowLink></span>
+        </div>
+        <div className="mt-8">
+          <EuropePayMap data={europe} triptych findings={findings} spark={comp.spark} />
+        </div>
+      </section>
+
+      {/* Top companies — interactive */}
       {board.length > 0 && (
-        <section className="band mt-16 py-14">
+        <section className="mt-16 py-14">
           <div className="flex items-end justify-between gap-4">
             <LinkedSectionHeader
               href="/leaderboards#overall"
@@ -249,7 +261,7 @@ export default async function Home({
 
       {/* Top-paying cities */}
       {mapData.cities.length > 0 && (
-        <section className="mt-16 py-14">
+        <section className="band mt-16 py-14">
           <div className="flex items-end justify-between gap-4">
             <LinkedSectionHeader
               href="/leaderboards#cities"
@@ -267,49 +279,25 @@ export default async function Home({
         </section>
       )}
 
-      {/* Europe pay map — three columns: country table · map on the band · insight */}
-      <section className="band section-y mt-16">
-        <div className="flex items-end justify-between gap-4">
-          <SectionHeader kicker="Geography" title="The Europe pay map" />
-          <span className="hidden md:block"><ArrowLink href="/locations/countries">Explore countries</ArrowLink></span>
-        </div>
-        <div className="mt-8">
-          <EuropePayMap data={europe} triptych findings={findings} spark={comp.spark} />
-        </div>
-      </section>
-
-      {/* Employer CTA — full-width dark teal band card */}
+      {/* Employer CTA — whole band is one link to /for-companies. icon · copy · arrow */}
       <section className="section-y">
-        <div className="band-dark flex flex-col gap-8 p-8 md:p-10 min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between">
-          <div className="min-[900px]:max-w-xl">
-            <div className="flex items-center gap-4">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full" style={{ background: "rgba(255,255,255,.12)" }} aria-hidden="true">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="7" width="18" height="13" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18" />
-                </svg>
-              </span>
-              <h2 className="text-2xl font-bold tracking-tight text-white md:text-[28px]">Hiring? Benchmark your pay against your sector.</h2>
-            </div>
-            <p className="mt-4 text-[15px] leading-relaxed" style={{ color: "rgba(255,255,255,.72)" }}>
-              See where your offers sit against live base-pay data from real job postings, by role and city.
+        <Link
+          href="/for-companies"
+          className="band-dark group flex items-center gap-5 p-6 transition-[filter] hover:brightness-[1.08] md:gap-6 md:p-8"
+        >
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full" style={{ background: "rgba(255,255,255,.12)" }} aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="7" width="18" height="13" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18" />
+            </svg>
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-xl font-bold tracking-tight text-white md:text-2xl">Hiring? Benchmark your pay against your sector.</h2>
+            <p className="mt-1.5 text-[14px] leading-relaxed" style={{ color: "rgba(255,255,255,.72)" }}>
+              Live base-pay data by role and city — real market ranges, directive-ready, with a transparency score.
             </p>
-            <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
-              {[
-                { t: "Real market data", d: "M3 13V7M8 13V4M13 13V9" }, // bar chart
-                { t: "Directive-ready ranges", d: "M8 2v12M4 5l4-3 4 3M3.5 8.5h9M4 8.5l-1 3h3zM12 8.5l-1 3h3z" }, // scales
-                { t: "Transparency score", d: "M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8ZM8 6.2a1.8 1.8 0 100 3.6 1.8 1.8 0 000-3.6Z" }, // eye
-              ].map((f) => (
-                <div key={f.t} className="flex items-center gap-2">
-                  <svg className="shrink-0" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--mint)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={f.d} /></svg>
-                  <span className="text-[13px] font-medium text-white">{f.t}</span>
-                </div>
-              ))}
-            </div>
           </div>
-          <Link href="/for-companies" className="pill-btn pill-btn-light shrink-0 self-start px-6 py-3 text-sm min-[900px]:self-center">
-            <span>For employers</span><span className="arw">→</span>
-          </Link>
-        </div>
+          <span className="arw shrink-0 text-2xl text-white transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>
+        </Link>
       </section>
     </div>
   );

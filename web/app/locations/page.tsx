@@ -32,7 +32,7 @@ export default async function CitiesIndex() {
       <section className="mt-6 grid items-center gap-8 lg:grid-cols-[1fr_.7fr]">
         <div>
           <span className="eyebrow-pill"><span className="eyebrow">{map.cities.length} cities · live</span></span>
-          <h1 className="t-h1 mt-5">Explore pay<br /><span className="font-normal italic">by city across Europe.</span></h1>
+          <h1 className="t-h1 mt-5">Explore pay<br /><span className="accent-italic">by city across Europe.</span></h1>
           <p className="mt-4 max-w-lg text-lg leading-relaxed text-ink-muted">Median advertised base by tech hub, live from company job boards. A city median needs 8 salaried postings before it shows.</p>
         </div>
         <div className="card-float p-6">

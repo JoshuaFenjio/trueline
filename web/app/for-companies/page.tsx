@@ -25,7 +25,7 @@ export default function ForCompanies() {
 
       <section className="mt-6 max-w-2xl">
         <span className="eyebrow-pill"><span className="eyebrow">For companies</span></span>
-        <h1 className="t-h1 mt-5">Know what the market pays, <span className="font-normal italic">before you post.</span></h1>
+        <h1 className="t-h1 mt-5">Know what the market pays, <span className="accent-italic">before you post.</span></h1>
         <p className="mt-4 text-lg leading-relaxed text-ink-muted">
           SalaryRadar already reads the live salary market across EMEA. We&rsquo;re building the employer side: benchmark your bands against your real competitors and price roles on live data.
         </p>

@@ -109,6 +109,13 @@ h2 {
   letter-spacing: 0.1em;
   color: var(--accent);
 }
+/* Shared hero/headline italic accent — the brand teal, matching homepage
+   "actually". One treatment for every hero italic word site-wide. */
+.accent-italic {
+  font-weight: 400;
+  font-style: italic;
+  color: var(--accent);
+}
 /* Logo mark: ink + teal two-tone, no gradient. */
 .logo-mark {
   background: var(--ink);
