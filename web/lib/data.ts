@@ -102,7 +102,7 @@ const _fetchShard = unstable_cache(
     }
     return out;
   },
-  ["trueline-shard-v19"],
+  ["trueline-shard-v20"],
   { revalidate: 3600 }
 );
 
@@ -195,9 +195,15 @@ export interface CompanyStat {
   payScore: number; sectorRank: number; sectorTotal: number; trend: Trend;
 }
 
+// Board-sourced rows whose employer is anonymised (e.g. Landing.jobs "our
+// client…"). They count in role/country/city medians but must never appear as a
+// company — no company page, no ranking.
+const ANON_EMPLOYERS = new Set(["Landing.jobs (employer undisclosed)"]);
+
 function midpointByCompany(rows: Posting[]) {
   const m = new Map<string, number[]>();
   for (const r of usable(rows)) {
+    if (ANON_EMPLOYERS.has(r.company)) continue;
     const a = m.get(r.company) || []; a.push(r.annual); m.set(r.company, a);
   }
   return m;
@@ -427,6 +433,7 @@ export interface RankRow { key: string; label: string; slug: string; value: numb
 function rankCompaniesBy(rows: Posting[], pred: (p: Posting) => boolean, gate = N_COMPANY): RankRow[] {
   const m = new Map<string, number[]>();
   for (const r of usable(rows).filter(pred)) {
+    if (ANON_EMPLOYERS.has(r.company)) continue;
     const a = m.get(r.company) || []; a.push(r.annual); m.set(r.company, a);
   }
   return [...m.entries()].filter(([, v]) => v.length >= gate)
