@@ -126,7 +126,7 @@ def maybe_log_sample(ats: str, raw_posting: Any) -> None:
 # -----------------------------------------------------------------------------
 # SALARY EXTRACTION
 # -----------------------------------------------------------------------------
-CURRENCY_SYMBOLS = {"€": "EUR", "£": "GBP", "$": "USD"}
+CURRENCY_SYMBOLS = {"€": "EUR", "£": "GBP", "$": "USD", "zł": "PLN"}
 CURRENCY_CODES = ["EUR", "GBP", "USD", "CHF", "PLN", "SEK", "DKK", "NOK"]
 
 # Words that tell us the pay period.
@@ -135,10 +135,12 @@ PERIOD_HINTS = [
               "par heure", "pro stunde"]),
     ("month", ["per month", "/month", "/mo", "a month", "monthly", "pcm", "per mo",
                "pro monat", "/monat", "monatlich", "im monat", "par mois", "mensuel",
-               "per maand", "al mese", "por mes", "/mois"]),
+               "per maand", "al mese", "por mes", "/mois", "miesięcznie", "/mies",
+               "mies.", "maandelijks", "mensile", "mensuale", "mensual", "/mes"]),
     ("year", ["per year", "/year", "/yr", "per annum", "p.a.", "annually",
               "annual", "a year", "per yr", "pro jahr", "jährlich", "par an",
-              "annuel", "per jaar", "all'anno", "al año"]),
+              "annuel", "per jaar", "all'anno", "al año", "rocznie", "/rok",
+              "annuo", "annui", "anual", "anualmente", "jaarlijks", "/jaar"]),
 ]
 
 
@@ -212,34 +214,64 @@ def parse_salary_from_text(text: str):
     if not markers:
         return None
 
-    explicit_period = _detect_period(text)
-    period = explicit_period or "year"
+    # Period is decided from cues NEAR each number — a stray "month"/"year"
+    # elsewhere in a long description must not retag the salary. Whole-text
+    # detection is only a last resort.
+    whole_text_period = _detect_period(text)
 
     for pos in markers:
-        window = text[max(0, pos - 10): pos + 40]
+        # Wide enough backwards to catch a range that PRECEDES the symbol, as in
+        # German "60.000–75.000€". Collapse space/NBSP thousands ("45 000" ->
+        # "45000", French/Nordic style) so the range regex sees one token.
+        window = text[max(0, pos - 28): pos + 40]
+        window = re.sub(r"(\d)[   ](?=\d{3}\b)", r"\1", window)
+        window = re.sub(r"(\d)[   ](?=\d{3}\b)", r"\1", window)  # 1 234 567
+        # A period word usually sits right after the number ("€70,000 per year").
+        wperiod = _detect_period(text[max(0, pos - 40): pos + 70])
         rng = _RANGE_RE.search(window)
         if rng:
-            lo, hi = _num(rng.group(1)), _num(rng.group(2))
+            g1, g2 = rng.group(1), rng.group(2)
+            lo, hi = _num(g1), _num(g2)
             if lo and hi:
-                candidates.append((min(lo, hi), max(lo, hi)))
+                # Shared 'k': "45–55k" / "60–75k€" means 45k–55k — apply the 'k' to
+                # the bare endpoint when only one side carries it and the other is
+                # small. Without this the most common EU shorthand parses as
+                # (45, 55000) and is thrown out by the ratio guard.
+                k1, k2 = g1.strip().lower().endswith("k"), g2.strip().lower().endswith("k")
+                if k2 and not k1 and lo < 1000:
+                    lo *= 1000
+                elif k1 and not k2 and hi < 1000:
+                    hi *= 1000
+                candidates.append((min(lo, hi), max(lo, hi), wperiod))
                 continue
         single = _SINGLE_RE.search(window)
         if single:
             v = _num(single.group(1))
             if v:
-                candidates.append((v, v))
+                candidates.append((v, v, wperiod))
 
-    # No explicit period cue, but the numbers are far too small to be an annual
-    # salary (e.g. "2.000–3.500")? It's monthly — tag it so, so it's converted
-    # rather than silently dropped by the annual plausibility floor.
-    if explicit_period is None and candidates:
-        biggest = max(hi for _, hi in candidates)
-        if 0 < biggest < 10000:
-            period = "month"
+    if not candidates:
+        return None
+
+    # Prefer a period cue found NEXT TO a number; else whole-text; else infer from
+    # magnitude (tiny numbers are monthly, e.g. "2.000–3.500").
+    near = [p for _, _, p in candidates if p]
+    period = near[0] if near else whole_text_period
+    if period is None:
+        biggest = max(hi for _, hi, _ in candidates)
+        period = "month" if 0 < biggest < 10000 else "year"
+    # Safety backstop: a "monthly" figure whose EUR value is absurd for one month
+    # (> €20k/mo ≈ > €240k/yr) is an annual salary that sat near a stray "month"
+    # word — retag to annual rather than 12× it into a fake €800k median.
+    if period == "month":
+        lo_guess = min(lo for lo, _, _ in candidates)
+        me = to_eur(lo_guess, currency)
+        if me and me > 20000:
+            period = "year"
 
     # Keep only plausible salaries. Hourly numbers are small; annual are large.
     plausible = []
-    for lo, hi in candidates:
+    for lo, hi, _ in candidates:
         if period == "hour":
             if 3 <= lo <= 1000:
                 plausible.append((lo, hi))
@@ -256,6 +288,15 @@ def parse_salary_from_text(text: str):
     # Use the widest plausible range we found (most informative).
     lo = min(p[0] for p in plausible)
     hi = max(p[1] for p in plausible)
+    # Final magnitude backstop on the CHOSEN figure (not just the candidate min):
+    # a "monthly" salary whose top EUR value is absurd for one month (> €20k/mo)
+    # is an annual figure that sat near a stray "month" cue. Retag & re-validate.
+    if period == "month":
+        me_hi = to_eur(hi, currency)
+        if me_hi and me_hi > 20000:
+            period = "year"
+            if not (10000 <= lo <= 5000000):
+                return None
     # Guard against mixed-unit parses (e.g. a monthly base merged with an annual
     # commission). A real salary range rarely spans more than ~4x; if it does,
     # the parse is unreliable — be conservative and return nothing.
