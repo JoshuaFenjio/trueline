@@ -16,9 +16,9 @@ import type { CompanyDetail } from "@/lib/data";
 
 const COMPANY_TABS = [
   { id: "overview", label: "Overview", icon: Icon.target },
+  { id: "locations", label: "Locations", icon: Icon.globe },
   { id: "salaries", label: "Salaries", icon: Icon.bars },
   { id: "roles", label: "Roles", icon: Icon.briefcase },
-  { id: "locations", label: "Locations", icon: Icon.globe },
   { id: "jobs", label: "Jobs", icon: Icon.building },
 ];
 function tier(n: number, hi: number, mid: number) { return n >= hi ? "High" : n >= mid ? "Medium" : "Low"; }
@@ -110,6 +110,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
           <CompanyLogo name={c.company} size={56} rounded="rounded-2xl" />
           <div>
             <h1 className="t-h2">{c.company}</h1>
+            {meta.description && <p className="mt-1.5 max-w-md text-[13px] leading-snug text-ink-muted">{meta.description}</p>}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {chips.map((b) => <span key={b} className="rounded-full border px-2.5 py-0.5 text-[12px] text-ink-muted" style={{ background: "var(--surface-1)" }}>{b}</span>)}
               {meta.website && <a href={`https://${meta.website}`} target="_blank" rel="noopener noreferrer" className="rounded-full border px-2.5 py-0.5 text-[12px] text-ink-muted hover:text-ink" style={{ background: "var(--surface-1)" }}>{meta.website} ↗</a>}
@@ -179,6 +180,14 @@ export default async function CompanyPage({ params }: { params: { slug: string }
         </div>
       </section>
 
+      {/* Where they hire — moved directly under role-vs-market + transparency */}
+      {c.markets.length > 0 && (
+        <section className="mt-10 scroll-mt-24" id="locations">
+          <SectionHeader kicker="Locations" title={`Where ${c.company} hires`} sub="Active postings by country. Median shown where 3+ are salaried; dots mark office cities." />
+          <div className="mt-5"><CompanyHiresMap company={c.company} markets={c.markets} offices={c.offices} /></div>
+        </section>
+      )}
+
       {earlyCoverage && (
         <section className="mt-6">
           <div className="card flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -244,13 +253,6 @@ export default async function CompanyPage({ params }: { params: { slug: string }
       </section>
 
       {/* Locations */}
-      {c.markets.length > 0 && (
-        <section className="mt-16 scroll-mt-24" id="locations">
-          <SectionHeader kicker="Locations" title={`Where ${c.company} hires`} sub="Active postings by country. Median shown where 3+ are salaried; dots mark office cities." />
-          <div className="mt-5"><CompanyHiresMap company={c.company} markets={c.markets} offices={c.offices} /></div>
-        </section>
-      )}
-
       {/* Jobs */}
       <section className="mt-16 scroll-mt-24" id="jobs">
         <SectionHeader kicker="Jobs" title="Latest salaried postings" />

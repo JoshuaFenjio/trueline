@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getCountryLeaderboard, getLiveStats, isConfigured } from "@/lib/data";
+import { getCountryLeaderboard, getLiveStats, getEuropePayData, isConfigured } from "@/lib/data";
 import { SectionHeader, Breadcrumbs, PillButton } from "@/components/blocks";
 import { HubExplorer, HubItem } from "@/components/HubExplorer";
+import { CountryRoleRanker } from "@/components/CountryRoleRanker";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/icons";
 import { subregionOf, SUBREGIONS } from "@/lib/subregion";
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 
 export default async function CountriesIndex() {
   if (!isConfigured) return <p className="py-24 text-center text-ink-muted">Supabase not configured.</p>;
-  const [countries, stats] = await Promise.all([getCountryLeaderboard(), getLiveStats()]);
+  const [countries, stats, europe] = await Promise.all([getCountryLeaderboard(), getLiveStats(), getEuropePayData()]);
   const topMarkets = [...countries].sort((a, b) => b.n - a.n).slice(0, 6);
   const items: HubItem[] = countries.map((c) => ({ name: c.country, slug: slugify(c.country), median: c.median, n: c.n, flagCountry: c.country, href: `/locations/country/${slugify(c.country)}` }));
   const regionCounts = SUBREGIONS.map((r) => ({ region: r, n: countries.filter((c) => subregionOf(c.country) === r).length })).filter((r) => r.n > 0);
@@ -40,6 +41,11 @@ export default async function CountriesIndex() {
             <div><div className="tnum text-lg font-semibold">{stats.salaried.toLocaleString()}</div><div className="text-[11px] text-ink-faint">Salaried ads</div></div>
           </div>
         </div>
+      </section>
+
+      <section className="mt-12">
+        <SectionHeader kicker="Rank by role" title="Which countries pay most — by role" sub="Pick a role to re-rank every market by its median advertised base." />
+        <div className="mt-5"><CountryRoleRanker data={europe} /></div>
       </section>
 
       <section className="mt-12">
