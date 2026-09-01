@@ -1,5 +1,5 @@
 import { isAdmin, getServiceClient, adminConfigured } from "@/lib/admin";
-import { login, logout, setStatus } from "./actions";
+import { login, logout, setStatus, approveRoleRequest, rejectRoleRequest } from "./actions";
 import { Card, PrimaryButton } from "@/components/ui";
 import { eur } from "@/lib/format";
 
@@ -47,6 +47,13 @@ export default async function Admin({ searchParams }: { searchParams: { error?: 
     : { data: [] as any[] };
   const rows = (data as any[]) || [];
 
+  // Role requests (growth loop). Gracefully handle the table not being migrated yet.
+  const rrRes = sb
+    ? await sb.from("role_requests").select("*").in("status", ["pending", "verified", "approved"]).order("created_at", { ascending: false }).limit(100)
+    : { data: [] as any[], error: null };
+  const requests = (rrRes.data as any[]) || [];
+  const requestsMigrated = !rrRes.error;
+
   return (
     <div className="mx-auto max-w-4xl py-12">
       <div className="flex items-center justify-between">
@@ -91,6 +98,49 @@ export default async function Admin({ searchParams }: { searchParams: { error?: 
           ))}
         </div>
       )}
+
+      {/* Role requests — the growth loop. Approve maps the query to a family as a
+          synonym; reclassify_supabase.py relabels matching postings next run. */}
+      <div className="mt-14 flex items-center justify-between">
+        <div>
+          <h2 className="t-h2">Role requests</h2>
+          <p className="mt-1 text-sm text-ink-muted">
+            {requestsMigrated
+              ? <><span className="tnum">{requests.length}</span> open. Approve → maps the query to a family; a reclassify run relabels postings we already hold.</>
+              : <>Table not migrated yet — apply <code className="tnum">migrations/2026-09-role-requests.sql</code> in Supabase.</>}
+          </p>
+        </div>
+      </div>
+
+      {requestsMigrated && (requests.length === 0 ? (
+        <Card className="mt-6 text-center text-ink-muted">No role requests yet.</Card>
+      ) : (
+        <div className="mt-6 space-y-3">
+          {requests.map((r) => (
+            <Card key={r.id} className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="min-w-0">
+                <div className="font-medium">&ldquo;{r.query}&rdquo; <span className="text-ink-muted">· {r.status}</span></div>
+                <div className="tnum mt-1 text-sm text-ink-muted">
+                  {r.email} · <span className="text-ink">{(r.matching_n ?? 0).toLocaleString()}</span> postings may match
+                  {r.family_assigned ? ` · → ${r.family_assigned}` : ""}
+                </div>
+              </div>
+              {r.status !== "approved" && (
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  <form action={approveRoleRequest.bind(null, r.id, r.query_norm)} className="flex items-center gap-2">
+                    <input name="family" placeholder="Family (existing or new)" defaultValue={r.query}
+                      className="field w-48 px-2.5 py-1.5 text-sm" />
+                    <button className="rounded-lg border px-3 py-1.5 text-sm" style={{ color: "var(--mint)", borderColor: "rgba(74,222,156,.35)", background: "rgba(74,222,156,.08)" }}>Approve</button>
+                  </form>
+                  <form action={rejectRoleRequest.bind(null, r.id)}>
+                    <button className="rounded-lg border px-3 py-1.5 text-sm" style={{ color: "var(--ember)", borderColor: "rgba(255,106,69,.35)", background: "rgba(255,106,69,.08)" }}>Reject</button>
+                  </form>
+                </div>
+              )}
+            </Card>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }

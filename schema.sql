@@ -106,3 +106,34 @@ create policy anon_insert_submissions on submissions
 drop policy if exists anon_read_approved_submissions on submissions;
 create policy anon_read_approved_submissions on submissions
     for select to anon using (status = 'approved');
+
+-- =============================================================================
+-- Role-request loop (see migrations/2026-09-role-requests.sql for the canonical,
+-- comment-rich version). Service-key only; RLS on with no anon policies.
+-- =============================================================================
+create table if not exists role_requests (
+    id              bigint generated always as identity primary key,
+    query           text not null,
+    query_norm      text not null,
+    email           text not null,
+    status          text default 'pending',   -- pending|verified|approved|published|rejected
+    token           text not null,
+    matching_n      integer default 0,
+    family_assigned text,
+    created_at      timestamptz default now(),
+    verified_at     timestamptz,
+    notified_at     timestamptz
+);
+create index if not exists role_requests_status_idx on role_requests (status);
+
+create table if not exists role_synonyms (
+    id         bigint generated always as identity primary key,
+    synonym    text not null,
+    family     text not null,
+    note       text,
+    created_at timestamptz default now()
+);
+create unique index if not exists role_synonyms_uq on role_synonyms (synonym);
+
+alter table role_requests enable row level security;
+alter table role_synonyms enable row level security;

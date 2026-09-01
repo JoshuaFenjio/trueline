@@ -56,3 +56,24 @@ export async function setStatus(id: number, status: "approved" | "rejected") {
   if (sb) await sb.from("submissions").update({ status }).eq("id", id);
   revalidatePath("/admin");
 }
+
+// Approve a role request: record the title as a synonym mapping to a family
+// (existing or new). reclassify_supabase.py reads role_synonyms and re-labels
+// matching postings on its next run. We NEVER auto-scrape — we relabel data we
+// already hold, then the honesty gates decide when it publishes.
+export async function approveRoleRequest(id: number, queryNorm: string, formData: FormData) {
+  if (!isAdmin()) redirect("/admin");
+  const sb = getServiceClient();
+  const family = String(formData.get("family") || "").trim().slice(0, 60);
+  if (!sb || !family) { revalidatePath("/admin"); return; }
+  await sb.from("role_synonyms").upsert({ synonym: queryNorm, family }, { onConflict: "synonym" });
+  await sb.from("role_requests").update({ status: "approved", family_assigned: family }).eq("id", id);
+  revalidatePath("/admin");
+}
+
+export async function rejectRoleRequest(id: number) {
+  if (!isAdmin()) redirect("/admin");
+  const sb = getServiceClient();
+  if (sb) await sb.from("role_requests").update({ status: "rejected" }).eq("id", id);
+  revalidatePath("/admin");
+}

@@ -19,6 +19,7 @@ from pipeline import classify_role
 
 PAGE = 1000
 URL = os.environ["SUPABASE_URL"].rstrip("/") + "/rest/v1/job_postings"
+REST_SYN = os.environ["SUPABASE_URL"].rstrip("/") + "/rest/v1/role_synonyms"
 KEY = os.environ.get("SUPABASE_SERVICE_KEY") or os.environ["SUPABASE_KEY"]
 H = {"apikey": KEY, "Authorization": "Bearer " + KEY}
 
@@ -63,8 +64,32 @@ def apply_changes(changes):
     return done
 
 
+def fetch_synonyms():
+    """Admin-approved role-request synonyms (role_synonyms table). A title
+    containing an approved synonym is relabelled to that family — this is how an
+    approved role request takes effect. Empty/absent table -> no overrides."""
+    try:
+        r = requests.get(REST_SYN, headers=H, params={"select": "synonym,family"}, timeout=30)
+        if r.status_code != 200:
+            return []
+        return [(s["synonym"].lower(), s["family"]) for s in r.json() if s.get("synonym") and s.get("family")]
+    except Exception:
+        return []
+
+
+def classify_with_synonyms(title, synonyms):
+    t = (title or "").lower()
+    for syn, fam in synonyms:
+        if syn and syn in t:
+            return fam
+    return classify_role(title or "")
+
+
 def main():
     rows = fetch_all()
+    synonyms = fetch_synonyms()
+    if synonyms:
+        print("applying {} admin-approved synonym(s)".format(len(synonyms)))
     old_dist = Counter(p.get("role_family") for p in rows)
     new_dist = Counter()
     sal_new_dist = Counter()
@@ -73,7 +98,7 @@ def main():
     samples = {}
     for p in rows:
         old = p.get("role_family")
-        new = classify_role(p.get("title") or "")
+        new = classify_with_synonyms(p.get("title") or "", synonyms)
         new_dist[new] += 1
         if salaried(p):
             sal_new_dist[new] += 1

@@ -46,6 +46,15 @@ export function SmartSearch({ roles, cities, companies, countries = [], compact 
     return out.slice(0, 8);
   }, [q, roles, cities, companies, compact]);
 
+  // No role family matches the typed query → offer the request loop.
+  const qt = q.trim();
+  const noRoleMatch = qt.length >= 2 && !roles.some((r) => r.toLowerCase().includes(qt.toLowerCase()));
+
+  function requestRole() {
+    router.push(`/request?q=${encodeURIComponent(qt.slice(0, 120))}`);
+    setOpen(false);
+  }
+
   function goRoleLocation(role: string) {
     const params = new URLSearchParams();
     if (role) params.set("role", role);
@@ -76,7 +85,7 @@ export function SmartSearch({ roles, cities, companies, countries = [], compact 
     } else if (e.key === "Enter") submit();
   }
 
-  const dropdown = open && suggestions.length > 0 && (
+  const dropdown = open && (suggestions.length > 0 || noRoleMatch) && (
     <div className="surface absolute z-30 mt-2 w-full overflow-hidden rounded-xl border p-1 shadow-glow">
       {suggestions.map((s, i) => (
         <button
@@ -89,6 +98,16 @@ export function SmartSearch({ roles, cities, companies, countries = [], compact 
  <span className="text-[10px] text-ink-faint">{s.kind}</span>
         </button>
       ))}
+      {noRoleMatch && (
+        <button
+          onMouseDown={(e) => { e.preventDefault(); requestRole(); }}
+          className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm"
+          style={{ borderTop: suggestions.length ? "1px solid var(--border)" : undefined }}
+        >
+          <span className="text-ink-muted">We don&rsquo;t track &ldquo;<span className="font-medium text-ink">{qt}</span>&rdquo; yet</span>
+          <span className="shrink-0 font-medium text-[var(--accent)]">Request it →</span>
+        </button>
+      )}
     </div>
   );
 
