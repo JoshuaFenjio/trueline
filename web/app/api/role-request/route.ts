@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createRequest, requestRate, normQuery } from "@/lib/roleRequests";
 import { sendEmail, emailConfigured } from "@/lib/email";
+import { magicLinkEmail } from "@/lib/emailTemplates";
 import { SITE_URL } from "@/lib/site";
 
 export const runtime = "nodejs";
@@ -26,16 +27,8 @@ export async function POST(req: Request) {
 
   // Magic-link verification (scaffolded delivery — see lib/email.ts).
   const link = `${SITE_URL}/request/verify?e=${encodeURIComponent(email)}&q=${encodeURIComponent(normQuery(query))}&t=${r.token}`;
-  const delivered = await sendEmail(
-    email,
-    `Confirm your request to track “${query}”`,
-    `<p>Confirm you asked SalaryRadar to track <strong>${query}</strong>:</p>
-     <p><a href="${link}">Confirm my request →</a></p>
-     <p style="color:#666;font-size:13px">We already track ${r.matching} live postings that may match. We'll classify
-     “${query}” and email you when it has enough data to publish. We don't summon new data — a role is a new label on
-     postings we largely already track.</p>`,
-    `Confirm your request to track "${query}": ${link}`
-  );
+  const mail = magicLinkEmail(query, r.matching ?? 0, link);
+  const delivered = await sendEmail(email, mail.subject, mail.html, mail.text);
 
   return NextResponse.json({ ok: true, matching: r.matching, emailSent: delivered, emailConfigured });
 }
