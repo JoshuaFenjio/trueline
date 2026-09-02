@@ -186,9 +186,13 @@ def _detect_period(text: str) -> Optional[str]:
 
 # A number that may carry a 'k' and EU/US separators.
 _NUMBER = r"\d[\d.,]*\s*k?"
-# A range: number  (- – — to / "up to")  number
+# A currency symbol/code that may sit between the two ends of a range, as in
+# "€70,000 - €90,000" or "£55k to £65k". Without allowing it here the second
+# number fails to match and the range collapses to a single figure (min==max).
+_CUR_TOKEN = r"(?:€|£|\$|zł|EUR|GBP|USD|CHF|PLN|SEK|DKK|NOK)"
+# A range: number  (- – — to / "up to")  [optional currency]  number
 _RANGE_RE = re.compile(
-    r"(" + _NUMBER + r")\s*(?:-|–|—|to|up to)\s*(" + _NUMBER + r")",
+    r"(" + _NUMBER + r")\s*(?:-|–|—|to|up to)\s*" + _CUR_TOKEN + r"?\s*(" + _NUMBER + r")",
     re.IGNORECASE,
 )
 _SINGLE_RE = re.compile(r"(" + _NUMBER + r")", re.IGNORECASE)
