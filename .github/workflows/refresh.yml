@@ -88,8 +88,12 @@ jobs:
           ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
           ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
           REED_API_KEY: ${{ secrets.REED_API_KEY }}
+          ITJOBS_API_KEY: ${{ secrets.ITJOBS_API_KEY }}
         run: |
-          python -u new_sources.py personio --apply
+          python -u new_sources.py germantechjobs --apply
+          python -u new_sources.py himalayas --apply
           python -u new_sources.py landing --apply
+          python -u new_sources.py personio --apply
+          python -u new_sources.py itjobs --apply
           python -u new_sources.py adzuna --apply
           python -u new_sources.py reed --apply

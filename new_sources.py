@@ -192,6 +192,128 @@ def run_landing(apply):
 
 
 # ---------------------------------------------------------------------------
+# GERMANTECHJOBS.DE  (public RSS; salary range MANDATORY in every item title,
+# e.g. "Role @ Company [45.000 - 75.000 €]" — Germany, EUR, all usable). robots
+# allows /rss. Salary is parsed from the title (the board's own posted range) and
+# stored as 'structured' provenance under ats='germantechjobs'.
+# ---------------------------------------------------------------------------
+def run_germantechjobs(apply):
+    r = requests.get("https://germantechjobs.de/rss", headers=UA, timeout=30)
+    if r.status_code != 200:
+        print("Germantechjobs: RSS HTTP", r.status_code); return
+    try:
+        root = ET.fromstring(r.content)
+    except ET.ParseError:
+        print("Germantechjobs: RSS parse error"); return
+    allposts = []
+    for it in root.findall(".//item"):
+        title = (it.findtext("title") or "").strip()
+        link = (it.findtext("link") or "").strip()
+        desc = it.findtext("description") or ""
+        if not title or not link:
+            continue
+        # "Role (m/w/d) @ Company [45.000 - 75.000 €]"
+        role = title.split(" @ ")[0].strip() if " @ " in title else title.split("[")[0].strip()
+        company = "Unknown"
+        if " @ " in title:
+            company = title.split(" @ ", 1)[1].split("[")[0].strip() or "Unknown"
+        sal = P.parse_salary_from_text(title)  # the mandatory range lives in the title
+        if not sal:
+            continue  # no posted range -> skip (we never invent one)
+        row = P.build_posting("germantechjobs", company, link, role, "Germany", None, "Germany",
+                              False, it.findtext("pubDate"), link, desc,
+                              structured_salary={"min": sal["min"], "max": sal["max"],
+                                                 "currency": sal["currency"], "period": sal["period"]})
+        if row.get("region") == "EMEA" and row["salary_source"] not in (None, "none"):
+            allposts.append(finalize(row))
+    sal_n = sum(1 for r in allposts if (r["currency"] or "") in ("EUR", "GBP", "CHF", "SEK", "DKK", "NOK", "PLN"))
+    print("Germantechjobs: {} EMEA salaried postings ({} EMEA-currency usable)".format(len(allposts), sal_n))
+    if apply:
+        print("upserting...", upsert(allposts), "rows")
+
+
+# ---------------------------------------------------------------------------
+# HIMALAYAS  (public keyless JSON; structured minSalary/maxSalary/currency).
+# Remote-global and USD-skewed, so we keep ONLY rows that are EMEA-region AND
+# carry an EMEA currency (the rest can't feed EMEA medians). robots allows the
+# /jobs/api endpoint (only paginated HTML ?page= URLs are disallowed).
+# ---------------------------------------------------------------------------
+def run_himalayas(apply):
+    emea_cur = {"EUR", "GBP", "CHF", "SEK", "DKK", "NOK", "PLN"}
+    allposts, offset = [], 0
+    while offset < 2000:
+        r = requests.get("https://himalayas.app/jobs/api", headers=UA,
+                         params={"limit": 100, "offset": offset}, timeout=30)
+        if r.status_code != 200:
+            break
+        jobs = r.json().get("jobs", [])
+        if not jobs:
+            break
+        for j in jobs:
+            if not j.get("minSalary") and not j.get("maxSalary"):
+                continue
+            loc = "; ".join(j.get("locationRestrictions") or [])
+            if not loc:
+                continue  # worldwide/unknown -> can't claim as EMEA
+            row = P.build_posting("himalayas", j.get("companyName") or "Unknown",
+                                  j.get("guid") or j.get("applicationLink"), j.get("title") or "",
+                                  loc, None, None, True, j.get("pubDate"), j.get("applicationLink"),
+                                  j.get("description") or "",
+                                  structured_salary={"min": j.get("minSalary"), "max": j.get("maxSalary"),
+                                                     "currency": j.get("currency"), "period": j.get("salaryPeriod")})
+            # keep only EMEA-region rows with an EMEA currency (median-usable)
+            if row.get("region") == "EMEA" and (row["currency"] or "") in emea_cur \
+               and row["salary_source"] not in (None, "none"):
+                allposts.append(finalize(row))
+        offset += len(jobs)
+        time.sleep(0.5)
+    print("Himalayas: {} EMEA-currency salaried postings kept".format(len(allposts)))
+    if apply:
+        print("upserting...", upsert(allposts), "rows")
+
+
+# ---------------------------------------------------------------------------
+# ITJOBS.PT — SCAFFOLD. Official documented REST API with explicit salaryMin/
+# salaryMax (annual gross); robots-clean, but needs a free read-only api key
+# (self-serve by email -> ITJOBS_API_KEY). Respects its ai-train=no signal:
+# we ingest for reference/benchmarking, never for model training.
+# ---------------------------------------------------------------------------
+def run_itjobs(apply):
+    key = os.environ.get("ITJOBS_API_KEY")
+    if not key:
+        print("ITJobs.pt: SCAFFOLD READY — set ITJOBS_API_KEY (free at api.itjobs.pt) to activate.")
+        print("  Will ingest documented salaryMin/salaryMax (annual gross EUR); PT rows; ai-train=no honored.")
+        return
+    allposts, page = [], 1
+    while page <= 50:
+        r = requests.get("https://api.itjobs.pt/job/list.json", headers=UA,
+                         params={"api_key": key, "page": page, "limit": 100}, timeout=30)
+        if r.status_code != 200:
+            break
+        jobs = (r.json() or {}).get("results", [])
+        if not jobs:
+            break
+        for j in jobs:
+            lo, hi = j.get("wage") or j.get("salaryMin"), j.get("salaryMax")
+            if not (lo or hi):
+                continue
+            loc = (j.get("locations") or [{}])
+            city = (loc[0].get("name") if loc else None)
+            row = P.build_posting("itjobs", (j.get("company") or {}).get("name") or "Unknown",
+                                  j["id"], j.get("title") or "", city or "Portugal", city, "Portugal",
+                                  bool(j.get("allowRemote")), j.get("publishedAt"),
+                                  (j.get("company") or {}).get("url"), j.get("body") or "",
+                                  structured_salary={"min": lo, "max": hi, "currency": "EUR", "period": "year"})
+            if row.get("region") == "EMEA":
+                allposts.append(finalize(row))
+        page += 1
+        time.sleep(0.5)
+    print("ITJobs.pt: {} PT salaried postings".format(len(allposts)))
+    if apply:
+        print("upserting...", upsert(allposts), "rows")
+
+
+# ---------------------------------------------------------------------------
 # ADZUNA / REED — scaffold only (need keys; predicted salaries hard-rejected)
 # ---------------------------------------------------------------------------
 def run_adzuna(apply):
@@ -255,4 +377,6 @@ if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else ""
     apply = "--apply" in sys.argv
     {"personio": run_personio, "landing": run_landing,
-     "adzuna": run_adzuna, "reed": run_reed}.get(cmd, lambda a: print("usage: personio|landing|adzuna|reed [--apply]"))(apply)
+     "germantechjobs": run_germantechjobs, "himalayas": run_himalayas, "itjobs": run_itjobs,
+     "adzuna": run_adzuna, "reed": run_reed}.get(
+        cmd, lambda a: print("usage: personio|landing|germantechjobs|himalayas|itjobs|adzuna|reed [--apply]"))(apply)

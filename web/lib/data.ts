@@ -102,7 +102,7 @@ const _fetchShard = unstable_cache(
     }
     return out;
   },
-  ["trueline-shard-v22"],
+  ["trueline-shard-v23"],
   { revalidate: 3600 }
 );
 
