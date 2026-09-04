@@ -365,7 +365,8 @@ def classify_role(title: str) -> str:
     # --- Research science (before Data Scientist / ML) ----------------------
     if has("research scientist", "applied scientist", "research fellow", "postdoc",
            "post-doc", "phd researcher", "principal scientist", "senior scientist",
-           "staff scientist", "scientist, research", "member of technical staff"):
+           "staff scientist", "scientist, research", "member of technical staff",
+           "quantum", "quantum computing", "quantum error"):
         return "Research Scientist"
 
     # --- Specialised engineering (most specific first) ----------------------
@@ -409,6 +410,21 @@ def classify_role(title: str) -> str:
            "cloud engineer", "reliability engineer", "systems engineer", "platform team",
            "cloud architect", "enterprise architect", "kubernetes", "observability"):
         return "DevOps/Platform"
+    # --- IT operations / administration (internal IT, not product engineering).
+    #     Named to lift a large real cluster out of "Other" (German IT roles esp.).
+    #     Kept AFTER DevOps and BEFORE the generic SWE/Support catches. Uses
+    #     "fachinformatiker systemintegration" specifically; the dev variant
+    #     ("anwendungsentwicklung") is routed to Software Engineer below.
+    # Leading spaces on the "it …" phrases are load-bearing: t is space-padded, so
+    # " it operations" / " it manager" match a real word "IT" but NOT the tail of
+    # "audit operations" / "audit manager" (substring match would misfile them).
+    if has(" it administrator", "it-administrator", "system administrator",
+           "systems administrator", "sysadmin", "systemadministrator",
+           " it systemadministrator", " it operations", " it technician", " it techniker",
+           " it support", "it-support", "desktop support", "network administrator",
+           "netzwerkadministrator", " it application manager", " it infrastructure",
+           " it manager", " it specialist", "fachinformatiker systemintegration"):
+        return "IT/SysAdmin"
     if has("qa ", "quality assurance", "test engineer", "sdet", "qa engineer",
            "test automation", "quality engineer", "tester", "in test"):
         return "QA/Test"
@@ -431,7 +447,8 @@ def classify_role(title: str) -> str:
 
     # --- Generic engineering / design ---------------------------------------
     if has("software", "full stack", "fullstack", "full-stack", "swe", "developer",
-           "programmer", "engineer", "technical lead", "tech lead"):
+           "programmer", "engineer", "technical lead", "tech lead",
+           "entwickler", "anwendungsentwicklung", "softwareentwickl"):
         return "Software Engineer"
     if has("designer", "design lead", " ux ", "ui / ", "user experience",
            "product design", "graphic design", "motion design", "design system",
@@ -532,7 +549,9 @@ def classify_role(title: str) -> str:
            "office coordinator", "admin assistant", "office administrator", "front desk"):
         return "Office/EA"
     if has("operations", "operational", " ops ", "program manager", "programme manager",
-           "project manager", "supply chain", "logistics", "warehouse", "procurement",
+           "project manager", "projektleiter", "projektmanager", "projectleider",
+           "projectcoördinator", "projectcoordinator", " pmo ", "chef de projet",
+           "supply chain", "logistics", "warehouse", "procurement",
            "fulfil", "general manager", "country manager", "scrum master", "agile coach",
            "delivery manager", "order management", "inventory", "demand planner",
            "supply planner", "production planner"):
@@ -552,9 +571,12 @@ def classify_role(title: str) -> str:
            "radiographer", "paramedic", "therapy technician", "therapist assistant"):
         return "Healthcare"
     if has("electrician", "elektriker", "elektromonteur", "electromécanicien", "monteur",
-           "mechanic", "fitter", "welder", "plumber", "hvac", "robinetier", "tuyauteur",
-           "lokführer", "kabeltiefbau", "field technician", "service technician",
-           "maintenance technician", "installer"):
+           "mechanic", "mécanicien", "fitter", "welder", "plumber", "hvac", "robinetier",
+           "tuyauteur", "lokführer", "zugchef", "kabeltiefbau", "field technician",
+           "service technician", "maintenance technician", "installer",
+           "technicien", "contrôleur qualité", "contrôle qualité", "assurance qualité",
+           "inspecteur qualité", "inspection qualité", "qualitätssicherung",
+           "chef de chantier", "chef d'équipe"):
         return "Skilled Trades"
     if has("grocery", "cashier", "store associate", "store manager", "store supervisor",
            "retail assistant", "merchandiser", "shop assistant", "category manager",
