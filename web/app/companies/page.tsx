@@ -199,9 +199,9 @@ export default async function CompaniesPage({
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="mt-5 flex items-center justify-center gap-3 text-sm">
-          {page > 1 ? <Link href={qs({ page: String(page - 1) })} className="pill-btn">Prev</Link> : <span className="pill-btn opacity-40">Prev</span>}
+          {page > 1 ? <Link href={qs({ page: String(page - 1) })} className="pill-btn">Prev</Link> : <span className="pill-btn opacity-40 pointer-events-none">Prev</span>}
           <span className="tnum text-ink-faint">Page {page} of {totalPages}</span>
-          {page < totalPages ? <Link href={qs({ page: String(page + 1) })} className="pill-btn">Next</Link> : <span className="pill-btn opacity-40">Next</span>}
+          {page < totalPages ? <Link href={qs({ page: String(page + 1) })} className="pill-btn">Next</Link> : <span className="pill-btn opacity-40 pointer-events-none">Next</span>}
         </div>
       )}
       <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2"><span className="text-[11px] text-ink-faint">Scale</span><PayScaleLegend /></div>

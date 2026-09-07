@@ -170,7 +170,7 @@ export function RankTable({ rows, valueHead = "Median base" }: { rows: RankVM[];
       <ol>
         {rows.map((r, i) => {
           const inner = (
-            <div className="relative flex h-10 items-center px-1 transition-colors hover:bg-[var(--band)]">
+            <div className="relative flex h-10 items-center px-1">
               <span className="tnum w-8 shrink-0 text-right text-sm text-ink-faint">{i + 1}</span>
               <span className="ml-4 min-w-0 flex-1 truncate">
                 <span className="text-ink">{r.label}</span>
@@ -188,7 +188,7 @@ export function RankTable({ rows, valueHead = "Median base" }: { rows: RankVM[];
           );
           return (
             <li key={r.label + i} className="border-t" style={{ borderColor: "var(--border)" }}>
-              {r.href ? <Link href={r.href} className="block">{inner}</Link> : inner}
+              {r.href ? <Link href={r.href} className="block transition-colors hover:bg-[var(--band)]">{inner}</Link> : inner}
             </li>
           );
         })}
