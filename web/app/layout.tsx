@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Schibsted_Grotesk } from "next/font/google";
-import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { NavBar, Footer } from "@/components/Chrome";
 import { SITE_URL } from "@/lib/site";
@@ -41,7 +40,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${schibsted.variable} ${GeistMono.variable}`}>
+    <html lang="en" className={schibsted.variable}>
       <body className="font-sans">
         <NavBar />
         <main className="container-page">{children}</main>

@@ -338,10 +338,15 @@ h2 {
   font-weight: inherit;
 }
 
+/* Data figures render in the brand sans (Schibsted), NOT a monospace — the mono
+   "AI stat" look is retired site-wide. tabular-nums keeps columns aligned; a
+   hair of negative tracking tightens long numbers. Mono survives only in genuine
+   code contexts (none user-facing). */
 .tnum {
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-family: var(--font-schibsted), system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
+  letter-spacing: -0.01em;
 }
 
 /* Arrow links — Schibsted affordance (mono is for data values only); teal on

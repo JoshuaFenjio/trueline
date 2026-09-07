@@ -29,7 +29,6 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-schibsted)", "system-ui", "sans-serif"],
-        mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
       },
       borderRadius: {
         card: "12px",
