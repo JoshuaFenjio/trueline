@@ -19,11 +19,15 @@ export interface Fact { label: string; value: string }
 
 export function EuropePayMap({
   data, initialRole = "All roles", highlightCountry, withTable = false, facts,
-  triptych = false, findings, spark,
+  triptych = false, findings, spark, roleParamMode = false, cityParam,
 }: {
   data: EuropePayData; initialRole?: string; highlightCountry?: string | null;
   withTable?: boolean; facts?: Fact[];
   triptych?: boolean; findings?: Record<string, CountryFinding | null>; spark?: number[];
+  // When true the role selector drives the URL (?role=) so the WHOLE server view
+  // — H1, facts strip, sibling modules — recomputes and the link is shareable,
+  // instead of only mutating this widget's client state.
+  roleParamMode?: boolean; cityParam?: string;
 }) {
   const [mounted, setMounted] = useState(false);
   const [role, setRole] = useState(data.data[initialRole] ? initialRole : "All roles");
@@ -31,6 +35,21 @@ export function EuropePayMap({
   const [tip, setTip] = useState<{ x: number; y: number; name: string; c: CountryPay | null } | null>(null);
   const router = useRouter();
   useEffect(() => setMounted(true), []);
+  // Keep the widget in sync when the server hands down a new role (URL-driven
+  // navigation reuses this client instance, so a prop change alone won't apply).
+  useEffect(() => { if (data.data[initialRole]) setRole(initialRole); }, [initialRole, data]);
+
+  function pickRole(v: string) {
+    const nv = v || "All roles";
+    if (roleParamMode) {
+      const p = new URLSearchParams();
+      if (nv !== "All roles") p.set("role", nv);
+      if (cityParam) p.set("city", cityParam);
+      router.push(`/${p.toString() ? "?" + p.toString() : ""}#results`);
+    } else {
+      setRole(nv);
+    }
+  }
 
   const rp = data.data[role] ?? data.data["All roles"];
   const byCountry = useMemo(() => new Map(rp.countries.map((c) => [c.country, c])), [rp]);
@@ -40,7 +59,7 @@ export function EuropePayMap({
   const controls = (
     <div className="mb-5 flex flex-wrap items-center gap-3">
       <label className="text-[11px] text-ink-faint">Role</label>
-      <Combobox options={data.roles} value={role} onChange={(v) => setRole(v || "All roles")} placeholder="All roles" clearValue="All roles" className="w-52" inputClassName="filter-pill w-full" />
+      <Combobox options={data.roles} value={role} onChange={pickRole} placeholder="All roles" clearValue="All roles" className="w-52" inputClassName="filter-pill w-full" />
       <button
         onClick={() => setShowTop((v) => !v)}
         className="filter-pill"

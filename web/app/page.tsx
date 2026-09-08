@@ -210,6 +210,8 @@ export default async function Home({
             <EuropePayMap
               data={europe}
               withTable
+              roleParamMode
+              cityParam={result.city !== "Any" ? result.city : undefined}
               initialRole={result.role === "Any" ? "All roles" : result.role}
               highlightCountry={result.city}
               facts={[
@@ -225,16 +227,20 @@ export default async function Home({
         </section>
       )}
 
-      {/* Europe pay map — moved above Top companies. Three columns: table · map · insight */}
-      <section className="band section-y mt-16">
-        <div className="flex items-end justify-between gap-4">
-          <SectionHeader kicker="Geography" title="The Europe pay map" />
-          <span className="hidden md:block"><ArrowLink href="/locations/countries">Explore countries</ArrowLink></span>
-        </div>
-        <div className="mt-8">
-          <EuropePayMap data={europe} triptych findings={findings} spark={comp.spark} />
-        </div>
-      </section>
+      {/* Europe pay map — three columns: table · map · insight. Hidden while a
+          search result is shown (that view already renders a country table+map,
+          so this would be a duplicate second map). */}
+      {result === null && (
+        <section className="band section-y mt-16">
+          <div className="flex items-end justify-between gap-4">
+            <SectionHeader kicker="Geography" title="The Europe pay map" />
+            <span className="hidden md:block"><ArrowLink href="/locations/countries">Explore countries</ArrowLink></span>
+          </div>
+          <div className="mt-8">
+            <EuropePayMap data={europe} triptych findings={findings} spark={comp.spark} />
+          </div>
+        </section>
+      )}
 
       {/* Top companies — interactive */}
       {board.length > 0 && (
