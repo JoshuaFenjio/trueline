@@ -19,7 +19,7 @@ export interface Fact { label: string; value: string }
 
 export function EuropePayMap({
   data, initialRole = "All roles", highlightCountry, withTable = false, facts,
-  triptych = false, findings, spark, roleParamMode = false, cityParam,
+  triptych = false, findings, spark, roleParamMode = false, cityParam, hideControls = false,
 }: {
   data: EuropePayData; initialRole?: string; highlightCountry?: string | null;
   withTable?: boolean; facts?: Fact[];
@@ -28,6 +28,8 @@ export function EuropePayMap({
   // — H1, facts strip, sibling modules — recomputes and the link is shareable,
   // instead of only mutating this widget's client state.
   roleParamMode?: boolean; cityParam?: string;
+  // Suppress the built-in role/toggle controls when an external picker drives role.
+  hideControls?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
   const [role, setRole] = useState(data.data[initialRole] ? initialRole : "All roles");
@@ -56,7 +58,7 @@ export function EuropePayMap({
   const lookup = (name: string): CountryPay | null => byCountry.get(NAME_ALIAS[name] ?? name) ?? null;
   const highlight = highlightCountry || null;
 
-  const controls = (
+  const controls = hideControls ? null : (
     <div className="mb-5 flex flex-wrap items-center gap-3">
       <label className="text-[11px] text-ink-faint">Role</label>
       <Combobox options={data.roles} value={role} onChange={pickRole} placeholder="All roles" clearValue="All roles" className="w-52" inputClassName="filter-pill w-full" />

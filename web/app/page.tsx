@@ -14,6 +14,8 @@ import { MeasureBar } from "@/components/MeasureBar";
 import { ShareButton } from "@/components/ShareButton";
 import { Card, Stat, GhostLink } from "@/components/ui";
 import { EuropePayMap } from "@/components/EuropePayMap";
+import { RolePicker } from "@/components/RolePicker";
+import { CompanyLogo } from "@/components/CompanyLogo";
 import { SectionHeader, LinkedSectionHeader, ArrowLink } from "@/components/blocks";
 import { Icon } from "@/components/icons";
 import { EmailCapture } from "@/components/EmailCapture";
@@ -202,30 +204,91 @@ export default async function Home({
         </section>
       )}
 
-      {/* Search answer: country-level view for this role, above the results */}
-      {result !== null && (
-        <section id="results" className="mx-auto mt-10 max-w-5xl scroll-mt-20">
-          <SectionHeader kicker="Across Europe" title={`${result.role === "Any" ? "All roles" : result.role} pay by country`} />
-          <div className="surface mt-5 rounded-card p-5">
-            <EuropePayMap
-              data={europe}
-              withTable
-              roleParamMode
-              cityParam={result.city !== "Any" ? result.city : undefined}
-              initialRole={result.role === "Any" ? "All roles" : result.role}
-              highlightCountry={result.city}
-              facts={[
+      {/* Search answer view. Order: facts strip → pay by company → pay by city →
+          country table+map. One role picker (URL-driven) drives the whole view. */}
+      {result !== null && (() => {
+        const roleLabel = result.role === "Any" ? "All roles" : result.role;
+        const roleRp = europe.data[roleLabel] ?? europe.data["All roles"];
+        return (
+          <section id="results" className="mx-auto mt-10 max-w-5xl scroll-mt-20">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <SectionHeader kicker="Across Europe" title={`${roleLabel} pay`} />
+              <div className="flex items-center gap-2">
+                <label className="text-[11px] text-ink-faint">Role</label>
+                <RolePicker roles={europe.roles} role={roleLabel} city={result.city} />
+              </div>
+            </div>
+
+            {/* Facts strip */}
+            <div className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
+              {[
                 { label: "Top payer", value: result.topPayers[0]?.company ?? "—" },
-                { label: "EMEA median", value: eur((europe.data[result.role === "Any" ? "All roles" : result.role] ?? europe.data["All roles"]).emeaMedian) },
+                { label: "EMEA median", value: eur(roleRp.emeaMedian) },
                 { label: "Sample", value: `${result.advertisedN} postings` },
-              ]}
-            />
-          </div>
-          <div className="mt-8">
-            {!result.enough ? <NotEnough result={result} /> : <Results result={result} />}
-          </div>
-        </section>
-      )}
+              ].map((f) => (
+                <div key={f.label}>
+                  <div className="tnum text-lg font-semibold">{f.value}</div>
+                  <div className="text-[11px] text-ink-faint">{f.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Headline median + your position */}
+            <div className="mt-8">
+              {!result.enough ? <NotEnough result={result} /> : <Results result={result} />}
+            </div>
+
+            {/* [Role] pay by company — ranked, logos, 3+ postings gate */}
+            {result.topPayers.length > 0 && (
+              <section className="mt-14">
+                <SectionHeader kicker="Employers" title={`${roleLabel} pay by company`} sub="Median advertised base for this role, per company. Shown at 3+ postings." />
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  {result.topPayers.map((c, i) => (
+                    <Link key={c.slug} href={`/companies/${c.slug}`} className="card card-hover flex items-center gap-3 !p-4">
+                      <span className="tnum w-5 shrink-0 text-right text-sm text-ink-faint">{i + 1}</span>
+                      <CompanyLogo name={c.company} size={32} />
+                      <span className="min-w-0 flex-1 truncate font-medium">{c.company}</span>
+                      <span className="shrink-0 text-right">
+                        <span className="tnum font-semibold">{eur(c.midpoint)}</span>
+                        <span className="tnum ml-1.5 text-xs text-ink-faint">n={c.n}</span>
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Top paying cities — 8+ postings gate */}
+            {result.acrossCities.length > 0 && (
+              <section className="mt-14">
+                <SectionHeader kicker="Geography" title="Top paying cities" sub="Median advertised base for this role, by city. Shown at 8+ postings." />
+                <div className="card mt-5 overflow-hidden !p-0">
+                  <ol>
+                    {result.acrossCities.map((c, i) => (
+                      <li key={c.cityKey} className="border-t first:border-t-0" style={{ borderColor: "var(--border)" }}>
+                        <Link href={`/locations/${slugify(c.city)}`} className="flex h-12 items-center gap-3 px-4 transition-colors hover:bg-[var(--band)]">
+                          <span className="tnum w-5 text-right text-sm text-ink-faint">{i + 1}</span>
+                          <span className="min-w-0 flex-1 truncate">{c.city}</span>
+                          <span className="tnum mr-3 text-xs text-ink-faint">n={c.n}</span>
+                          <span className="tnum font-semibold">{eur(c.median)}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </section>
+            )}
+
+            {/* Country table + map */}
+            <section className="mt-14">
+              <SectionHeader kicker="Across Europe" title={`${roleLabel} pay by country`} />
+              <div className="surface mt-5 rounded-card p-5">
+                <EuropePayMap data={europe} withTable hideControls initialRole={roleLabel} highlightCountry={result.city} />
+              </div>
+            </section>
+          </section>
+        );
+      })()}
 
       {/* Europe pay map — three columns: table · map · insight. Hidden while a
           search result is shown (that view already renders a country table+map,
@@ -362,34 +425,6 @@ function Results({ result }: { result: Awaited<ReturnType<typeof searchSalaries>
         </div>
       </Card>
 
-      <div className="grid gap-5 md:grid-cols-2">
-        <Card>
-          <h3 className="text-sm font-medium text-ink-muted">Top payers <span className="text-ink-faint">· {result.role === "Any" ? "all roles" : result.role}</span></h3>
-          <ul className="mt-3 space-y-1.5">
-            {result.topPayers.map((c) => (
-              <li key={c.slug}>
-                <Link href={`/companies/${c.slug}`} className="surface-hover flex items-center justify-between rounded-xl border px-3 py-2.5 transition-colors">
-                  <span>{c.company}</span>
-                  <span className="tnum text-ink">{eur(c.midpoint)} <span className="text-ink-faint">· {c.n}</span></span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Card>
-        <Card>
-          <h3 className="text-sm font-medium text-ink-muted">Same role, other cities</h3>
-          <ul className="mt-3 space-y-1.5">
-            {result.acrossCities.map((c) => (
-              <li key={c.cityKey}>
-                <Link href={`/locations/${slugify(c.city)}`} className="surface-hover flex items-center justify-between rounded-xl border px-3 py-2.5 transition-colors">
-                  <span>{c.city}</span>
-                  <span className="tnum text-ink">{eur(c.median)} <span className="text-ink-faint">· {c.n}</span></span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      </div>
 
       <Card>
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
