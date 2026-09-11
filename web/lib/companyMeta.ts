@@ -5,6 +5,7 @@
 export interface CompanyMeta {
   hqCity?: string;
   website?: string; // bare domain
+  logo?: string; // manual override: full logo URL or local /logos/*.svg (wins over favicon)
   founded?: number;
   stage?: string; // "Series A/B/C…", "Public", "Private"
   description?: string; // short factual one-liner; hidden if absent
@@ -443,6 +444,28 @@ export const COMPANY_META: Record<string, CompanyMeta> = {
   Ziina: { website: "ziina.com" },
   Zitec: { website: "zitec.com" },
   Zowie: { website: "zowie.ai" },
+
+  // Logo sweep 3 — domains for top-100-by-postings companies that lacked one.
+  // Verifiable company domains only; ambiguous single-word names (Applied,
+  // Headway) are deliberately left as letter-marks rather than guessed.
+  Nebius: { website: "nebius.com", stage: "Public" },
+  Trigo: { website: "trigoretail.com" },
+  Endel: { website: "endel.io" },
+  Nested: { website: "nested.com" },
+  Gropyus: { website: "gropyus.com" },
+  "Cato Networks": { website: "catonetworks.com" },
+  Salonkee: { website: "salonkee.com" },
+  "Tripledot Studios": { website: "tripledotstudios.com" },
+  Lovable: { website: "lovable.dev" },
+  "Neko Health": { website: "nekohealth.com" },
+  "adesso SE": { website: "adesso.de" },
+  Sophos: { website: "sophos.com" },
+  "Welcome to the Jungle": { website: "welcometothejungle.com" },
+  Fractile: { website: "fractile.ai" },
+  Emag: { website: "emag.ro" },
+  KNDS: { website: "knds.com" },
+  "KNDS Deutschland": { website: "knds.com" },
+  Catawiki: { website: "catawiki.com" },
 };
 
 export function companyMeta(name: string): CompanyMeta {
