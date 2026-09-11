@@ -3,6 +3,7 @@ import {
   getLiveStats, getFilterOptions, getSectors, getCompaniesBoard,
   getCityMapData, getSectorCounts, getRoleIndex,
   getEuropePayData, getHomeComposition, getHeroBand, topCountryFinding, searchSalaries, isConfigured,
+  pickSpotlightRole, getWeeklyTrends,
 } from "@/lib/data";
 import type { Metadata } from "next";
 import { SearchForm } from "@/components/SearchForm";
@@ -63,11 +64,15 @@ export default async function Home({
 }) {
   if (!isConfigured) return <NotConfigured />;
 
-  const [stats, options, sectors, board, mapData, sectorCounts, roleIdx, europe, comp, heroBand] = await Promise.all([
+  const [stats, options, sectors, board, mapData, sectorCounts, roleIdx, europe, comp, weekly] = await Promise.all([
     getLiveStats(), getFilterOptions(), getSectors(), getCompaniesBoard(),
     getCityMapData(), getSectorCounts(), getRoleIndex(),
-    getEuropePayData(), getHomeComposition(), getHeroBand(),
+    getEuropePayData(), getHomeComposition(), getWeeklyTrends(),
   ]);
+  // Country-spotlight band features a role that rotates every 3 days (see
+  // pickSpotlightRole) so the homepage stays fresh with no manual curation.
+  const spotlightRole = pickSpotlightRole(europe);
+  const heroBand = await getHeroBand(spotlightRole);
   // Per-role top-country findings for the map insight card, computed at build
   // time from the pay data (never hand-written). Keyed by role, incl. "All roles".
   const findings: Record<string, ReturnType<typeof topCountryFinding>> = {};
@@ -176,11 +181,11 @@ export default async function Home({
           <div className="card overflow-hidden !p-0">
             <div className="flex flex-col md:flex-row md:items-stretch">
               <div className="shrink-0 border-b p-5 md:w-60 md:border-b-0 md:border-r" style={{ borderColor: "var(--border)" }}>
-                <div className="text-[12px] text-ink-faint">Median base salary</div>
-                <div className="t-h3 mt-1">
+                <div className="eyebrow">Country spotlight</div>
+                <div className="t-h3 mt-1.5">
                   <Link href={`/roles/${slugify(heroBand.role)}`} className="hover:text-[var(--accent)]">{heroBand.role}</Link>
                 </div>
-                <div className="text-[13px] text-ink-muted">{heroBand.level} · gated at n = 8</div>
+                <div className="text-[13px] text-ink-muted">Median base · {heroBand.level} · n≥8 · refreshes every 3 days</div>
               </div>
               <div className="flex gap-0 overflow-x-auto md:flex-1">
                 {heroBand.cells.map((c) => (
@@ -200,6 +205,40 @@ export default async function Home({
                 ))}
               </div>
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* This week on SalaryRadar — 3 live-computed cards over the last 7 days,
+          each gated and n-labelled. Cards that clear no gate are omitted. */}
+      {(weekly.topRole || weekly.topCompany || weekly.mover) && (
+        <section className="mt-8 md:mt-10">
+          <SectionHeader kicker="Live · last 7 days" title="This week on SalaryRadar" />
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            {weekly.topRole && (
+              <Link href={`/roles/${weekly.topRole.slug}`} className="card card-hover !p-5">
+                <div className="text-[11px] text-ink-faint">Highest-median role</div>
+                <div className="mt-1 truncate font-semibold">{weekly.topRole.role}</div>
+                <div className="tnum mt-2 text-2xl font-semibold">{eur(weekly.topRole.median)}</div>
+                <div className="tnum mt-1 text-[11px] text-ink-faint">median · n={weekly.topRole.n} this week</div>
+              </Link>
+            )}
+            {weekly.topCompany && (
+              <Link href={`/companies/${weekly.topCompany.slug}`} className="card card-hover !p-5">
+                <div className="text-[11px] text-ink-faint">Highest-paying company</div>
+                <div className="mt-1 flex items-center gap-2"><CompanyLogo name={weekly.topCompany.company} size={22} /><span className="truncate font-semibold">{weekly.topCompany.company}</span></div>
+                <div className="tnum mt-2 text-2xl font-semibold">{eur(weekly.topCompany.median)}</div>
+                <div className="tnum mt-1 text-[11px] text-ink-faint">median · n={weekly.topCompany.n} this week</div>
+              </Link>
+            )}
+            {weekly.mover && (
+              <Link href={`/roles/${weekly.mover.slug}`} className="card card-hover !p-5">
+                <div className="text-[11px] text-ink-faint">Biggest new-postings mover</div>
+                <div className="mt-1 truncate font-semibold">{weekly.mover.role}</div>
+                <div className="tnum mt-2 text-2xl font-semibold">+{weekly.mover.n}</div>
+                <div className="tnum mt-1 text-[11px] text-ink-faint">new postings · last 7 days</div>
+              </Link>
+            )}
           </div>
         </section>
       )}

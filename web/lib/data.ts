@@ -1128,6 +1128,53 @@ export const getHeroBand = async (role = "Software Engineer", level?: Level, top
   return { role, level: level ?? "All levels", cells };
 };
 
+// Featured role for the country-spotlight band. Rotates every 3 days,
+// deterministically from the date, across roles that have >=5 gated countries
+// (so the band always has enough cells to fill). No manual curation — it stays
+// fresh on its own. Same input on the same day => same pick (stable SSR).
+export function pickSpotlightRole(europe: EuropePayData, nowMs = Date.now()): string {
+  const eligible = europe.roles
+    .filter((r) => (europe.data[r]?.countries.filter((c) => c.median != null).length ?? 0) >= 5)
+    .sort();
+  if (eligible.length === 0) return "Software Engineer";
+  const bucket = Math.floor(nowMs / (3 * 864e5)); // 3-day buckets since epoch
+  return eligible[bucket % eligible.length];
+}
+
+// "This week on SalaryRadar" — 3 live-computed cards over postings from the last
+// 7 days (by posted_at). All gated; any card is null when nothing clears its
+// gate. Nothing hand-written.
+export interface WeeklyTrends {
+  windowDays: number;
+  topRole: { role: string; slug: string; median: number; n: number } | null;      // highest median, n>=8
+  topCompany: { company: string; slug: string; median: number; n: number } | null; // highest median, n>=3
+  mover: { role: string; slug: string; n: number } | null;                          // most new postings
+}
+export const getWeeklyTrends = async (): Promise<WeeklyTrends> => {
+  const all = await getData();
+  const since = Date.now() - 7 * 864e5;
+  const recentAll = all.filter((r) => r.dateMs && r.dateMs >= since);
+  const recent = usable(recentAll);
+
+  const byRole = new Map<string, number[]>();
+  for (const r of recent) { if (r.roleFamily === "Other") continue; const a = byRole.get(r.roleFamily) || []; a.push(r.annual); byRole.set(r.roleFamily, a); }
+  let topRole: WeeklyTrends["topRole"] = null;
+  for (const [role, v] of byRole) { if (v.length < N_MEDIAN) continue; const m = Math.round(median(v)); if (!topRole || m > topRole.median) topRole = { role, slug: slugify(role), median: m, n: v.length }; }
+
+  const byCo = new Map<string, number[]>();
+  for (const r of recent) { if (ANON_EMPLOYERS.has(r.company)) continue; const a = byCo.get(r.company) || []; a.push(r.annual); byCo.set(r.company, a); }
+  let topCompany: WeeklyTrends["topCompany"] = null;
+  for (const [company, v] of byCo) { if (v.length < N_COMPANY) continue; const m = Math.round(median(v)); if (!topCompany || m > topCompany.median) topCompany = { company, slug: slugify(company), median: m, n: v.length }; }
+
+  // Mover = role with the most NEW postings (all, not just salaried) this window.
+  const counts = new Map<string, number>();
+  for (const r of recentAll) { if (r.roleFamily === "Other") continue; counts.set(r.roleFamily, (counts.get(r.roleFamily) || 0) + 1); }
+  let mover: WeeklyTrends["mover"] = null;
+  for (const [role, n] of counts) { if (n >= N_MEDIAN && (!mover || n > mover.n)) mover = { role, slug: slugify(role), n }; }
+
+  return { windowDays: 7, topRole, topCompany, mover };
+};
+
 // Map insight finding — the top-paying country for a role vs the EMEA median,
 // computed from the pay data (no hand-written copy). The flagship #1 slot needs
 // n>=N_FLAGSHIP (deeper than the standard median gate) so a thin sample can't
