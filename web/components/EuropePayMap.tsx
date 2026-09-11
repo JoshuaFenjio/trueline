@@ -19,7 +19,7 @@ export interface Fact { label: string; value: string }
 
 export function EuropePayMap({
   data, initialRole = "All roles", highlightCountry, withTable = false, facts,
-  triptych = false, findings, spark, roleParamMode = false, cityParam, hideControls = false,
+  triptych = false, findings, spark, roleParamMode = false, cityParam, hideRoleSelect = false,
 }: {
   data: EuropePayData; initialRole?: string; highlightCountry?: string | null;
   withTable?: boolean; facts?: Fact[];
@@ -28,12 +28,13 @@ export function EuropePayMap({
   // — H1, facts strip, sibling modules — recomputes and the link is shareable,
   // instead of only mutating this widget's client state.
   roleParamMode?: boolean; cityParam?: string;
-  // Suppress the built-in role/toggle controls when an external picker drives role.
-  hideControls?: boolean;
+  // Hide only the built-in role combobox (an external picker drives role); the
+  // currency toggle stays.
+  hideRoleSelect?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
   const [role, setRole] = useState(data.data[initialRole] ? initialRole : "All roles");
-  const [showTop, setShowTop] = useState(false);
+  const [eurOnly, setEurOnly] = useState(false);
   const [tip, setTip] = useState<{ x: number; y: number; name: string; c: CountryPay | null } | null>(null);
   const router = useRouter();
   useEffect(() => setMounted(true), []);
@@ -57,19 +58,34 @@ export function EuropePayMap({
   const byCountry = useMemo(() => new Map(rp.countries.map((c) => [c.country, c])), [rp]);
   const lookup = (name: string): CountryPay | null => byCountry.get(NAME_ALIAS[name] ?? name) ?? null;
   const highlight = highlightCountry || null;
+  // Currency mode: normalized (FX-converted to EUR) vs EUR-only (native euros).
+  const cMed = (c: CountryPay | null) => (c ? (eurOnly ? c.eurMedian : c.median) : null);
+  const cN = (c: CountryPay) => (eurOnly ? c.eurN : c.n);
+  const emeaMed = eurOnly ? rp.eurEmeaMedian : rp.emeaMedian;
 
-  const controls = hideControls ? null : (
+  const controls = (
     <div className="mb-5 flex flex-wrap items-center gap-3">
-      <label className="text-[11px] text-ink-faint">Role</label>
-      <Combobox options={data.roles} value={role} onChange={pickRole} placeholder="All roles" clearValue="All roles" className="w-52" inputClassName="filter-pill w-full" />
-      <button
-        onClick={() => setShowTop((v) => !v)}
-        className="filter-pill"
-        style={showTop ? { borderColor: "var(--accent)", color: "var(--accent)" } : undefined}
-      >
-        Top payers {showTop ? "on" : "off"}
-      </button>
-      <span className="tnum ml-auto text-xs text-ink-faint">EMEA median {eur(rp.emeaMedian)}</span>
+      {!hideRoleSelect && (
+        <>
+          <label className="text-[11px] text-ink-faint">Role</label>
+          <Combobox options={data.roles} value={role} onChange={pickRole} placeholder="All roles" clearValue="All roles" className="w-52" inputClassName="filter-pill w-full" />
+        </>
+      )}
+      {/* Currency mode: normalized (FX→EUR) vs native-EUR only. Reveals the
+          FX-normalization assumption instead of hiding it. */}
+      <div className="inline-flex overflow-hidden rounded-full border" style={{ borderColor: "var(--border)" }}>
+        {([{ k: false, label: "All currencies" }, { k: true, label: "EUR only" }] as const).map((o) => (
+          <button
+            key={String(o.k)}
+            onClick={() => setEurOnly(o.k)}
+            className="px-3 py-1.5 text-xs"
+            style={eurOnly === o.k ? { background: "var(--accent)", color: "#fff" } : { color: "var(--ink-muted)" }}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+      <span className="tnum ml-auto text-xs text-ink-faint">{eurOnly ? "EUR-only" : "EMEA"} median {eur(emeaMed)}</span>
     </div>
   );
 
@@ -87,7 +103,8 @@ export function EuropePayMap({
               geographies.map((geo: any) => {
                 const name = geo.properties.NAME as string;
                 const c = lookup(name);
-                const fill = c && c.median != null ? payColor(scoreFromRatio(c.median, rp.emeaMedian)) : NO_DATA_FILL;
+                const m = cMed(c);
+                const fill = m != null ? payColor(scoreFromRatio(m, emeaMed)) : NO_DATA_FILL;
                 const isHi = highlight != null && c?.country === highlight;
                 return (
                   <Geography
@@ -121,13 +138,13 @@ export function EuropePayMap({
           style={{ left: Math.min(tip.x + 12, 560), top: tip.y + 12, background: "#fff", borderColor: "var(--border)" }}
         >
           <div className="font-semibold">{tip.c?.country ?? NAME_ALIAS[tip.name] ?? tip.name}</div>
-          {tip.c && tip.c.median != null ? (
+          {tip.c && cMed(tip.c) != null ? (
             <>
-              <div className="tnum mt-1 text-ink">{eur(tip.c.median)} <span className="text-ink-faint">median · n={tip.c.n}</span></div>
+              <div className="tnum mt-1 text-ink">{eur(cMed(tip.c)!)} <span className="text-ink-faint">median · n={cN(tip.c)}</span></div>
               {tip.c.concentration && tip.c.concentration.share > 0.6 && (
                 <div className="mt-0.5 text-[11px] text-ink-faint">mostly {tip.c.concentration.company}</div>
               )}
-              {showTop && tip.c.topPayers.length > 0 && (
+              {tip.c.topPayers.length > 0 && (
                 <ul className="mt-2 space-y-0.5 border-t pt-2 text-xs" style={{ borderColor: "var(--border)" }}>
                   {tip.c.topPayers.map((p) => (
                     <li key={p.company} className="flex justify-between gap-2">
@@ -139,7 +156,7 @@ export function EuropePayMap({
               )}
             </>
           ) : (
-            <div className="mt-1 text-xs text-ink-faint">No data yet{tip.c ? ` · n=${tip.c.n}` : ""}</div>
+            <div className="mt-1 text-xs text-ink-faint">{eurOnly ? "No EUR-only data yet" : "No data yet"}{tip.c ? ` · n=${cN(tip.c)}` : ""}</div>
           )}
         </div>
       )}
@@ -162,8 +179,8 @@ export function EuropePayMap({
   }
 
   // Table-beside-map: ranked country table (always visible) + map (lg+ only).
-  const ranked = [...rp.countries].filter((c) => c.median != null).sort((a, b) => b.median! - a.median!);
-  const maxMed = Math.max(1, ...ranked.map((c) => c.median!));
+  const ranked = [...rp.countries].filter((c) => cMed(c) != null).sort((a, b) => cMed(b)! - cMed(a)!);
+  const maxMed = Math.max(1, ...ranked.map((c) => cMed(c)!));
 
   // Compact ranked table (used in the triptych left column).
   const tableEl = (
@@ -180,12 +197,12 @@ export function EuropePayMap({
               <Flag country={c.country} />
               <span className="min-w-0 flex-1">
                 <span className="text-sm">{c.country}</span>
-                <span className="tnum ml-2 text-[11px] text-ink-faint">n={c.n}</span>
+                <span className="tnum ml-2 text-[11px] text-ink-faint">n={cN(c)}</span>
                 <span className="rank-track mt-1.5 block">
-                  <span className="rank-fill" style={{ width: `${(c.median! / maxMed) * 100}%`, background: payColor(scoreFromRatio(c.median!, rp.emeaMedian)) }} />
+                  <span className="rank-fill" style={{ width: `${(cMed(c)! / maxMed) * 100}%`, background: payColor(scoreFromRatio(cMed(c)!, emeaMed)) }} />
                 </span>
               </span>
-              <span className="tnum w-20 text-right text-sm font-semibold">{eur(c.median!)}</span>
+              <span className="tnum w-20 text-right text-sm font-semibold">{eur(cMed(c)!)}</span>
             </Link>
           </li>
         ))}
@@ -286,11 +303,11 @@ export function EuropePayMap({
                     <span className="truncate">{c.country}</span>
                     {c.concentration && c.concentration.share > 0.6 && <span className="ml-2 text-xs text-ink-faint">mostly {c.concentration.company}</span>}
                     <span className="relative mt-1.5 block h-1.5 overflow-hidden rounded-full" style={{ background: "var(--surface-3)" }}>
-                      <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${(c.median! / maxMed) * 100}%`, background: payColor(scoreFromRatio(c.median!, rp.emeaMedian)) }} />
+                      <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${(cMed(c)! / maxMed) * 100}%`, background: payColor(scoreFromRatio(cMed(c)!, emeaMed)) }} />
                     </span>
                   </span>
-                  <span className="tnum w-24 text-right font-semibold">{eur(c.median!)}</span>
-                  <span className="tnum hidden w-12 text-right text-sm text-ink-faint sm:block">{c.n}</span>
+                  <span className="tnum w-24 text-right font-semibold">{eur(cMed(c)!)}</span>
+                  <span className="tnum hidden w-12 text-right text-sm text-ink-faint sm:block">{cN(c)}</span>
                 </Link>
               </li>
             ))}

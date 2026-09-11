@@ -25,6 +25,7 @@ export interface Posting {
   country: string | null;
   remote: boolean;
   annual: number | null; // usable base for stats, or null
+  currency: string | null; // native currency (for EUR-only vs normalized views)
   disclosed: boolean; // ad stated any salary (source !== none)
   multiMarket: boolean; // spans an EMEA and a non-EMEA office
   url: string | null;
@@ -69,7 +70,7 @@ function mapRow(r: any): Posting | null {
   return {
     company: r.company, sector: sectorOf(r.company), roleFamily: r.role_family || "Other",
     title: r.title || "", level: levelBucket(r.title), city: place.city, country: place.country,
-    remote: place.remote || !!r.remote, annual, disclosed: !!disclosed, multiMarket,
+    remote: place.remote || !!r.remote, annual, currency: r.currency || null, disclosed: !!disclosed, multiMarket,
     url: r.url || null, dateMs: parseDate(r.posted_at),
   };
 }
@@ -102,7 +103,7 @@ const _fetchShard = unstable_cache(
     }
     return out;
   },
-  ["trueline-shard-v24"],
+  ["trueline-shard-v25"],
   { revalidate: 3600 }
 );
 
@@ -308,12 +309,21 @@ export const getCountryIndex = async (): Promise<IndexEntity[]> => indexBy(await
 export const getCityIndex = async (): Promise<IndexEntity[]> => indexBy(await getData(), (p) => p.city);
 
 // Europe pay map — per-role country medians + top payers, for the choropleth.
-export interface CountryPay { country: string; median: number | null; n: number; topPayers: { company: string; median: number }[]; concentration: Concentration | null; }
-export interface RolePay { emeaMedian: number; countries: CountryPay[]; }
+// eurMedian/eurN describe the SAME country using ONLY natively-EUR postings (no
+// FX conversion). The map's currency toggle switches between median (all EMEA
+// currencies normalized to EUR via FX) and eurMedian (EUR-only) so a user can
+// see the ranking without the FX-normalization assumption. Non-Eurozone markets
+// (UK/Sweden/Poland…) simply drop out of EUR-only mode — honest, not hidden.
+export interface CountryPay { country: string; median: number | null; n: number; eurMedian: number | null; eurN: number; topPayers: { company: string; median: number }[]; concentration: Concentration | null; }
+export interface RolePay { emeaMedian: number; eurEmeaMedian: number; countries: CountryPay[]; }
 export interface EuropePayData { roles: string[]; data: Record<string, RolePay>; }
+
+const isEur = (p: Posting) => (p.currency || "EUR").toUpperCase() === "EUR";
 
 function rolePay(rows: (Posting & { annual: number })[]): RolePay {
   const emeaMedian = rows.length ? Math.round(median(rows.map((r) => r.annual))) : 0;
+  const eurRows = rows.filter(isEur);
+  const eurEmeaMedian = eurRows.length ? Math.round(median(eurRows.map((r) => r.annual))) : 0;
   const byCountry = new Map<string, (Posting & { annual: number })[]>();
   for (const r of rows) {
     if (!r.country) continue;
@@ -327,9 +337,16 @@ function rolePay(rows: (Posting & { annual: number })[]): RolePay {
       .filter(([, v]) => v.length >= N_COMPANY)
       .map(([company, v]) => ({ company, median: Math.round(median(v)) }))
       .sort((a, b) => b.median - a.median).slice(0, 3);
-    countries.push({ country, n: ps.length, median: ps.length >= N_MEDIAN ? Math.round(median(ps.map((p) => p.annual))) : null, topPayers, concentration: topCompanyShare(ps) });
+    const eurPs = ps.filter(isEur);
+    countries.push({
+      country, n: ps.length,
+      median: ps.length >= N_MEDIAN ? Math.round(median(ps.map((p) => p.annual))) : null,
+      eurN: eurPs.length,
+      eurMedian: eurPs.length >= N_MEDIAN ? Math.round(median(eurPs.map((p) => p.annual))) : null,
+      topPayers, concentration: topCompanyShare(ps),
+    });
   }
-  return { emeaMedian, countries };
+  return { emeaMedian, eurEmeaMedian, countries };
 }
 
 export const getEuropePayData = async (): Promise<EuropePayData> => {

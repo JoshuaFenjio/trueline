@@ -283,7 +283,7 @@ export default async function Home({
             <section className="mt-14">
               <SectionHeader kicker="Across Europe" title={`${roleLabel} pay by country`} />
               <div className="surface mt-5 rounded-card p-5">
-                <EuropePayMap data={europe} withTable hideControls initialRole={roleLabel} highlightCountry={result.city} />
+                <EuropePayMap data={europe} withTable hideRoleSelect initialRole={roleLabel} highlightCountry={result.city} />
               </div>
             </section>
           </section>
