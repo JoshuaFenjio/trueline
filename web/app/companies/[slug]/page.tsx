@@ -59,7 +59,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
   }
   const refreshed = await getLastRefreshed();
   const meta = companyMeta(c.company);
-  const chips = [c.sector, meta.hqCity, meta.stage].filter(Boolean) as string[];
+  const chips = [c.sector, meta.hqCity, meta.stage, meta.founded ? `Founded ${meta.founded}` : null].filter(Boolean) as string[];
   const topPct = c.sectorTotal ? Math.max(1, Math.round((c.sectorRank / c.sectorTotal) * 100)) : null;
 
   // Transparency sub-scores — all from real fields.
