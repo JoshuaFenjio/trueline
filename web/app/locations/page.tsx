@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getCityMapData, getLiveStats, isConfigured } from "@/lib/data";
 import { SectionHeader, Breadcrumbs, PillButton } from "@/components/blocks";
 import { HubExplorer, HubItem } from "@/components/HubExplorer";
-import { Flag } from "@/components/Flag";
+import { PlaceTile } from "@/components/PlaceTile";
 import { Icon } from "@/components/icons";
 import { subregionOf, SUBREGIONS } from "@/lib/subregion";
 import { eur, slugify } from "@/lib/format";
@@ -50,11 +50,7 @@ export default async function CitiesIndex() {
         <SectionHeader kicker="Top markets" title="Most-tracked cities" />
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {topMarkets.map((c) => (
-            <Link key={c.slug} href={`/locations/${c.slug}`} className="rounded-[14px] p-4 transition-colors hover:brightness-[.98]" style={{ background: "var(--panel)" }}>
-              <div className="flex items-center gap-2"><Flag country={c.country} /><span className="truncate text-sm font-medium">{c.city}</span></div>
-              <div className="tnum mt-2 text-lg font-semibold">{eur(c.median)}</div>
-              <div className="tnum text-[11px] text-ink-faint">{c.n} salaried</div>
-            </Link>
+            <PlaceTile key={c.slug} name={c.city} href={`/locations/${c.slug}`} median={c.median} n={c.n} flagCountry={c.country} />
           ))}
         </div>
       </section>

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCityDetail, cityFromSlug } from "@/lib/data";
 import { SectionHeader, RankTable, toPayVMs, Breadcrumbs, PillButton, GatedState } from "@/components/blocks";
-import { CitySilhouette } from "@/components/CitySilhouette";
+import { PlaceHero } from "@/components/PlaceHero";
 import { Sparkline } from "@/components/Sparkline";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/icons";
@@ -46,20 +46,12 @@ export default async function CityPage({ params }: { params: { city: string } })
     <div className="pb-4">
       <div className="pt-8"><Breadcrumbs items={[{ label: "Salaries", href: "/locations" }, { label: "Cities", href: "/locations" }, { label: city }]} /></div>
 
-      {/* Header — tinted panel with teal silhouette, no photo */}
-      <section className="relative mt-6 overflow-hidden rounded-[20px] p-8" style={{ background: "var(--panel)" }}>
-        <CitySilhouette className="pointer-events-none absolute inset-x-0 bottom-0 h-24 w-full" />
-        <div className="relative">
-          <div className="flex items-center gap-3">
-            <Flag country={d.country} className="!h-6 !w-9 !text-xl" />
-            <h1 className="t-h1">{city}</h1>
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-3 text-ink-muted">
-            {d.country && <Link href={`/locations/country/${slugify(d.country)}`} className="hover:text-[var(--accent)]">{d.country}</Link>}
-            <span className="eyebrow-pill"><span className="eyebrow">{d.trackedN.toLocaleString()} roles tracked</span></span>
-          </div>
-        </div>
-      </section>
+      {/* Header — full-bleed place hero (teal-duotone photo where we have one,
+          tinted silhouette otherwise). See PlaceHero. */}
+      <PlaceHero title={city} photoName={city} flagCountry={d.country}>
+        {d.country && <Link href={`/locations/country/${slugify(d.country)}`} className="underline-offset-2 hover:underline">{d.country}</Link>}
+        <span className="eyebrow-pill"><span className="eyebrow">{d.trackedN.toLocaleString()} roles tracked</span></span>
+      </PlaceHero>
 
       {d.median == null ? (
         <section className="mt-8"><GatedState n={d.n} what={city} tracked={d.trackedN} /></section>

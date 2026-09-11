@@ -6,6 +6,7 @@ import { SectionHeader, RankTable, toPayVMs, LevelLadder, Breadcrumbs, PillButto
 import { EuropePayMap } from "@/components/EuropePayMap";
 import { Donut } from "@/components/Donut";
 import { Flag } from "@/components/Flag";
+import { PlaceHero } from "@/components/PlaceHero";
 import { Icon } from "@/components/icons";
 import { eur, slugify } from "@/lib/format";
 
@@ -51,25 +52,17 @@ export default async function CountryPage({ params }: { params: { country: strin
     <div className="pb-4">
       <div className="pt-8"><Breadcrumbs items={[{ label: "Salaries", href: "/locations" }, { label: "Countries", href: "/locations/countries" }, { label: country }]} /></div>
 
-      {/* Header */}
-      <section className="mt-6 grid items-start gap-8 lg:grid-cols-[1fr_1.05fr]">
-        <div>
-          <div className="flex items-center gap-3">
-            <Flag country={country} className="!h-7 !w-10 !text-2xl" />
-            <h1 className="t-h1">{country}</h1>
-          </div>
-          <p className="mt-4 max-w-lg text-lg leading-relaxed text-ink-muted">
-            Real advertised pay for <span className="tnum text-ink">{d.rolesBenchmarked}</span> benchmarked role families from <span className="tnum text-ink">{d.companyCount}</span> companies across {country}.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <PillButton href="#cities">Explore salaries</PillButton>
-            <Link href="/locations/countries" className="pill-btn"><Icon.scale size={15} /><span>Compare countries</span></Link>
-          </div>
-        </div>
-        <div className="card !p-3">
-          <EuropePayMap data={europe} highlightCountry={country} />
-        </div>
-      </section>
+      {/* Header — same full-bleed place-hero treatment as city pages */}
+      <PlaceHero title={country} photoName={country} flagCountry={country}>
+        <span><span className="tnum">{d.rolesBenchmarked}</span> benchmarked roles · <span className="tnum">{d.companyCount}</span> companies</span>
+      </PlaceHero>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <PillButton href="#cities">Explore salaries</PillButton>
+        <Link href="/locations/countries" className="pill-btn"><Icon.scale size={15} /><span>Compare countries</span></Link>
+      </div>
+      <div className="card mt-8 !p-3">
+        <EuropePayMap data={europe} highlightCountry={country} />
+      </div>
 
       {d.median == null ? (
         <section className="mt-8"><GatedState n={d.n} what={country} tracked={d.trackedN} /></section>
