@@ -2,6 +2,8 @@ import { isAdmin, getServiceClient, adminConfigured } from "@/lib/admin";
 import { login, logout, setStatus, approveRoleRequest, rejectRoleRequest } from "./actions";
 import { Card, PrimaryButton } from "@/components/ui";
 import { eur } from "@/lib/format";
+import { getNearMiss } from "@/lib/data";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin", robots: { index: false } };
@@ -53,6 +55,9 @@ export default async function Admin({ searchParams }: { searchParams: { error?: 
     : { data: [] as any[], error: null };
   const requests = (rrRes.data as any[]) || [];
   const requestsMigrated = !rrRes.error;
+
+  // Near-miss unlock kit — live each load.
+  const { nearMiss, unlocked } = await getNearMiss();
 
   return (
     <div className="mx-auto max-w-4xl py-12">
@@ -141,6 +146,49 @@ export default async function Admin({ searchParams }: { searchParams: { error?: 
           ))}
         </div>
       ))}
+
+      {/* Near-miss unlock kit — advertised slices at n=5-7; seed submissions to clear. */}
+      <div className="mt-14">
+        <h2 className="t-h2">Near-miss unlock kit</h2>
+        <p className="mt-1 text-sm text-ink-muted">
+          Advertised slices sitting at <span className="tnum">5–7</span> salaried — one modest data increase publishes them (gate stays n≥8, unchanged). Seed the exact role + location.
+        </p>
+
+        {unlocked.length > 0 && (
+          <div className="mt-4 rounded-xl border p-3" style={{ borderColor: "rgba(74,222,156,.35)", background: "rgba(74,222,156,.06)" }}>
+            <div className="text-sm font-medium" style={{ color: "var(--mint)" }}>Unlocked by submissions ({unlocked.length})</div>
+            <ul className="mt-2 space-y-1 text-sm">
+              {unlocked.slice(0, 20).map((u, i) => (
+                <li key={i} className="flex items-center justify-between gap-3">
+                  <Link href={u.href} className="truncate hover:text-[var(--accent)]">{u.label} <span className="text-ink-faint">· {u.kind}</span></Link>
+                  <span className="tnum shrink-0 text-xs text-ink-faint">{u.n} ads + {u.subs} sub = {u.combined}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="card mt-4 overflow-hidden !p-0">
+          <div className="flex items-center gap-3 border-b px-4 py-2.5 text-[12px] text-ink-faint" style={{ borderColor: "var(--border)" }}>
+            <span className="w-6 text-right">#</span><span className="flex-1">Slice (role · location)</span>
+            <span className="w-14 text-right">n</span><span className="w-16 text-right">needed</span><span className="w-14 text-right">subs</span>
+          </div>
+          <ol>
+            {nearMiss.map((r, i) => (
+              <li key={i} className="border-t first:border-t-0" style={{ borderColor: "var(--border)" }}>
+                <Link href={r.href} className="flex items-center gap-3 px-4 py-2 transition-colors hover:bg-[var(--band)]">
+                  <span className="tnum w-6 text-right text-sm text-ink-faint">{i + 1}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm">{r.label} <span className="text-ink-faint">· {r.kind}</span></span>
+                  <span className="tnum w-14 text-right text-sm">{r.n}</span>
+                  <span className="tnum w-16 text-right text-sm font-semibold" style={{ color: "var(--accent)" }}>+{r.needed}</span>
+                  <span className="tnum w-14 text-right text-xs text-ink-faint">{r.subs || ""}</span>
+                </Link>
+              </li>
+            ))}
+            {nearMiss.length === 0 && <li className="px-4 py-6 text-center text-sm text-ink-faint">No slices at n=5–7 right now.</li>}
+          </ol>
+        </div>
+      </div>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { sectorOf, Sector } from "./sectors";
 import { resolvePlace } from "./geo";
 import { iso2 } from "./flags";
 import { slugify, eur as eurFmt } from "./format";
+import { getServiceClient } from "./admin";
 
 export { isConfigured };
 
@@ -1293,4 +1294,56 @@ export async function searchSalaries(p: {
     baseDelta: base ? Math.round(base - sp.median) : null,
     topPayers, acrossCities,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Near-miss unlock kit (admin). Advertised slices sitting at n=5-7 usable — one
+// modest data increase publishes them. Also flags slices an approved submission
+// has since pushed over the gate (adv < 8 but adv + approved-submissions >= 8).
+// READ-ONLY analysis: the public median gate is unchanged (advertised n>=8).
+// ---------------------------------------------------------------------------
+export interface NearMissRow {
+  kind: "role-country" | "role-city" | "company";
+  label: string; href: string; role: string | null; place: string | null;
+  n: number; needed: number; subs: number; combined: number;
+}
+
+export async function getNearMiss(): Promise<{ nearMiss: NearMissRow[]; unlocked: NearMissRow[] }> {
+  const rows = usable(await getData());
+  const rc = new Map<string, { role: string; place: string; n: number }>();
+  const rci = new Map<string, { role: string; place: string; n: number }>();
+  const comp = new Map<string, { company: string; n: number }>();
+  const bump = <T extends { n: number }>(m: Map<string, T>, k: string, init: T) => {
+    const cur = m.get(k) || (m.set(k, init), m.get(k)!); cur.n++;
+  };
+  for (const r of rows) {
+    if (r.roleFamily && r.roleFamily !== "Other") {
+      if (r.country) bump(rc, r.roleFamily + " " + r.country, { role: r.roleFamily, place: r.country, n: 0 });
+      if (r.city) bump(rci, r.roleFamily + " " + r.city, { role: r.roleFamily, place: r.city, n: 0 });
+    }
+    if (r.company && !ANON_EMPLOYERS.has(r.company)) bump(comp, r.company, { company: r.company, n: 0 });
+  }
+
+  // Approved submissions with a base — the admin's deliberate-seeding lever.
+  const subRC = new Map<string, number>(), subRCI = new Map<string, number>(), subComp = new Map<string, number>();
+  const inc = (m: Map<string, number>, k: string) => m.set(k, (m.get(k) || 0) + 1);
+  const sb = getServiceClient();
+  if (sb) {
+    const { data } = await sb.from("submissions").select("role_family,city,country,company,base_eur,status").eq("status", "approved");
+    for (const s of (data as any[]) || []) {
+      if (!s.base_eur) continue;
+      if (s.role_family && s.country) inc(subRC, s.role_family + " " + s.country);
+      if (s.role_family && s.city) inc(subRCI, s.role_family + " " + s.city);
+      if (s.company) inc(subComp, s.company);
+    }
+  }
+
+  const out: NearMissRow[] = [];
+  for (const [k, v] of rc) { const sub = subRC.get(k) || 0; out.push({ kind: "role-country", label: v.role + " · " + v.place, href: `/roles/${slugify(v.role)}`, role: v.role, place: v.place, n: v.n, needed: Math.max(0, N_MEDIAN - v.n), subs: sub, combined: v.n + sub }); }
+  for (const [k, v] of rci) { const sub = subRCI.get(k) || 0; out.push({ kind: "role-city", label: v.role + " · " + v.place, href: `/locations/${slugify(v.place)}`, role: v.role, place: v.place, n: v.n, needed: Math.max(0, N_MEDIAN - v.n), subs: sub, combined: v.n + sub }); }
+  for (const [k, v] of comp) { const sub = subComp.get(k) || 0; out.push({ kind: "company", label: v.company, href: `/companies/${slugify(v.company)}`, role: null, place: v.company, n: v.n, needed: Math.max(0, N_MEDIAN - v.n), subs: sub, combined: v.n + sub }); }
+
+  const nearMiss = out.filter((r) => r.n >= 5 && r.n <= 7).sort((a, b) => b.n - a.n || b.combined - a.combined).slice(0, 50);
+  const unlocked = out.filter((r) => r.n < N_MEDIAN && r.combined >= N_MEDIAN).sort((a, b) => b.subs - a.subs);
+  return { nearMiss, unlocked };
 }
