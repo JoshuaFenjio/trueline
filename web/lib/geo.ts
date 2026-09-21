@@ -61,6 +61,9 @@ const CITY_COUNTRY: Record<string, string> = {
   berlin: "Germany", munich: "Germany", hamburg: "Germany", frankfurt: "Germany",
   cologne: "Germany", stuttgart: "Germany", dusseldorf: "Germany", "düsseldorf": "Germany",
   leipzig: "Germany", "munich - berlin": "Germany",
+  // German/local exonyms -> same market as their English name (see CITY_DISPLAY)
+  "münchen": "Germany", "koeln": "Germany", "köln": "Germany", "nürnberg": "Germany",
+  "nuernberg": "Germany", "frankfurt am main": "Germany",
   paris: "France", lyon: "France", marseille: "France", toulouse: "France",
   bordeaux: "France", nantes: "France", lille: "France", nice: "France",
   madrid: "Spain", barcelona: "Spain", valencia: "Spain", seville: "Spain",
@@ -72,9 +75,10 @@ const CITY_COUNTRY: Record<string, string> = {
   "the hague": "Netherlands", eindhoven: "Netherlands",
   brussels: "Belgium", antwerp: "Belgium", ghent: "Belgium",
   zurich: "Switzerland", geneva: "Switzerland", basel: "Switzerland", lausanne: "Switzerland",
-  vienna: "Austria",
-  copenhagen: "Denmark", aarhus: "Denmark",
-  stockholm: "Sweden", gothenburg: "Sweden", malmo: "Sweden",
+  "zürich": "Switzerland", "genève": "Switzerland", "genf": "Switzerland",
+  vienna: "Austria", "wien": "Austria",
+  copenhagen: "Denmark", aarhus: "Denmark", "københavn": "Denmark",
+  stockholm: "Sweden", gothenburg: "Sweden", malmo: "Sweden", "göteborg": "Sweden",
   oslo: "Norway", bergen: "Norway",
   helsinki: "Finland", espoo: "Finland", tampere: "Finland",
   warsaw: "Poland", warszawa: "Poland", krakow: "Poland", "kraków": "Poland",
@@ -109,9 +113,17 @@ const CITY_DISPLAY: Record<string, string> = {
   milano: "Milan", genova: "Genoa", warszawa: "Warsaw", praha: "Prague",
   lisboa: "Lisbon", "munich - berlin": "Munich", "kraków": "Krakow",
   "wrocław": "Wroclaw", "düsseldorf": "Düsseldorf",
+  // Exonyms -> English canonical so e.g. Wien and Vienna are one slice, not two.
+  "wien": "Vienna", "münchen": "Munich", "köln": "Cologne", "koeln": "Cologne",
+  "nürnberg": "Nuremberg", "nuernberg": "Nuremberg", "frankfurt am main": "Frankfurt",
+  "zürich": "Zurich", "genève": "Geneva", "genf": "Geneva", "göteborg": "Gothenburg",
+  "københavn": "Copenhagen",
 };
 
-const REMOTE_TOKENS = ["remote", "europe", "emea", "anywhere", "worldwide", "global"];
+// Work-mode strings are NOT places — they must not resolve to a city slice.
+const REMOTE_TOKENS = ["remote", "europe", "emea", "anywhere", "worldwide", "global",
+  "hybrid", "home office", "homeoffice", "home-office", "home", "remote work",
+  "fully remote", "wfh", "work from home", "flexible"];
 
 // Lowercased connectors/elisions that stay lowercase mid-name across EU spellings
 // ("Frankfurt am Main", "Bourg-en-Bresse", "Cerdanyola del Vallès", "Gonfreville-l'Orcher").
