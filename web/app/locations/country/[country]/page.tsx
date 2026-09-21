@@ -70,10 +70,10 @@ export default async function CountryPage({ params }: { params: { country: strin
         <>
           {/* Stat row */}
           <section className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <StatCard icon={<Icon.bars size={15} />} label="Median base salary" value={eur(d.median)} sub={`${d.n} salaried postings`} />
-            <StatCard icon={<Icon.briefcase size={15} />} label="Roles tracked" value={d.trackedN.toLocaleString()} sub={`${d.rolesBenchmarked} benchmarked`} />
-            <StatCard icon={<Icon.shield size={15} />} label="Transparency" value={`${d.disclosurePct}%`} sub="of ads disclose pay" />
-            <StatCard icon={<Icon.globe size={15} />} label="EMEA median rank" value={d.medianRank ? `#${d.medianRank}` : "—"} sub={d.medianRank ? `of ${d.total} countries` : undefined} />
+            <StatCard icon={<Icon.bars size={15} />} label="Median advertised base" value={eur(d.median)} sub={`from ${d.n} salaried job ads`} />
+            <StatCard icon={<Icon.briefcase size={15} />} label="Live job ads tracked" value={d.trackedN.toLocaleString()} sub={`${d.rolesBenchmarked} role families benchmarked`} />
+            <StatCard icon={<Icon.shield size={15} />} label="Job ads that disclose pay" value={`${d.disclosurePct}%`} sub="of all live ads here" />
+            <StatCard icon={<Icon.globe size={15} />} label="Rank by median pay in EMEA" value={d.medianRank ? `#${d.medianRank}` : "—"} sub={d.medianRank ? `of ${d.total} countries with a median` : undefined} />
           </section>
 
           {/* Three-column */}

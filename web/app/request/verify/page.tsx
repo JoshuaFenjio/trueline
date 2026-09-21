@@ -4,7 +4,7 @@ import { Breadcrumbs } from "@/components/blocks";
 import { verifyRequest, matchInfo } from "@/lib/roleRequests";
 import { RequestConfirmation } from "@/components/RequestConfirmation";
 
-export const metadata: Metadata = { title: "Confirm your request — SalaryRadar", robots: { index: false } };
+export const metadata: Metadata = { title: "Confirm your request", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 export default async function VerifyPage({ searchParams }: { searchParams: { e?: string; q?: string; t?: string } }) {

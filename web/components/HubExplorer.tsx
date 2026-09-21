@@ -8,7 +8,7 @@ export interface HubItem { name: string; slug: string; median: number; n: number
 
 // Searchable tile grid for the location/role hubs. Filters the passed list
 // client-side; all items are real gated entries computed on the server.
-export function HubExplorer({ items, placeholder, unit = "roles" }: { items: HubItem[]; placeholder: string; unit?: string }) {
+export function HubExplorer({ items, placeholder, unit = "salaried ads" }: { items: HubItem[]; placeholder: string; unit?: string }) {
   const [q, setQ] = useState("");
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -25,7 +25,7 @@ export function HubExplorer({ items, placeholder, unit = "roles" }: { items: Hub
           <Link key={i.slug} href={i.href} className="card card-hover !p-4">
             <div className="flex items-center gap-2">{i.flagCountry && <Flag country={i.flagCountry} />}<span className="truncate font-medium">{i.name}</span></div>
             <div className="tnum mt-2 text-lg font-semibold">{eur(i.median)}</div>
-            <div className="tnum text-[12px] text-ink-faint">median base · {i.n} {unit}</div>
+            <div className="tnum text-[12px] text-ink-faint">median · {i.n} {unit}</div>
           </Link>
         ))}
       </div>

@@ -8,7 +8,7 @@ import { eur } from "@/lib/format";
 // (NO duotone), city name + flag + median below. Falls back to the tinted
 // silhouette in the image slot until a photo exists for the place.
 export function PlaceTile({
-  name, href, median, n, flagCountry, unit = "salaried",
+  name, href, median, n, flagCountry, unit = "salaried ads",
 }: {
   name: string; href: string; median: number; n: number; flagCountry?: string | null; unit?: string;
 }) {

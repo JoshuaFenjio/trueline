@@ -62,7 +62,7 @@ export function CompanyHiresMap({ company, markets, offices }: {
         <div className="pointer-events-none absolute z-20 w-48 rounded-xl border p-3 text-sm shadow-glow" style={{ left: Math.min(tip.x + 12, 560), top: tip.y + 12, background: "#fff", borderColor: "var(--border)" }}>
           <div className="font-semibold">{tip.m.country}</div>
           <div className="tnum mt-1 text-ink">{tip.m.postings} posting{tip.m.postings === 1 ? "" : "s"}</div>
-          <div className="tnum text-xs text-ink-faint">{tip.m.median != null ? `${eur(tip.m.median)} median` : "median needs 3+"}</div>
+          <div className="tnum text-xs text-ink-faint">{tip.m.median != null ? `${eur(tip.m.median)} median base` : "median needs 3+ salaried ads"}</div>
         </div>
       )}
     </div>
@@ -72,7 +72,7 @@ export function CompanyHiresMap({ company, markets, offices }: {
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="surface overflow-hidden rounded-card">
         <div className="flex items-center gap-3 border-b px-4 py-2.5 text-[11px] text-ink-faint" style={{ borderColor: "var(--border)" }}>
-          <span className="flex-1">Market</span><span className="w-20 text-right">Postings</span><span className="w-24 text-right">Median</span>
+          <span className="flex-1">Market</span><span className="w-20 text-right">Live job ads</span><span className="w-24 text-right">Median base</span>
         </div>
         <ol>
           {markets.map((m) => (
@@ -84,13 +84,13 @@ export function CompanyHiresMap({ company, markets, offices }: {
               </Link>
             </li>
           ))}
-          {markets.length === 0 && <li className="px-4 py-6 text-sm text-ink-faint">No located postings yet.</li>}
+          {markets.length === 0 && <li className="px-4 py-6 text-sm text-ink-faint">No located job ads yet.</li>}
         </ol>
       </div>
       <div className="hidden lg:block">
         {mapEl}
         <div className="tnum mt-3 flex items-center gap-4 text-[11px] text-ink-faint">
-          <span className="flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ background: "rgba(15,118,110,0.85)" }} /> more postings</span>
+          <span className="flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ background: "rgba(15,118,110,0.85)" }} /> more live job ads</span>
           <span className="flex items-center gap-1"><i className="inline-block h-2 w-2 rounded-full" style={{ background: "var(--ink)" }} /> office city</span>
         </div>
       </div>

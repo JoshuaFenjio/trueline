@@ -138,10 +138,10 @@ export default async function RoleLevelPage({ params }: { params: { role: string
         <>
           {/* Stat cards */}
           <section className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <StatCard icon={<Icon.bars size={15} />} label="Median base salary" value={eur(sp.median)} sub={`${hub.overall.n} salaried postings`} />
-            <StatCard icon={<Icon.scale size={15} />} label="Middle 50% of postings" value={`${eurK(sp.p25)}–${eurK(sp.p75)}`} sub="P25 to P75" />
-            <StatCard icon={<Icon.spark size={15} />} label="Top decile (P90)" value={eurK(sp.p90)} sub="Best-paid 10%" />
-            <StatCard icon={<Icon.briefcase size={15} />} label="Roles tracked" value={hub.trackedN.toLocaleString()} sub={`${hub.disclosedN} disclose pay`} />
+            <StatCard icon={<Icon.bars size={15} />} label="Median advertised base" value={eur(sp.median)} sub={`from ${hub.overall.n} salaried job ads`} />
+            <StatCard icon={<Icon.scale size={15} />} label="Middle 50% of ads" value={`${eurK(sp.p25)}–${eurK(sp.p75)}`} sub="25th to 75th percentile" />
+            <StatCard icon={<Icon.spark size={15} />} label="Top 10% of ads (P90)" value={eurK(sp.p90)} sub="Best-paid tenth" />
+            <StatCard icon={<Icon.briefcase size={15} />} label="Live job ads tracked" value={hub.trackedN.toLocaleString()} sub={`${hub.disclosedN} disclose pay`} />
           </section>
 
           {/* Distribution */}

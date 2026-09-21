@@ -50,7 +50,7 @@ export default async function CityPage({ params }: { params: { city: string } })
           tinted silhouette otherwise). See PlaceHero. */}
       <PlaceHero title={city} photoName={city} flagCountry={d.country}>
         {d.country && <Link href={`/locations/country/${slugify(d.country)}`} className="underline-offset-2 hover:underline">{d.country}</Link>}
-        <span className="eyebrow-pill"><span className="eyebrow">{d.trackedN.toLocaleString()} roles tracked</span></span>
+        <span className="eyebrow-pill"><span className="eyebrow">{d.trackedN.toLocaleString()} live job ads tracked</span></span>
       </PlaceHero>
 
       {d.median == null ? (
@@ -59,10 +59,10 @@ export default async function CityPage({ params }: { params: { city: string } })
         <>
           {/* Stat cards */}
           <section className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <StatCard icon={<Icon.bars size={15} />} label="Median base salary" value={eur(d.median)} sub={`${d.n} salaried postings`} />
-            <StatCard icon={<Icon.briefcase size={15} />} label="Roles tracked" value={d.trackedN.toLocaleString()} sub={`${d.rolesBenchmarked} benchmarked`} />
-            <StatCard icon={<Icon.target size={15} />} label="Sample size" value={d.n.toLocaleString()} sub="salaried postings" />
-            <StatCard icon={<Icon.shield size={15} />} label="Transparency" value={`${d.disclosurePct}%`} sub="of ads disclose pay" />
+            <StatCard icon={<Icon.bars size={15} />} label="Median advertised base" value={eur(d.median)} sub={`from ${d.n} salaried job ads`} />
+            <StatCard icon={<Icon.briefcase size={15} />} label="Live job ads tracked" value={d.trackedN.toLocaleString()} sub={`${d.rolesBenchmarked} role families benchmarked`} />
+            <StatCard icon={<Icon.target size={15} />} label="Salaried job ads" value={d.n.toLocaleString()} sub="the sample behind the median" />
+            <StatCard icon={<Icon.shield size={15} />} label="Job ads that disclose pay" value={`${d.disclosurePct}%`} sub="of all live ads here" />
           </section>
 
           {/* How city compares */}

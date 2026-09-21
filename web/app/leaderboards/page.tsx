@@ -25,7 +25,7 @@ export async function generateMetadata({
   else if (searchParams.crole) { kicker = "By country · " + searchParams.crole; title = "Which countries pay most"; value = searchParams.crole; }
   const og = `/og?kicker=${encodeURIComponent(kicker)}&title=${encodeURIComponent(title)}&value=${encodeURIComponent(value)}`;
   return {
-    title: `${title} · EMEA salary leaderboards · SalaryRadar`,
+    title: `${title} · EMEA salary leaderboards`,
     description: "Live leaderboards of the top-paying tech companies in EMEA, by sector, role and country, plus the most transparent employers.",
     openGraph: { title, images: [og] },
     twitter: { card: "summary_large_image", images: [og] },
@@ -100,9 +100,9 @@ export default async function Leaderboards({
         {comp.emeaMedian > 0 && (
           <div className="hidden min-[900px]:block">
             <div className="card-float mx-auto max-w-xs p-6">
-              <div className="text-[12px] text-ink-faint">EMEA median base salary</div>
+              <div className="text-[12px] text-ink-faint">EMEA median advertised base</div>
               <div className="tnum mt-2 text-3xl font-semibold">{eur(comp.emeaMedian)}</div>
-              <div className="tnum mt-1 text-[12px] text-ink-faint">{comp.salaried.toLocaleString()} salaried roles</div>
+              <div className="tnum mt-1 text-[12px] text-ink-faint">{comp.salaried.toLocaleString()} salaried job ads</div>
               {comp.spark.length >= 2 && <div className="mt-4"><Sparkline values={comp.spark} width={260} height={44} className="w-full" /></div>}
             </div>
           </div>
@@ -115,7 +115,7 @@ export default async function Leaderboards({
           <a key={t.id} href={`#${t.id}`} className="pill-btn"><t.icon size={15} /><span>{t.label}</span></a>
         ))}
       </nav>
-      <p className="mt-3 text-[12px] text-ink-faint">View: <span className="text-ink">Median base salary</span> · Source: SalaryRadar data · Updated {timeAgo(refreshed)}</p>
+      <p className="mt-3 text-[12px] text-ink-faint">View: <span className="text-ink">Median advertised base</span> · Source: SalaryRadar data · Updated {timeAgo(refreshed)}</p>
 
       {/* Countries — primary */}
       <section className="mt-10 scroll-mt-24" id="countries">

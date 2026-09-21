@@ -187,7 +187,7 @@ export function EuropePayMap({
     <div className="card overflow-hidden !p-0">
       <div className="flex items-center gap-3 border-b px-4 py-2.5 text-[12px] text-ink-faint" style={{ borderColor: "var(--border)" }}>
         <span className="w-5 text-right">#</span><span className="flex-1">Country</span>
-        <span className="w-20 text-right">Median</span>
+        <span className="w-20 text-right">Median base</span>
       </div>
       <ol>
         {ranked.slice(0, 12).map((c, i) => (
@@ -206,7 +206,7 @@ export function EuropePayMap({
             </Link>
           </li>
         ))}
-        {ranked.length === 0 && <li className="px-4 py-6 text-sm text-ink-faint">No country clears the 8-posting gate for this role yet.</li>}
+        {ranked.length === 0 && <li className="px-4 py-6 text-sm text-ink-faint">No country clears the 8-salaried-ad gate for this role family yet.</li>}
       </ol>
       <Link href="/locations/countries" className="arrow-link flex items-center justify-center gap-1 border-t px-4 py-2.5 text-xs" style={{ borderColor: "var(--border)" }}>
         View all countries <span className="arw">→</span>
@@ -291,7 +291,7 @@ export function EuropePayMap({
         <div className="surface overflow-hidden rounded-card">
           <div className="flex items-center gap-3 border-b px-4 py-2.5 text-[11px] text-ink-faint" style={{ borderColor: "var(--border)" }}>
             <span className="w-5 text-right">#</span><span className="flex-1">Country</span>
-            <span className="w-24 text-right">Median</span><span className="hidden w-12 text-right sm:block">n</span>
+            <span className="w-24 text-right">Median base</span><span className="hidden w-12 text-right sm:block">Ads</span>
           </div>
           <ol>
             {ranked.map((c, i) => (
@@ -311,7 +311,7 @@ export function EuropePayMap({
                 </Link>
               </li>
             ))}
-            {ranked.length === 0 && <li className="px-4 py-6 text-sm text-ink-faint">No country clears the 8-posting gate for this role yet.</li>}
+            {ranked.length === 0 && <li className="px-4 py-6 text-sm text-ink-faint">No country clears the 8-salaried-ad gate for this role family yet.</li>}
           </ol>
         </div>
         <div className="hidden lg:block">{mapEl}{legendEl}</div>

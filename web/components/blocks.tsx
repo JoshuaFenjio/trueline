@@ -222,7 +222,7 @@ export function toVolumeVMs(
   return rows.map((r) => ({
     label: (r.label ?? r.name)!,
     href: hrefBase(r.slug),
-    valueLabel: `${r.n} ${unit}`,
+    valueLabel: unit ? `${r.n} ${unit}` : String(r.n),
     barPct: r.n / max,
   }));
 }

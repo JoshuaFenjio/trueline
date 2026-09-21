@@ -68,7 +68,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
     return Number.isNaN(d) ? min : Math.min(min, d);
   }, Infinity);
   const subScores = [
-    { label: "Data volume", tier: tier(c.activeN, 30, 10), note: `${c.activeN} tracked postings` },
+    { label: "Data volume", tier: tier(c.activeN, 30, 10), note: `${c.activeN} live job ads` },
     { label: "Role coverage", tier: tier(c.roles.length, 8, 4), note: `${c.roles.length} role families` },
     { label: "Geo coverage", tier: tier(c.markets.length, 5, 2), note: `${c.markets.length} countries` },
     { label: "Recency", tier: recentDays <= 21 ? "High" : recentDays <= 60 ? "Medium" : "Low", note: recentDays === Infinity ? "no dated ads" : `newest ${Math.round(recentDays)}d ago` },
@@ -128,7 +128,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
           </div>
           <div className="card !p-4">
             <div className="tnum text-2xl font-semibold" style={{ color: c.disclosurePct >= 50 ? "var(--mint)" : c.disclosurePct < 25 ? "var(--ember)" : undefined }}>{pct(c.disclosurePct)}</div>
-            <div className="mt-1 text-[11px] text-ink-faint">Transparency · {c.activeN} ads</div>
+            <div className="mt-1 text-[11px] text-ink-faint">Job ads that disclose pay · of {c.activeN} live</div>
           </div>
         </div>
       </header>
@@ -137,7 +137,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <Link href={compareHref} className="pill-btn"><Icon.scale size={15} /><span>Compare</span></Link>
         <ShareButton />
-        <span className="ml-auto text-[12px] text-ink-faint">Median base <span className="tnum text-ink">{eur(c.midpoint)}</span> · from {c.n} salaried postings · refreshed {timeAgo(refreshed)}</span>
+        <span className="ml-auto text-[12px] text-ink-faint">Median advertised base <span className="tnum text-ink">{eur(c.midpoint)}</span> · from {c.n} salaried job ads · refreshed {timeAgo(refreshed)}</span>
       </div>
 
       {/* Tab bar */}
@@ -176,7 +176,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
               </div>
             ))}
           </div>
-          <p className="mt-3 text-[12px] text-ink-faint">Based on {c.activeN} tracked postings. No verified employee submissions yet.</p>
+          <p className="mt-3 text-[12px] text-ink-faint">Based on {c.activeN} live job ads. No verified employee submissions yet.</p>
         </div>
       </section>
 
@@ -239,7 +239,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
             </tbody>
           </table>
         </Card>
-        {c.history.length >= 2 && <Card className="mt-5"><div className="mb-3 text-[13px] font-medium">Median &amp; postings over time</div><Sparkline history={c.history} /></Card>}
+        {c.history.length >= 2 && <Card className="mt-5"><div className="mb-3 text-[13px] font-medium">Median advertised base over time</div><Sparkline history={c.history} /></Card>}
       </section>
 
       {/* Roles */}
@@ -319,9 +319,9 @@ function WatchlistCompany({ w }: { w: WatchEntry }) {
       <Card className="mt-6">
         <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
           <Stat label="Pay Score" value={<span className="text-ink-faint">—</span>} />
-          <Stat label="Median base" value={<span className="text-ink-faint">No data</span>} />
-          <Stat label="Salaried postings" value={<span className="tnum">0</span>} />
-          <Stat label="Transparency" value={<span className="text-ink-faint">Unknown</span>} />
+          <Stat label="Median advertised base" value={<span className="text-ink-faint">No data</span>} />
+          <Stat label="Salaried job ads" value={<span className="tnum">0</span>} />
+          <Stat label="Job ads that disclose pay" value={<span className="text-ink-faint">Unknown</span>} />
         </div>
       </Card>
 
@@ -365,8 +365,8 @@ function PeerCompare({ c }: { c: CompanyDetail }) {
             <tr className="text-left text-xs text-ink-faint">
               <th className="px-5 py-3 font-normal">Company</th>
               <th className="px-5 py-3 text-right font-normal">Pay Score</th>
-              <th className="px-5 py-3 text-right font-normal">Median base</th>
-              <th className="px-5 py-3 text-right font-normal">Transparency</th>
+              <th className="px-5 py-3 text-right font-normal">Median advertised base</th>
+              <th className="px-5 py-3 text-right font-normal">Ads disclosing pay</th>
             </tr>
           </thead>
           <tbody>

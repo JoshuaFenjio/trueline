@@ -115,7 +115,7 @@ export default async function Home({
           <p className="text-[13px] leading-relaxed text-ink-faint">
             <span className="font-medium text-ink-muted">Live salary data</span>
             {" · "}<span className="font-semibold text-ink">{stats.companies.toLocaleString()}</span> companies
-            {" · "}<span className="font-semibold text-ink">{stats.titles.toLocaleString()}</span> job titles
+            {" · "}<span className="font-semibold text-ink">{stats.titles.toLocaleString()}</span> distinct job titles
             {" · "}<span className="font-semibold text-ink">{countryNames.length}</span> countries
           </p>
           <h1 className="t-h1 mt-5 max-w-xl">
@@ -185,7 +185,7 @@ export default async function Home({
                 <div className="t-h3 mt-1.5">
                   <Link href={`/roles/${slugify(heroBand.role)}`} className="hover:text-[var(--accent)]">{heroBand.role}</Link>
                 </div>
-                <div className="text-[13px] text-ink-muted">Median base · {heroBand.level} · n≥8 · refreshes every 3 days</div>
+                <div className="text-[13px] text-ink-muted">Median advertised base · {heroBand.level} · 8+ salaried ads per country · new role family every 3 days</div>
               </div>
               <div className="flex gap-0 overflow-x-auto md:flex-1">
                 {heroBand.cells.map((c) => (
@@ -200,7 +200,7 @@ export default async function Home({
                       <span className="truncate text-sm">{c.country}</span>
                     </span>
                     <span className="tnum text-lg font-semibold">{eur(c.median)}</span>
-                    <span className="tnum text-[11px] text-ink-faint">n={c.n}</span>
+                    <span className="tnum text-[11px] text-ink-faint">{c.n} salaried ads</span>
                   </Link>
                 ))}
               </div>
@@ -217,26 +217,26 @@ export default async function Home({
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             {weekly.topRole && (
               <Link href={`/roles/${weekly.topRole.slug}`} className="card card-hover !p-5">
-                <div className="text-[11px] text-ink-faint">Highest-median role</div>
+                <div className="text-[11px] text-ink-faint">Highest-median role family</div>
                 <div className="mt-1 truncate font-semibold">{weekly.topRole.role}</div>
                 <div className="tnum mt-2 text-2xl font-semibold">{eur(weekly.topRole.median)}</div>
-                <div className="tnum mt-1 text-[11px] text-ink-faint">median · n={weekly.topRole.n} this week</div>
+                <div className="tnum mt-1 text-[11px] text-ink-faint">median · {weekly.topRole.n} salaried ads this week</div>
               </Link>
             )}
             {weekly.topCompany && (
               <Link href={`/companies/${weekly.topCompany.slug}`} className="card card-hover !p-5">
-                <div className="text-[11px] text-ink-faint">Highest-paying company</div>
+                <div className="text-[11px] text-ink-faint">Highest-median employer</div>
                 <div className="mt-1 flex items-center gap-2"><CompanyLogo name={weekly.topCompany.company} size={22} /><span className="truncate font-semibold">{weekly.topCompany.company}</span></div>
                 <div className="tnum mt-2 text-2xl font-semibold">{eur(weekly.topCompany.median)}</div>
-                <div className="tnum mt-1 text-[11px] text-ink-faint">median · n={weekly.topCompany.n} this week</div>
+                <div className="tnum mt-1 text-[11px] text-ink-faint">median · {weekly.topCompany.n} salaried ads this week</div>
               </Link>
             )}
             {weekly.mover && (
               <Link href={`/roles/${weekly.mover.slug}`} className="card card-hover !p-5">
-                <div className="text-[11px] text-ink-faint">Biggest new-postings mover</div>
+                <div className="text-[11px] text-ink-faint">Most new job ads</div>
                 <div className="mt-1 truncate font-semibold">{weekly.mover.role}</div>
                 <div className="tnum mt-2 text-2xl font-semibold">+{weekly.mover.n}</div>
-                <div className="tnum mt-1 text-[11px] text-ink-faint">new postings · last 7 days</div>
+                <div className="tnum mt-1 text-[11px] text-ink-faint">new job ads · last 7 days</div>
               </Link>
             )}
           </div>
@@ -261,9 +261,9 @@ export default async function Home({
             {/* Facts strip */}
             <div className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
               {[
-                { label: "Top payer", value: result.topPayers[0]?.company ?? "—" },
-                { label: "EMEA median", value: eur(roleRp.emeaMedian) },
-                { label: "Sample", value: `${result.advertisedN} postings` },
+                { label: "Top-paying employer", value: result.topPayers[0]?.company ?? "—" },
+                { label: "EMEA median advertised base", value: eur(roleRp.emeaMedian) },
+                { label: "Sample size", value: `${result.advertisedN} salaried ads` },
               ].map((f) => (
                 <div key={f.label}>
                   <div className="tnum text-lg font-semibold">{f.value}</div>
@@ -457,10 +457,10 @@ function Results({ result }: { result: Awaited<ReturnType<typeof searchSalaries>
 
       <Card>
         <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
-          <Stat label="Postings analysed" value={<span className="tnum">{result.advertisedN}</span>} />
-          <Stat label="Advertised · verified" value={<span className="tnum">{result.advertisedN} · {result.verifiedN}</span>} />
-          <Stat label="Middle 50%" value={<span className="tnum">{eurK(sp.p25)}–{eurK(sp.p75)}</span>} />
-          <Stat label="P10 → P90" value={<span className="tnum">{eurK(sp.p10)}–{eurK(sp.p90)}</span>} />
+          <Stat label="Salaried job ads analysed" value={<span className="tnum">{result.advertisedN}</span>} />
+          <Stat label="Verified employee submissions" value={<span className="tnum">{result.verifiedN}</span>} />
+          <Stat label="Middle 50% of ads (P25–P75)" value={<span className="tnum">{eurK(sp.p25)}–{eurK(sp.p75)}</span>} />
+          <Stat label="Full range (P10–P90)" value={<span className="tnum">{eurK(sp.p10)}–{eurK(sp.p90)}</span>} />
         </div>
       </Card>
 

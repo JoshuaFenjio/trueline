@@ -29,7 +29,7 @@ export function TopCities({ cities, emeaMedian, excludeConcentrated = false }: {
         <span className="w-5 text-right">#</span>
         <span className="flex-1">City</span>
         <span className="w-28 text-right">Median base</span>
-        <span className="hidden w-16 text-right sm:block">Roles</span>
+        <span className="hidden w-16 text-right sm:block">Salaried ads</span>
       </div>
       <ol>
         {top.map((c, i) => {

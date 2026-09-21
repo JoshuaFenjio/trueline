@@ -7,7 +7,7 @@ import { Icon } from "@/components/icons";
 import { matchInfo } from "@/lib/roleRequests";
 
 export const metadata: Metadata = {
-  title: "Request a role — SalaryRadar",
+  title: "Request a role",
   robots: { index: false },
 };
 

@@ -30,9 +30,9 @@ export function HeroIllustration({ comp }: { comp: HomeComposition }) {
   // than a quarter-over-quarter delta, which posted_at is too sparse to support.
   if (comp.emeaMedian > 0) {
     cards.push(
-      <Card key="median" label="EMEA median base salary">
+      <Card key="median" label="EMEA median advertised base">
         <div className="tnum text-[19px] font-semibold leading-none">{eur(comp.emeaMedian)}</div>
-        <div className="tnum mt-1 text-[10px] text-ink-faint">{comp.salaried.toLocaleString()} salaried roles</div>
+        <div className="tnum mt-1 text-[10px] text-ink-faint">{comp.salaried.toLocaleString()} salaried job ads</div>
       </Card>
     );
   }
@@ -40,10 +40,10 @@ export function HeroIllustration({ comp }: { comp: HomeComposition }) {
   // b) Top paying city
   if (comp.topCity) {
     cards.push(
-      <Card key="city" label="Top paying city" href={`/locations/${comp.topCity.slug}`}>
+      <Card key="city" label="Top-paying city" href={`/locations/${comp.topCity.slug}`}>
         <div className="text-[15px] font-semibold leading-tight">{comp.topCity.city}</div>
         <div className="tnum mt-0.5 text-[13px] font-semibold">{eur(comp.topCity.median)}</div>
-        <div className="tnum mt-0.5 text-[10px] text-ink-faint">median base · n={comp.topCity.n}</div>
+        <div className="tnum mt-0.5 text-[10px] text-ink-faint">median · {comp.topCity.n} salaried ads</div>
       </Card>
     );
   }
@@ -52,9 +52,9 @@ export function HeroIllustration({ comp }: { comp: HomeComposition }) {
   if (comp.inDemandRole) {
     const r = comp.inDemandRole;
     cards.push(
-      <Card key="role" label="In-demand role" href={`/roles/${r.slug}`}>
+      <Card key="role" label="Most in-demand role family" href={`/roles/${r.slug}`}>
         <div className="text-[15px] font-semibold leading-tight">{r.name}</div>
-        <div className="tnum mt-1 text-[10px] text-ink-faint">{r.activeN.toLocaleString()} open roles tracked</div>
+        <div className="tnum mt-1 text-[10px] text-ink-faint">{r.activeN.toLocaleString()} live job ads tracked</div>
       </Card>
     );
   }

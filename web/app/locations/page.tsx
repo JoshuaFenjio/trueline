@@ -36,11 +36,11 @@ export default async function CitiesIndex() {
           <p className="mt-4 max-w-lg text-lg leading-relaxed text-ink-muted">Median advertised base by tech hub, live from company job boards. A city median needs 8 salaried postings before it shows.</p>
         </div>
         <div className="card-float p-6">
-          <div className="text-[12px] text-ink-faint">Cities tracked</div>
+          <div className="text-[12px] text-ink-faint">Cities with live job ads</div>
           <div className="tnum mt-1 text-3xl font-semibold">{map.cities.length}</div>
           <div className="mt-4 grid grid-cols-2 gap-4">
-            <div><div className="tnum text-lg font-semibold">{eur(cities[0]?.median ?? 0)}</div><div className="text-[11px] text-ink-faint">Top: {cities[0]?.city}</div></div>
-            <div><div className="tnum text-lg font-semibold">{stats.salaried.toLocaleString()}</div><div className="text-[11px] text-ink-faint">Salaried ads</div></div>
+            <div><div className="tnum text-lg font-semibold">{eur(cities[0]?.median ?? 0)}</div><div className="text-[11px] text-ink-faint">Top-paying: {cities[0]?.city}</div></div>
+            <div><div className="tnum text-lg font-semibold">{stats.salaried.toLocaleString()}</div><div className="text-[11px] text-ink-faint">Salaried job ads tracked</div></div>
           </div>
         </div>
       </section>
