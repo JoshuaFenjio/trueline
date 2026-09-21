@@ -4,7 +4,7 @@ import { getSupabase, isConfigured } from "./supabase";
 import {
   annualMidpointEur, spread, percentileRank, median, Spread, computeTrend, Trend,
 } from "./stats";
-import { levelBucket, isTrainee, Level, LEVELS, levelSlug } from "./levels";
+import { levelBucket, levelHasSignal, isTrainee, Level, LEVELS, levelSlug } from "./levels";
 import { sectorOf, Sector } from "./sectors";
 import { resolvePlace } from "./geo";
 import { iso2 } from "./flags";
@@ -20,7 +20,8 @@ export interface Posting {
   sector: Sector;
   roleFamily: string;
   title: string; // raw advertised title (for distinct-title counts)
-  level: Level;
+  level: Level; // stored (pipeline.classify_level) or read-time levelBucket fallback
+  levelExplicit: boolean; // title carried a real seniority signal (level_source='explicit')
   city: string | null;
   country: string | null;
   remote: boolean;
@@ -69,7 +70,9 @@ function mapRow(r: any): Posting | null {
   const place = resolvePlace(r.city || r.location, r.country, r.currency);
   return {
     company: r.company, sector: sectorOf(r.company), roleFamily: r.role_family || "Other",
-    title: r.title || "", level: levelBucket(r.title), city: place.city, country: place.country,
+    title: r.title || "", level: (r.level as Level) || levelBucket(r.title),
+    levelExplicit: r.level_source ? r.level_source === "explicit" : levelHasSignal(r.title),
+    city: place.city, country: place.country,
     remote: place.remote || !!r.remote, annual, currency: r.currency || null, disclosed: !!disclosed, multiMarket,
     url: r.url || null, dateMs: parseDate(r.posted_at),
   };
@@ -83,7 +86,7 @@ function mapRow(r: any): Posting | null {
 const SHARD_ROWS = 2000;
 const SHARDS = 14; // 28k-row capacity; ~15.3k active today. Bump if the count nears this.
 const SELECT_COLS =
-  "company,role_family,title,city,location,country,remote,salary_eur_min,salary_eur_max,salary_period,salary_source,currency,url,posted_at,region,multi_market";
+  "company,role_family,title,city,location,country,remote,salary_eur_min,salary_eur_max,salary_period,salary_source,currency,level,level_source,url,posted_at,region,multi_market";
 
 const _fetchShard = unstable_cache(
   async (shard: number): Promise<Posting[]> => {
@@ -103,7 +106,7 @@ const _fetchShard = unstable_cache(
     }
     return out;
   },
-  ["trueline-shard-v26"],
+  ["trueline-shard-v27"],
   { revalidate: 3600 }
 );
 
@@ -569,7 +572,10 @@ export async function getRoleHub(role: string): Promise<RoleHub> {
     overall: sliceOf(rows, inRole),
     trackedN: rows.filter(inRole).length,
     disclosedN: rows.filter((p) => inRole(p) && p.disclosed).length,
-    byLevel: LEVELS.map((level) => ({ level, slice: sliceOf(rows, (p) => inRole(p) && p.level === level) })),
+    // Level-sliced: only rows whose title carried a real seniority signal
+    // (level_source='explicit'). Default-Mid rows are excluded so a level page
+    // never counts an inferred level. The family overall (below) aggregates all.
+    byLevel: LEVELS.map((level) => ({ level, slice: sliceOf(rows, (p) => inRole(p) && p.level === level && p.levelExplicit) })),
     topCities: rankCitiesBy(rows, inRole).slice(0, 10),
     topCountries: rankCountriesBy(rows, inRole).slice(0, 10),
     topCompanies: rankCompaniesBy(rows, inRole).slice(0, 10),
@@ -590,7 +596,7 @@ export interface RoleLevelHub {
 }
 export async function getRoleLevelHub(role: string, level: Level): Promise<RoleLevelHub> {
   const rows = await getData();
-  const match = (p: Posting) => p.roleFamily === role && p.level === level;
+  const match = (p: Posting) => p.roleFamily === role && p.level === level && p.levelExplicit;
   return {
     role, slug: slugify(role), level,
     overall: sliceOf(rows, match),
@@ -600,7 +606,7 @@ export async function getRoleLevelHub(role: string, level: Level): Promise<RoleL
     topCompanies: rankCompaniesBy(rows, match).slice(0, 8),
     dist: usable(rows).filter(match).map((p) => p.annual).sort((a, b) => a - b),
     siblings: LEVELS.map((l) => {
-      const s = sliceOf(rows, (p) => p.roleFamily === role && p.level === l);
+      const s = sliceOf(rows, (p) => p.roleFamily === role && p.level === l && p.levelExplicit);
       return { level: l, median: s.spread?.median ?? null, n: s.n, gated: s.gated };
     }),
   };
@@ -617,7 +623,7 @@ export const getRoleLevelIndex = async (): Promise<
   const out: { role: string; level: Level; slug: string; levelSlug: string; n: number; hasMedian: boolean }[] = [];
   for (const role of roles) {
     for (const level of LEVELS) {
-      const s = sliceOf(rows, (p) => p.roleFamily === role && p.level === level);
+      const s = sliceOf(rows, (p) => p.roleFamily === role && p.level === level && p.levelExplicit);
       out.push({ role, level, slug: slugify(role), levelSlug: levelSlug(level), n: s.n, hasMedian: !s.gated });
     }
   }
@@ -699,7 +705,7 @@ export const getCountryDetail = async (name: string): Promise<CountryDetail> => 
 
   // By level.
   const byLevel = LEVELS.map((level) => {
-    const v = sal.filter((p) => p.level === level).map((p) => p.annual);
+    const v = sal.filter((p) => p.level === level && p.levelExplicit).map((p) => p.annual);
     return { level, median: v.length >= N_MEDIAN ? Math.round(median(v)) : null, n: v.length };
   });
 
@@ -1117,7 +1123,7 @@ export interface HeroBand { role: string; level: string; cells: HeroBandCell[] }
 // level omitted => all levels (needed to clear the n>=8 gate for enough countries
 // to fill the band; a single narrow level rarely has 5 gated markets).
 export const getHeroBand = async (role = "Software Engineer", level?: Level, top = 5): Promise<HeroBand> => {
-  const rows = usable(await getData()).filter((p) => p.roleFamily === role && (!level || p.level === level) && p.country);
+  const rows = usable(await getData()).filter((p) => p.roleFamily === role && (!level || (p.level === level && p.levelExplicit)) && p.country);
   const byCountry = new Map<string, number[]>();
   for (const r of rows) { const a = byCountry.get(r.country!) || []; a.push(r.annual); byCountry.set(r.country!, a); }
   const cells: HeroBandCell[] = [...byCountry.entries()]
@@ -1246,7 +1252,7 @@ export async function searchSalaries(p: {
   const cityL = city.toLowerCase();
 
   const roleLevel = (r: Posting) =>
-    (role === "Any" || r.roleFamily === role) && (level === "Any" || r.level === level);
+    (role === "Any" || r.roleFamily === role) && (level === "Any" || (r.level === level && r.levelExplicit));
   const mainPred = (r: Posting) => roleLevel(r) && (city === "Any" || (r.city || "").toLowerCase() === cityL);
 
   const values = usable(rows).filter(mainPred).map((r) => r.annual);
