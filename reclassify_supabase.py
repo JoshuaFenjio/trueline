@@ -15,7 +15,7 @@ from collections import Counter
 
 import requests
 
-from pipeline import classify_role
+from pipeline import classify_role, classify_level
 
 PAGE = 1000
 URL = os.environ["SUPABASE_URL"].rstrip("/") + "/rest/v1/job_postings"
@@ -24,14 +24,58 @@ KEY = os.environ.get("SUPABASE_SERVICE_KEY") or os.environ["SUPABASE_KEY"]
 H = {"apikey": KEY, "Authorization": "Bearer " + KEY}
 
 
+def level_cols_present():
+    """Have the migrations/2026-09-role-level.sql columns been applied yet?"""
+    r = requests.get(URL, headers=H, params={"select": "level", "limit": 1}, timeout=30)
+    return r.status_code < 300
+
+
+def backfill_levels(rows, apply):
+    """Compute (level, level_source) from each title and PATCH rows whose stored
+    values differ — grouped by the 8 (level, source) pairs, id-chunked. Idempotent:
+    a second run finds nothing to change."""
+    if not level_cols_present():
+        print("level columns not present — apply migrations/2026-09-role-level.sql first (skipping level backfill)")
+        return
+    groups = {}
+    for p in rows:
+        lvl, src = classify_level(p.get("title") or "")
+        if p.get("level") != lvl or p.get("level_source") != src:
+            groups.setdefault((lvl, src), []).append(p["id"])
+    changed = sum(len(v) for v in groups.values())
+    from collections import Counter as _C
+    dist = _C()
+    for p in rows:
+        dist[classify_level(p.get("title") or "")[1]] += 1
+    print("\nLEVEL BACKFILL: {} rows need level set  |  explicit {} / default {}".format(
+        changed, dist.get("explicit", 0), dist.get("default", 0)))
+    if not apply:
+        return
+    done = 0
+    for (lvl, src), ids in groups.items():
+        for i in range(0, len(ids), 200):
+            chunk = ids[i:i + 200]
+            r = requests.patch(URL, headers=dict(H, **{"Content-Type": "application/json",
+                               "Prefer": "return=minimal"}),
+                               params={"id": "in.({})".format(",".join(str(x) for x in chunk))},
+                               json={"level": lvl, "level_source": src}, timeout=60)
+            r.raise_for_status()
+            done += len(chunk)
+    print("  level backfill: patched {} rows".format(done))
+
+
 def fetch_all():
+    # Include level columns only if they exist, so this runs pre- and post-migration.
+    sel = "id,title,role_family,salary_source,salary_eur_min"
+    if level_cols_present():
+        sel += ",level,level_source"
     out, offset = [], 0
     while True:
         r = requests.get(URL, headers=dict(H, **{"Range-Unit": "items",
                          "Range": "{}-{}".format(offset, offset + PAGE - 1)}),
                          params={"order": "id.asc",  # stable order so Range paging
                          # doesn't silently skip/duplicate rows (no ORDER BY = arbitrary)
-                                 "select": "id,title,role_family,salary_source,salary_eur_min"},
+                                 "select": sel},
                          timeout=60)
         r.raise_for_status()
         batch = r.json()
@@ -134,6 +178,9 @@ def main():
         print("\napplying {} changes...".format(len(changes)))
         n = apply_changes(changes)
         print("done: patched {} rows".format(n))
+
+    # Level backfill (guarded; no-op until the migration is applied).
+    backfill_levels(rows, "--apply" in sys.argv)
 
 
 if __name__ == "__main__":

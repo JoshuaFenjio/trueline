@@ -452,7 +452,7 @@ def classify_role(title: str) -> str:
         return "Software Engineer"
     if has("designer", "design lead", " ux ", "ui / ", "user experience",
            "product design", "graphic design", "motion design", "design system",
-           "ux researcher", "ui designer"):
+           "ux researcher", "ui designer", "user researcher"):
         return "Designer"
 
     # --- Go-to-market: BizOps before the commercial split, so "sales operations"
@@ -475,12 +475,16 @@ def classify_role(title: str) -> str:
         return "Account Manager"
     if has("account executive", " ae ", " ae,", "sales representative", "sales manager",
            "sales rep", "field sales", "new business", "enterprise sales", "commercial",
-           "commerciale", "closing", " sales ", "sales specialist", "sales lead"):
+           "commerciale", "closing", " sales ", "sales specialist", "sales lead",
+           "vertrieb", "außendienst", "aussendienst", "vendas", "ventas", "sales consultant",
+           "territory manager", "télévente", "consultor de vend", "consultor de vent"):
         return "Account Executive"
 
     # --- Marketing split ----------------------------------------------------
     if has("content", "copywriter", "copywriting", " editor ", "editorial",
-           "technical writer", "content strategist"):
+           "technical writer", "content strategist", "translator", "linguist",
+           "localization", "localisation", "subtitling", "subtitler", "dubbing",
+           "transcription", "voice over", "voiceover"):
         return "Content"
     if has("performance marketing", "paid ", " ppc", " sem ", "paid social",
            "paid search", "growth marketing", "user acquisition", " seo", " sea ",
@@ -516,7 +520,8 @@ def classify_role(title: str) -> str:
            "procure to pay", "financial controller"):
         return "Accounting"
     if has("finance", "financial", "treasury", "investor relations", "corporate finance",
-           "actuary", "actuarial", "underwrit", "controlling"):
+           "actuary", "actuarial", "underwrit", "controlling", "insurance", "versicherung",
+           "credit analyst", "credit risk"):
         return "Finance"
 
     # --- People split -------------------------------------------------------
@@ -532,7 +537,7 @@ def classify_role(title: str) -> str:
     # --- Legal / risk -------------------------------------------------------
     if has("compliance", "regulatory", "aml", " kyc", "financial crime", "sanctions",
            "risk & compliance", "regulatory affairs", " risk ", "risk manager",
-           "risk analyst", "money laundering"):
+           "risk analyst", "money laundering", "fraud", "fincrime", "financial-crime"):
         return "Compliance"
     if has("legal", "counsel", "lawyer", "paralegal", "attorney", "privacy",
            "contracts manager", "data protection"):
@@ -554,7 +559,9 @@ def classify_role(title: str) -> str:
            "supply chain", "logistics", "warehouse", "procurement",
            "fulfil", "general manager", "country manager", "scrum master", "agile coach",
            "delivery manager", "order management", "inventory", "demand planner",
-           "supply planner", "production planner"):
+           "supply planner", "production planner", "demand planning", "supply planning",
+           "picker", "packer", "kommissionierer", "lagerist", "lagermitarbeiter",
+           "staplerfahrer", "forklift", "chauffeur", "fahrer", "kurier", "courier"):
         return "Operations"
 
     # --- Non-tech clusters that otherwise dominate "Other". Naming them keeps the
@@ -568,7 +575,9 @@ def classify_role(title: str) -> str:
     if has("physical therap", "physiotherap", "occupational therap", " nurse", "nursing",
            "physician", "medical assistant", "clinician", "pharmacist", "dental",
            "praxismanager", "care assistant", "healthcare assistant", "midwife",
-           "radiographer", "paramedic", "therapy technician", "therapist assistant"):
+           "radiographer", "paramedic", "therapy technician", "therapist assistant",
+           " arzt", "facharzt", "oberarzt", "ärzt", "pflege", "krankenpfleger",
+           "krankenschwester", "altenpfleger", "medizinische fach"):
         return "Healthcare"
     if has("electrician", "elektriker", "elektromonteur", "electromécanicien", "monteur",
            "mechanic", "mécanicien", "fitter", "welder", "plumber", "hvac", "robinetier",
@@ -576,13 +585,53 @@ def classify_role(title: str) -> str:
            "service technician", "maintenance technician", "installer",
            "technicien", "contrôleur qualité", "contrôle qualité", "assurance qualité",
            "inspecteur qualité", "inspection qualité", "qualitätssicherung",
-           "chef de chantier", "chef d'équipe"):
+           "chef de chantier", "chef d'équipe", "soudeur", "schweisser", "schweißer",
+           "schlosser", "elektroniker", "mechaniker", "installateur", "anlagenmechaniker",
+           "industriemechaniker"):
         return "Skilled Trades"
     if has("grocery", "cashier", "store associate", "store manager", "store supervisor",
            "retail assistant", "merchandiser", "shop assistant", "category manager",
-           "supermarket", "retail grocery"):
+           "supermarket", "retail grocery", "verkäufer", "verkäuferin", "filialleiter",
+           "einzelhandel", "kassierer"):
         return "Retail"
+
+    # --- Two families recovered from the "Other" stranded-salary audit (each has
+    #     >=8 stranded salaried and no existing home). Placed last so no tech or
+    #     business title is swept in by a broad education/safety keyword.
+    if has("teacher", "teaching", " tutor", "lehrer", "nachhilfe", "dozent", "lecturer",
+           "professor", "enseignant", "erzieher", "kindergarten", "pädagog", "pedagog",
+           "instructor"):
+        return "Teaching/Education"
+    if has("arbeitssicherheit", "arbeitsschutz", "fachkraft für arbeitssicherheit",
+           "health & safety", "health and safety", "safety officer", "safety manager",
+           "safety coordinator", "safety specialist", " hse ", " hse,", "qhse", " ehs ",
+           "brandschutz", "occupational safety", "sicherheitsingenieur"):
+        return "Health & Safety"
     return "Other"
+
+
+# Seniority level from the title. Mirrors web/lib/levels.ts levelBucket exactly,
+# so the stored level matches the read-time fallback. "manager" is deliberately
+# NOT a Staff+ cue (it's a role-type, not a tier). Returns (level, source):
+# source is 'explicit' when a real seniority signal was present, 'default' when
+# we fell through to Mid — callers can exclude 'default' rather than guess.
+_LVL_JUNIOR = re.compile(r"\b(intern|internship|working student|apprentice|apprenti|graduate|entry[- ]level|junior|jr\.?|trainee|d[eé]butant|ausbildung|azubi|praktikant|werkstudent)\b", re.I)
+_LVL_STAFF = re.compile(r"\b(staff|principal|distinguished|fellow|lead|head of|head,|director|directeur|directrice|vp|vice president|chief|c[te]o|leiter|leitung|teamleiter|gesch[aä]ftsf[uü]hrer|responsable|chef de|chef d'[eé]quipe|iv)\b", re.I)
+_LVL_SENIOR = re.compile(r"\b(senior|sr\.?|snr|iii|confirm[eé]|leitender)\b", re.I)
+_LVL_MID = re.compile(r"\b(mid[- ]level|intermediate|medior|ii)\b", re.I)
+
+
+def classify_level(title):
+    t = title or ""
+    if _LVL_JUNIOR.search(t):
+        return "Junior", "explicit"
+    if _LVL_STAFF.search(t):
+        return "Staff+", "explicit"
+    if _LVL_SENIOR.search(t):
+        return "Senior", "explicit"
+    if _LVL_MID.search(t):
+        return "Mid", "explicit"
+    return "Mid", "default"  # no honest signal — Mid is a fallback, flagged as such
 
 
 # -----------------------------------------------------------------------------
@@ -864,6 +913,8 @@ def build_posting(ats, company, ats_job_id, title, location, city, country, remo
         "ats_job_id": str(ats_job_id),
         "title": title or "",
         "role_family": classify_role(title),
+        "level": classify_level(title)[0],
+        "level_source": classify_level(title)[1],
         "location": location,
         "city": city,
         "country": country,
@@ -1295,6 +1346,21 @@ class SupabaseDB:
             "Authorization": "Bearer " + key,
             "Content-Type": "application/json",
         }
+        self._level_ok = None  # lazy: does job_postings have the level columns yet?
+
+    def _level_cols_present(self):
+        # Probe once. Until migrations/2026-09-role-level.sql is applied the
+        # columns don't exist, so we strip them from writes rather than 400 the
+        # whole scraper run. Auto-activates the moment the column appears.
+        if self._level_ok is None:
+            try:
+                r = requests.get(self.base + "/job_postings",
+                                 headers=self.h, params={"select": "level", "limit": 1},
+                                 timeout=HTTP_TIMEOUT)
+                self._level_ok = r.status_code < 300
+            except requests.exceptions.RequestException:
+                self._level_ok = False
+        return self._level_ok
 
     def _req(self, method, path, params=None, body=None, prefer=None):
         headers = dict(self.h)
@@ -1346,6 +1412,8 @@ class SupabaseDB:
                                     "select": "id,salary_source"})
         body = dict(p)
         body.update({"last_seen": ts, "status": "active", "expired_at": None})
+        if not self._level_cols_present():
+            body.pop("level", None); body.pop("level_source", None)
         if existing:
             # Never downgrade a previously-found salary to none (e.g. when we
             # skip the detail fetch for a known SmartRecruiters posting).
