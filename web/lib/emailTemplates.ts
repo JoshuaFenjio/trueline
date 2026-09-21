@@ -19,13 +19,10 @@ const TAGLINE = "Honest salary benchmarks for Europe — built only from disclos
 
 // The compass/radar mark, geometry kept in sync with components/BrandMark.tsx.
 const MARK = `<svg width="28" height="28" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;display:inline-block">
-  <rect width="32" height="32" rx="8" fill="${INK}"/>
-  <circle cx="16" cy="16" r="9" fill="none" stroke="${TEAL}" stroke-width="2"/>
-  <g transform="rotate(45 16 16)">
-    <path d="M16 7 L18.2 16 L16 25 L13.8 16 Z" fill="${TEAL}"/>
-    <path d="M7 16 L16 13.8 L25 16 L16 18.2 Z" fill="${TEAL}" opacity="0.5"/>
-  </g>
-  <circle cx="16" cy="16" r="1.6" fill="${INK}"/>
+  <circle cx="16" cy="16" r="12" fill="none" stroke="${TEAL}" stroke-width="2.75"/>
+  <path d="M16 5.5 L18.6 16 L13.4 16 Z" fill="${TEAL}"/>
+  <path d="M16 26.5 L18.6 16 L13.4 16 Z" fill="${TEAL}" opacity="0.42"/>
+  <circle cx="16" cy="16" r="1.8" fill="${TEAL}"/>
 </svg>`;
 
 interface Shell {

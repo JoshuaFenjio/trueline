@@ -10,9 +10,9 @@ import { slugify } from "@/lib/format";
 
 export function Logo({ className = "" }: { className?: string }) {
   return (
-    <Link href="/" className={`inline-flex items-center gap-2 font-semibold tracking-tight ${className}`}>
-      <BrandMark size={22} className="rounded-md" />
-      <span className="text-[17px]">SalaryRadar</span>
+    <Link href="/" className={`inline-flex items-center gap-2 tracking-tight ${className}`}>
+      <BrandMark size={22} />
+      <span className="text-[17px] font-bold">SalaryRadar</span>
     </Link>
   );
 }

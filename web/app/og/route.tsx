@@ -40,13 +40,10 @@ export async function GET(req: Request) {
         {/* Wordmark — compass mark + SalaryRadar */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <svg width="40" height="40" viewBox="0 0 32 32">
-            <rect width="32" height="32" rx="9" fill="#171614" />
-            <circle cx="16" cy="16" r="9" fill="none" stroke="#0F766E" strokeWidth="2" />
-            <g transform="rotate(45 16 16)">
-              <path d="M16 7 L18.2 16 L16 25 L13.8 16 Z" fill="#0F766E" />
-              <path d="M7 16 L16 13.8 L25 16 L16 18.2 Z" fill="#0F766E" fillOpacity="0.5" />
-            </g>
-            <circle cx="16" cy="16" r="1.6" fill="#171614" />
+            <circle cx="16" cy="16" r="12" fill="none" stroke="#0F766E" strokeWidth="2.75" />
+            <path d="M16 5.5 L18.6 16 L13.4 16 Z" fill="#0F766E" />
+            <path d="M16 26.5 L18.6 16 L13.4 16 Z" fill="#0F766E" fillOpacity="0.42" />
+            <circle cx="16" cy="16" r="1.8" fill="#0F766E" />
           </svg>
           <div style={{ color: "#171614", fontSize: 32, fontWeight: 700, letterSpacing: -1 }}>SalaryRadar</div>
         </div>
