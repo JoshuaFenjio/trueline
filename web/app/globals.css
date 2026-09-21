@@ -168,6 +168,7 @@ h2 {
   background: #ffffff;
   border: 1px solid var(--border);
   box-shadow: var(--card-shadow);
+  min-width: 0; /* same reason as .card — see below */
 }
 .surface-hover:hover {
   border-color: var(--border-strong);
@@ -182,6 +183,11 @@ h2 {
   border-radius: 14px;
   box-shadow: var(--card-shadow);
   padding: 24px;
+  /* Cards are almost always grid/flex items. Without this, the item's automatic
+     minimum size is its CONTENT min-width, so one long row (a role-family name,
+     a company name) widens the whole track and the page scrolls sideways at
+     375px. Zeroing it lets the inner truncate/min-w-0 rules do their job. */
+  min-width: 0;
 }
 .card-hover {
   transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
@@ -196,6 +202,7 @@ h2 {
   border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: var(--float-shadow);
+  min-width: 0;
 }
 
 /* Homepage canvas — the hero artwork's own cream (#FCFAF7, measured from the

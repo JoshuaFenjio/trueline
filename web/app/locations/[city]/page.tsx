@@ -7,6 +7,7 @@ import { PlaceHero } from "@/components/PlaceHero";
 import { Sparkline } from "@/components/Sparkline";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/icons";
+import { familyLabel } from "@/lib/roleNames";
 import { eur, eurK, slugify } from "@/lib/format";
 
 export const revalidate = 3600;
@@ -79,17 +80,17 @@ export default async function CityPage({ params }: { params: { city: string } })
           {/* Top roles + pay trend */}
           <section className="mt-8 grid gap-6 lg:grid-cols-2">
             <div className="card">
-              <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.briefcase size={15} /></span><span className="text-[15px] font-semibold">Top paying roles in {city}</span></div>
+              <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.briefcase size={15} /></span><span className="text-[15px] font-semibold">Top-paying role families in {city}</span></div>
               <ol className="mt-4">
                 {d.topRoles.length ? d.topRoles.map((r, i) => (
                   <li key={r.slug} className="border-t first:border-t-0" style={{ borderColor: "var(--border)" }}>
                     <Link href={`/roles/${r.slug}`} className="flex h-11 items-center gap-3 transition-colors hover:bg-[var(--band)]">
                       <span className="tnum w-5 text-right text-sm text-ink-faint">{i + 1}</span>
-                      <span className="min-w-0 flex-1"><span className="truncate text-sm">{r.role} <span className="tnum text-[11px] text-ink-faint">n={r.n}</span></span><span className="rank-track mt-1 block"><span className="rank-fill" style={{ width: `${(r.median / maxRole) * 100}%`, background: "var(--accent)" }} /></span></span>
+                      <span className="min-w-0 flex-1"><span className="block truncate text-sm">{familyLabel(r.role)} <span className="tnum text-[11px] text-ink-faint">n={r.n}</span></span><span className="rank-track mt-1 block"><span className="rank-fill" style={{ width: `${(r.median / maxRole) * 100}%`, background: "var(--accent)" }} /></span></span>
                       <span className="tnum text-sm font-semibold">{eur(r.median)}</span>
                     </Link>
                   </li>
-                )) : <li className="py-4 text-sm text-ink-faint">No role clears the gate yet.</li>}
+                )) : <li className="py-4 text-sm text-ink-faint">No role family clears the 8-ad gate here yet.</li>}
               </ol>
             </div>
             <div className="card">

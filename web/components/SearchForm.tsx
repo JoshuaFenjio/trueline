@@ -1,4 +1,5 @@
 import { LEVELS } from "@/lib/levels";
+import { familySuggestLabel } from "@/lib/roleNames";
 import { PrimaryButton } from "./ui";
 
 interface Props {
@@ -12,11 +13,11 @@ export function SearchForm({ roles, cities, current, compact }: Props) {
   return (
     <form method="get" action="/#results" className="surface rounded-card p-4 md:p-5">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-end">
-        <Field label="Role" className="md:col-span-3">
+        <Field label="Role family" className="md:col-span-3">
           <select name="role" defaultValue={current.role || "Any"} className="field w-full px-3 py-3">
-            <option value="Any">Any role</option>
+            <option value="Any">Any role family</option>
             {roles.map((r) => (
-              <option key={r} value={r}>{r}</option>
+              <option key={r} value={r}>{familySuggestLabel(r)}</option>
             ))}
           </select>
         </Field>

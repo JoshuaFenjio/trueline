@@ -7,39 +7,53 @@ import { useEffect, useMemo, useRef, useState } from "react";
 // clear row (placeholder text) is always offered so it doubles as a dropdown.
 export function Combobox({
   options, value, onChange, placeholder, clearValue = "", className = "", inputClassName = "field w-full px-3 py-2 text-sm",
+  labelOf, optionLabelOf,
 }: {
   options: string[]; value: string; onChange: (v: string) => void; placeholder: string;
   clearValue?: string; className?: string; inputClassName?: string;
+  // Display-only mapping. The committed value is ALWAYS the canonical option
+  // string (a role_family key, a country name…), so URLs and data lookups are
+  // untouched; only what the user reads changes. `optionLabelOf` lets the
+  // dropdown rows say more than the selected input does — e.g. a group family
+  // renders as "Operations — role family" in the list but "Operations" once
+  // chosen.
+  labelOf?: (v: string) => string;
+  optionLabelOf?: (v: string) => string;
 }) {
-  const [input, setInput] = useState(value === clearValue ? "" : value);
+  const label = labelOf ?? ((v: string) => v);
+  const rowLabel = optionLabelOf ?? label;
+  const [input, setInput] = useState(value === clearValue ? "" : label(value));
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => { setInput(value === clearValue ? "" : value); }, [value, clearValue]);
+  useEffect(() => { setInput(value === clearValue ? "" : label(value)); }, [value, clearValue, labelOf]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const rows = useMemo(() => {
     const s = input.trim().toLowerCase();
     let opts = options;
     if (s) {
+      // Match the canonical value AND the display label, so typing "backend
+      // engineer" finds the family stored as "Backend".
+      const hay = (o: string) => `${o} ${rowLabel(o)}`.toLowerCase();
       opts = options
-        .filter((o) => o.toLowerCase().includes(s))
+        .filter((o) => hay(o).includes(s))
         .sort((a, b) => {
-          const ap = a.toLowerCase().startsWith(s) ? 0 : 1;
-          const bp = b.toLowerCase().startsWith(s) ? 0 : 1;
-          return ap - bp || a.localeCompare(b);
+          const ap = rowLabel(a).toLowerCase().startsWith(s) || a.toLowerCase().startsWith(s) ? 0 : 1;
+          const bp = rowLabel(b).toLowerCase().startsWith(s) || b.toLowerCase().startsWith(s) ? 0 : 1;
+          return ap - bp || rowLabel(a).localeCompare(rowLabel(b));
         });
     }
-    const out = [{ label: placeholder, v: clearValue, clear: true }, ...opts.slice(0, 30).map((o) => ({ label: o, v: o, clear: false }))];
+    const out = [{ label: placeholder, v: clearValue, clear: true }, ...opts.slice(0, 30).map((o) => ({ label: rowLabel(o), v: o, clear: false }))];
     return out;
-  }, [input, options, placeholder, clearValue]);
+  }, [input, options, placeholder, clearValue, optionLabelOf, labelOf]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function commit(v: string) { onChange(v); setInput(v === clearValue ? "" : v); setOpen(false); }
+  function commit(v: string) { onChange(v); setInput(v === clearValue ? "" : label(v)); setOpen(false); }
   function onKey(e: React.KeyboardEvent) {
     if (!open) { if (e.key === "ArrowDown") { setOpen(true); setActive(0); } return; }
     if (e.key === "ArrowDown") { e.preventDefault(); setActive((a) => Math.min(a + 1, rows.length - 1)); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)); }
     else if (e.key === "Enter") { e.preventDefault(); if (rows[active]) commit(rows[active].v); }
-    else if (e.key === "Escape") { setOpen(false); setInput(value === clearValue ? "" : value); }
+    else if (e.key === "Escape") { setOpen(false); setInput(value === clearValue ? "" : label(value)); }
   }
 
   return (
@@ -49,7 +63,7 @@ export function Combobox({
         onChange={(e) => { setInput(e.target.value); setOpen(true); setActive(0); }}
         onKeyDown={onKey}
         onFocus={() => { setOpen(true); setActive(0); }}
-        onBlur={() => setTimeout(() => { setOpen(false); setInput(value === clearValue ? "" : value); }, 150)}
+        onBlur={() => setTimeout(() => { setOpen(false); setInput(value === clearValue ? "" : label(value)); }, 150)}
         placeholder={placeholder}
         role="combobox"
         aria-expanded={open}

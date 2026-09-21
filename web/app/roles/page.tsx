@@ -5,6 +5,7 @@ import { SectionHeader, RankTable, toPayVMs, toVolumeVMs, Breadcrumbs, PillButto
 import { HubExplorer, HubItem } from "@/components/HubExplorer";
 import { Icon } from "@/components/icons";
 import { eur } from "@/lib/format";
+import { familyLabel } from "@/lib/roleNames";
 
 export const revalidate = 3600;
 
@@ -28,7 +29,7 @@ export default async function RolesIndex() {
   const topMedian = ranked[0];
   const floating = ranked.slice(0, 4);
   const mostActive = activity.slice(0, 8);
-  const items: HubItem[] = ranked.map((r) => ({ name: r.name, slug: r.slug, median: r.median!, n: r.n, flagCountry: null, href: `/roles/${r.slug}` }));
+  const items: HubItem[] = ranked.map((r) => ({ name: familyLabel(r.name), slug: r.slug, median: r.median!, n: r.n, flagCountry: null, href: `/roles/${r.slug}` }));
   const topSectors = sectors.filter((s) => s.sector !== "Other");
 
   return (
@@ -45,7 +46,7 @@ export default async function RolesIndex() {
         <div className="grid grid-cols-2 gap-3">
           {floating.map((r) => (
             <Link key={r.slug} href={`/roles/${r.slug}`} className="card-float card-hover p-4">
-              <div className="truncate text-[13px] font-medium">{r.name}</div>
+              <div className="truncate text-[13px] font-medium">{familyLabel(r.name)}</div>
               <div className="tnum mt-2 text-lg font-semibold">{eur(r.median!)}</div>
               <div className="tnum text-[11px] text-ink-faint">median · {r.n} salaried ads</div>
             </Link>
@@ -66,7 +67,7 @@ export default async function RolesIndex() {
           { icon: Icon.bars, v: stats.salaried.toLocaleString(), l: "Salaried job ads tracked" },
           { icon: Icon.briefcase, v: ranked.length, l: "Role families benchmarked" },
           { icon: Icon.globe, v: countries.length, l: "Countries with a published median" },
-          { icon: Icon.trophy, v: topMedian?.name ?? "—", l: topMedian ? `Top-paying role family · ${eur(topMedian.median!)} median` : "Top-paying role family" },
+          { icon: Icon.trophy, v: topMedian ? familyLabel(topMedian.name) : "—", l: topMedian ? `Top-paying role family · ${eur(topMedian.median!)} median` : "Top-paying role family" },
         ].map((s, i) => (
           <div key={i} className="card"><div className="flex items-center gap-2 text-[12px] text-ink-faint"><span className="text-[var(--accent)]"><s.icon size={15} /></span>{s.l}</div><div className="tnum mt-2 truncate text-xl font-semibold">{s.v}</div></div>
         ))}
@@ -78,7 +79,7 @@ export default async function RolesIndex() {
           <SectionHeader kicker="Momentum" title="Most active role families" sub="Ranked by new job ads in the last 30 days." />
           <div className="mt-5 flex flex-wrap gap-2">
             {mostActive.map((r) => (
-              <Link key={r.slug} href={`/roles/${r.slug}`} className="pill-btn"><Icon.trending size={14} /><span>{r.role}</span><span className="tnum text-ink-faint">{r.recentN}</span></Link>
+              <Link key={r.slug} href={`/roles/${r.slug}`} className="pill-btn"><Icon.trending size={14} /><span>{familyLabel(r.role)}</span><span className="tnum text-ink-faint">{r.recentN}</span></Link>
             ))}
           </div>
         </section>
@@ -88,11 +89,11 @@ export default async function RolesIndex() {
       <section className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="card">
           <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.trophy size={15} /></span><span className="text-[15px] font-semibold">Highest-paying role families</span></div>
-          <div className="mt-4">{ranked.length ? <RankTable rows={toPayVMs(ranked.slice(0, 10).map((r) => ({ label: r.name, slug: r.slug, value: r.median!, n: r.n })), (s) => `/roles/${s}`)} /> : <p className="text-sm text-ink-faint">No role family clears the 8-ad gate yet.</p>}</div>
+          <div className="mt-4">{ranked.length ? <RankTable rows={toPayVMs(ranked.slice(0, 10).map((r) => ({ label: familyLabel(r.name), slug: r.slug, value: r.median!, n: r.n })), (s) => `/roles/${s}`)} /> : <p className="text-sm text-ink-faint">No role family clears the 8-ad gate yet.</p>}</div>
         </div>
         <div className="card">
           <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.users size={15} /></span><span className="text-[15px] font-semibold">Most in demand</span></div>
-          <div className="mt-4"><RankTable rows={toVolumeVMs(byVolume, (s) => `/roles/${s}`, "")} valueHead="Live job ads" /></div>
+          <div className="mt-4"><RankTable rows={toVolumeVMs(byVolume.map((r) => ({ ...r, name: familyLabel(r.name) })), (s) => `/roles/${s}`, "")} valueHead="Live job ads" /></div>
         </div>
       </section>
 

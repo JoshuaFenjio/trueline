@@ -12,6 +12,7 @@ import { GpgModule } from "@/components/GpgModule";
 import { ShareButton } from "@/components/ShareButton";
 import { Icon } from "@/components/icons";
 import { eur, eurK, pct, timeAgo, slugify } from "@/lib/format";
+import { familyLabel } from "@/lib/roleNames";
 import type { CompanyDetail } from "@/lib/data";
 
 const COMPANY_TABS = [
@@ -74,7 +75,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
     { label: "Recency", tier: recentDays <= 21 ? "High" : recentDays <= 60 ? "Medium" : "Low", note: recentDays === Infinity ? "no dated ads" : `newest ${Math.round(recentDays)}d ago` },
   ];
 
-  const thinRoles = c.roles.filter((r) => r.companyMedian === null).map((r) => r.role);
+  const thinRoles = c.roles.filter((r) => r.companyMedian === null).map((r) => familyLabel(r.role));
   const gaps: string[] = [];
   if (c.disclosurePct < 40) gaps.push(`Most ${c.company} ads don't state pay; only ${pct(c.disclosurePct)} do, so this is a partial picture.`);
   if (thinRoles.length) gaps.push(`Not enough salaried postings yet to publish a median for: ${thinRoles.slice(0, 6).join(", ")}.`);
@@ -156,7 +157,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
               const above = ratio != null && ratio >= 1;
               return (
                 <div key={r.role} className="flex items-center gap-3">
-                  <Link href={`/roles/${r.slug}`} className="w-40 truncate text-sm hover:text-ink">{r.role}</Link>
+                  <Link href={`/roles/${r.slug}`} className="w-40 truncate text-sm hover:text-ink">{familyLabel(r.role)}</Link>
                   <span className="rank-track block flex-1"><span className="rank-fill" style={{ width: `${w}%`, background: r.companyMedian ? (above ? "var(--mint)" : "var(--accent)") : "var(--border-strong)" }} /></span>
                   <span className="tnum w-24 text-right text-sm font-semibold">{r.companyMedian ? eur(r.companyMedian) : <span className="text-ink-faint">n&lt;3</span>}</span>
                 </div>
@@ -229,7 +230,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
                 const dColor = delta == null ? undefined : delta >= 0 ? "var(--mint)" : "var(--ember)";
                 return (
                   <tr key={r.role} className="border-t" style={{ borderColor: "var(--border)" }}>
-                    <td className="px-5 py-3"><Link href={`/roles/${r.slug}`} className="hover:text-ink">{r.role}</Link><span className="tnum ml-2 text-xs text-ink-faint">n={r.companyN}</span></td>
+                    <td className="px-5 py-3"><Link href={`/roles/${r.slug}`} className="hover:text-ink">{familyLabel(r.role)}</Link><span className="tnum ml-2 text-xs text-ink-faint">n={r.companyN}</span></td>
                     <td className="px-5 py-3 text-right tnum">{r.companyMedian ? eur(r.companyMedian) : <Link href={`/add?company=${encodeURIComponent(c.company)}`} className="text-xs font-medium hover:underline" style={{ color: "var(--accent)" }}>add yours →</Link>}</td>
                     <td className="px-5 py-3 text-right tnum text-ink-muted">{r.sectorMedian ? eur(r.sectorMedian) : <span className="text-ink-faint">—</span>}</td>
                     <td className="px-5 py-3 text-right tnum" style={{ color: dColor }}>{delta == null ? "—" : `${delta >= 0 ? "+" : "−"}${eur(Math.abs(delta))}`}</td>
@@ -247,7 +248,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
         <SectionHeader kicker="Roles" title={`Roles ${c.company} hires for`} sub="Role families with live tracked postings; median shown where 3+ are salaried." />
         <div className="mt-5 flex flex-wrap gap-2">
           {c.roles.map((r) => (
-            <Link key={r.role} href={`/roles/${r.slug}`} className="pill-btn"><span>{r.role}</span><span className="tnum text-ink-faint">{r.companyN}</span></Link>
+            <Link key={r.role} href={`/roles/${r.slug}`} className="pill-btn"><span>{familyLabel(r.role)}</span><span className="tnum text-ink-faint">{r.companyN}</span></Link>
           ))}
         </div>
       </section>

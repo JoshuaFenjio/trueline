@@ -8,6 +8,7 @@ import { Donut } from "@/components/Donut";
 import { Flag } from "@/components/Flag";
 import { PlaceHero } from "@/components/PlaceHero";
 import { Icon } from "@/components/icons";
+import { familyLabel } from "@/lib/roleNames";
 import { eur, slugify } from "@/lib/format";
 
 export const revalidate = 3600;
@@ -44,7 +45,7 @@ export default async function CountryPage({ params }: { params: { country: strin
   const nonOther = d.roleDist.filter((r) => r.role !== "Other");
   const top = nonOther.slice(0, 6);
   const restN = d.trackedN - top.reduce((s, r) => s + r.n, 0);
-  const segments = [...top.map((r) => ({ label: r.role, value: r.n })), ...(restN > 0 ? [{ label: "Other", value: restN }] : [])];
+  const segments = [...top.map((r) => ({ label: familyLabel(r.role), value: r.n })), ...(restN > 0 ? [{ label: "Other / unclassified", value: restN }] : [])];
   const otherPct = d.trackedN ? Math.round((restN / d.trackedN) * 100) : 0;
   const maxCompare = Math.max(1, ...d.compare.map((c) => c.median));
 
@@ -54,7 +55,7 @@ export default async function CountryPage({ params }: { params: { country: strin
 
       {/* Header — same full-bleed place-hero treatment as city pages */}
       <PlaceHero title={country} photoName={country} flagCountry={country}>
-        <span><span className="tnum">{d.rolesBenchmarked}</span> benchmarked roles · <span className="tnum">{d.companyCount}</span> companies</span>
+        <span><span className="tnum">{d.rolesBenchmarked}</span> benchmarked role families · <span className="tnum">{d.companyCount}</span> companies</span>
       </PlaceHero>
       <div className="mt-6 flex flex-wrap gap-3">
         <PillButton href="#cities">Explore salaries</PillButton>
@@ -108,7 +109,7 @@ export default async function CountryPage({ params }: { params: { country: strin
                       </li>
                     ))}
                   </ul>
-                ) : <Donut segments={segments} centerLabel={d.trackedN.toLocaleString()} centerSub="roles" />}
+                ) : <Donut segments={segments} centerLabel={d.trackedN.toLocaleString()} centerSub="live job ads" />}
               </div>
             </div>
           </section>

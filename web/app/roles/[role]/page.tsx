@@ -11,6 +11,7 @@ import { Icon } from "@/components/icons";
 import { roleBlurb, roleIconName } from "@/lib/roleBlurbs";
 import { levelSlug } from "@/lib/levels";
 import { eur, eurK, slugify, timeAgo } from "@/lib/format";
+import { familyLabel, isGroupFamily } from "@/lib/roleNames";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -19,14 +20,16 @@ export async function generateMetadata({ params }: { params: { role: string } })
   const role = await roleFromSlug(params.role);
   if (!role) return { title: "Role not found" };
   const hub = await getRoleHub(role);
+  const label = familyLabel(role);
+  const plural = isGroupFamily(role) ? `${label} roles` : `${label}s`;
   const med = hub.overall.spread ? eur(hub.overall.spread.median) : "live data";
-  const title = `${role} salary in Europe 2026, live from company job boards`;
+  const title = `${label} salary in Europe 2026, live from company job boards`;
   return {
     title,
-    description: `What ${role}s earn across EMEA: median ${med} base, by level, city, country and company. Real advertised salaries from live job boards.`,
+    description: `What ${plural} earn across EMEA: median ${med} base, by level, city, country and company. Real advertised salaries from live job boards.`,
     openGraph: {
       title,
-      images: [`/og?kicker=${encodeURIComponent(role + " · EMEA")}&title=${encodeURIComponent(role + " salaries")}&value=${encodeURIComponent(hub.overall.spread ? "Median " + med : "Live from job boards")}`],
+      images: [`/og?kicker=${encodeURIComponent(label + " · EMEA")}&title=${encodeURIComponent(label + " salaries")}&value=${encodeURIComponent(hub.overall.spread ? "Median " + med : "Live from job boards")}`],
     },
   };
 }
@@ -62,19 +65,24 @@ export default async function RolePage({ params }: { params: { role: string } })
   const [hub, allRoles, refreshed] = await Promise.all([getRoleHub(role), getRoleFamilies(), getLastRefreshed()]);
   const adjacent = allRoles.filter((r) => r !== role).slice(0, 10);
   const sp = hub.overall.spread;
+  // Stored family key drives data + URLs; `label` is the only thing rendered.
+  // Group families ("Operations") never take a plural "s" — they'd read as a
+  // job title that doesn't exist.
+  const label = familyLabel(role);
+  const plural = isGroupFamily(role) ? `${label} roles` : `${label}s`;
   const RoleIcon = (Icon as any)[roleIconName(role)] ?? Icon.briefcase;
   const showDemand = hub.trend.dir === "up" || hub.trend.dir === "down" || hub.trend.dir === "flat";
 
   return (
     <div className="pb-4">
-      <div className="pt-8"><Breadcrumbs items={[{ label: "Salaries", href: "/roles" }, { label: "Roles", href: "/roles" }, { label: role }]} /></div>
+      <div className="pt-8"><Breadcrumbs items={[{ label: "Salaries", href: "/roles" }, { label: "Roles", href: "/roles" }, { label }]} /></div>
 
       {/* Header */}
       <header className="mt-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}><RoleIcon size={22} /></span>
-            <h1 className="t-h2">{role}</h1>
+            <h1 className="t-h2">{label}</h1>
           </div>
           <p className="mt-3 max-w-xl text-ink-muted">{roleBlurb(role)}</p>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -90,7 +98,7 @@ export default async function RolePage({ params }: { params: { role: string } })
       </header>
 
       {!sp ? (
-        <section className="mt-8"><GatedState n={hub.overall.n} what={`${role} across EMEA`} tracked={hub.trackedN} /></section>
+        <section className="mt-8"><GatedState n={hub.overall.n} what={`${label} across EMEA`} tracked={hub.trackedN} /></section>
       ) : (
         <>
           {/* Stat cards */}
@@ -158,7 +166,7 @@ export default async function RolePage({ params }: { params: { role: string } })
                 <span className="icon-chip"><Icon.trending size={15} /></span>
                 <div className="flex-1">
                   <div className="text-[15px] font-semibold">Hiring demand</div>
-                  <p className="text-[13px] text-ink-muted">Recent 90-day posting activity for {role}, versus the prior 90 days.</p>
+                  <p className="text-[13px] text-ink-muted">Recent 90-day posting activity for {label}, versus the prior 90 days.</p>
                 </div>
                 <TrendBadge trend={hub.trend} />
               </div>
@@ -172,7 +180,7 @@ export default async function RolePage({ params }: { params: { role: string } })
         <SectionHeader kicker="Related" title="Adjacent roles" />
         <div className="mt-4 flex flex-wrap gap-2">
           {adjacent.map((r) => (
-            <Link key={r} href={`/roles/${slugify(r)}`} className="rounded-full border px-3 py-1.5 text-[13px] text-ink-muted transition-colors hover:border-[var(--border-strong)] hover:text-ink" style={{ background: "var(--surface-1)" }}>{r}</Link>
+            <Link key={r} href={`/roles/${slugify(r)}`} className="rounded-full border px-3 py-1.5 text-[13px] text-ink-muted transition-colors hover:border-[var(--border-strong)] hover:text-ink" style={{ background: "var(--surface-1)" }}>{familyLabel(r)}</Link>
           ))}
         </div>
       </section>
@@ -182,7 +190,7 @@ export default async function RolePage({ params }: { params: { role: string } })
         <div className="band-dark flex flex-col p-6">
           <span className="flex h-11 w-11 items-center justify-center rounded-full" style={{ background: "rgba(255,255,255,.12)" }}><Icon.users size={20} className="text-white" /></span>
           <h3 className="mt-4 text-xl font-bold text-white">Add your salary</h3>
-          <p className="mt-2 text-[14px] leading-relaxed" style={{ color: "rgba(255,255,255,.72)" }}>Anonymously sharpen the benchmark for {role}s across Europe.</p>
+          <p className="mt-2 text-[14px] leading-relaxed" style={{ color: "rgba(255,255,255,.72)" }}>Anonymously sharpen the benchmark for {plural} across Europe.</p>
           <div className="mt-auto pt-6"><Link href="/add" className="pill-btn pill-btn-light"><span>Add your salary</span><span className="arw">→</span></Link></div>
         </div>
         <div className="card flex flex-col">

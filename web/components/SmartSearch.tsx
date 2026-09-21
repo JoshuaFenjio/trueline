@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { parseQuery, parsedHref } from "@/lib/parseQuery";
 import { Combobox } from "@/components/Combobox";
 import { slugify } from "@/lib/format";
+import { familySuggestLabel, familyLabel } from "@/lib/roleNames";
 
 interface Props {
   roles: string[];
@@ -12,7 +13,7 @@ interface Props {
   countries?: string[];
   compact?: boolean; // nav variant: single input, no location select
 }
-type Sug = { kind: "role" | "company" | "city"; label: string; href?: string; role?: string };
+type Sug = { kind: "role family" | "company" | "city"; label: string; href?: string; role?: string };
 
 export function SmartSearch({ roles, cities, companies, countries = [], compact = false }: Props) {
   const router = useRouter();
@@ -34,8 +35,12 @@ export function SmartSearch({ roles, cities, companies, countries = [], compact 
       if (out.filter((x) => x.kind === "company").length >= 4) break;
     }
     for (const r of roles) {
-      if (r.toLowerCase().includes(s)) out.push({ kind: "role", label: r, role: r });
-      if (out.filter((x) => x.kind === "role").length >= 4) break;
+      // Match the stored key OR its display name, so "backend engineer" finds
+      // the family stored as "Backend".
+      if (`${r} ${familyLabel(r)}`.toLowerCase().includes(s)) {
+        out.push({ kind: "role family", label: familySuggestLabel(r), role: r });
+      }
+      if (out.filter((x) => x.kind === "role family").length >= 4) break;
     }
     if (compact) {
       for (const c of cities) {
@@ -48,7 +53,7 @@ export function SmartSearch({ roles, cities, companies, countries = [], compact 
 
   // No role family matches the typed query → offer the request loop.
   const qt = q.trim();
-  const noRoleMatch = qt.length >= 2 && !roles.some((r) => r.toLowerCase().includes(qt.toLowerCase()));
+  const noRoleMatch = qt.length >= 2 && !roles.some((r) => `${r} ${familyLabel(r)}`.toLowerCase().includes(qt.toLowerCase()));
 
   function requestRole() {
     router.push(`/request?q=${encodeURIComponent(qt.slice(0, 120))}`);
@@ -73,7 +78,7 @@ export function SmartSearch({ roles, cities, companies, countries = [], compact 
 
   function pick(s: Sug) {
     if (s.href) { router.push(s.href); setOpen(false); return; }
-    if (s.role) { setQ(s.role); goRoleLocation(s.role); }
+    if (s.role) { setQ(familyLabel(s.role)); goRoleLocation(s.role); }
   }
 
   function onKey(e: React.KeyboardEvent) {

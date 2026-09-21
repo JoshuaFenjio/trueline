@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Combobox } from "./Combobox";
+import { familyLabel, familySuggestLabel } from "@/lib/roleNames";
 import { Flag } from "./Flag";
 import { eur, slugify } from "@/lib/format";
 import type { EuropePayData } from "@/lib/data";
@@ -24,13 +25,15 @@ export function CountryRoleRanker({ data }: { data: EuropePayData }) {
           options={data.roles}
           value={role}
           onChange={(v) => setRole(v || "All roles")}
-          placeholder="All roles"
+          labelOf={familyLabel}
+          optionLabelOf={familySuggestLabel}
+          placeholder="All role families"
           clearValue="All roles"
           className="w-56"
           inputClassName="filter-pill w-full"
         />
         <span className="text-xs text-ink-faint">
-          Ranked by median base for {role === "All roles" ? "all roles" : role} · gated at 8 salaried postings
+          Ranked by median base for {role === "All roles" ? "all role families" : familyLabel(role)} · gated at 8 salaried job ads
         </span>
         <span className="tnum ml-auto text-xs text-ink-faint">EMEA median {eur(rp.emeaMedian)}</span>
       </div>
@@ -53,7 +56,7 @@ export function CountryRoleRanker({ data }: { data: EuropePayData }) {
           </li>
         ))}
         {ranked.length === 0 && (
-          <li className="py-6 text-center text-sm text-ink-faint">No country clears the 8-posting gate for this role yet.</li>
+          <li className="py-6 text-center text-sm text-ink-faint">No country clears the 8-salaried-ad gate for this role family yet.</li>
         )}
       </ol>
     </div>

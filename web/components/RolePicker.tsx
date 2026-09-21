@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { Combobox } from "./Combobox";
+import { familyLabel, familySuggestLabel } from "@/lib/roleNames";
 
 // Standalone role selector for the search/result country view. Drives the URL
 // (?role=), so the whole server-rendered view — H1, facts strip, company/city
@@ -18,7 +19,9 @@ export function RolePicker({ roles, role, city }: { roles: string[]; role: strin
         if (city && city !== "Any") p.set("city", city);
         router.push(`/${p.toString() ? "?" + p.toString() : ""}#results`);
       }}
-      placeholder="All roles"
+      labelOf={familyLabel}
+      optionLabelOf={familySuggestLabel}
+      placeholder="All role families"
       clearValue="All roles"
       className="w-56"
       inputClassName="filter-pill w-full"

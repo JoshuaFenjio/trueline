@@ -10,6 +10,7 @@ import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/icons";
 import { roleIconName } from "@/lib/roleBlurbs";
 import { eur, eurK, slugify } from "@/lib/format";
+import { familyLabel, isGroupFamily } from "@/lib/roleNames";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -26,14 +27,16 @@ export async function generateMetadata({ params }: { params: { role: string; lev
   const level = levelFromSlug(params.level);
   if (!role || !level) return { title: "Role not found" };
   const hub = await getRoleLevelHub(role, level);
+  const label = familyLabel(role);
+  const plural = isGroupFamily(role) ? `${label} roles` : `${label}s`;
   const med = hub.overall.spread ? eur(hub.overall.spread.median) : "live data";
-  const title = `${level} ${role} salary in Europe 2026, live from job boards`;
+  const title = `${level} ${label} salary in Europe 2026, live from job boards`;
   return {
     title,
-    description: `What ${level.toLowerCase()} ${role}s earn across EMEA: median ${med} base, by country and company. Real advertised salaries, gated at 8 postings.`,
+    description: `What ${level.toLowerCase()} ${plural} earn across EMEA: median ${med} base, by country and company. Real advertised salaries, gated at 8 postings.`,
     openGraph: {
       title,
-      images: [`/og?kicker=${encodeURIComponent(level + " · " + role)}&title=${encodeURIComponent(level + " " + role)}&value=${encodeURIComponent(hub.overall.spread ? "Median " + med : "Live from job boards")}`],
+      images: [`/og?kicker=${encodeURIComponent(level + " · " + label)}&title=${encodeURIComponent(level + " " + label)}&value=${encodeURIComponent(hub.overall.spread ? "Median " + med : "Live from job boards")}`],
     },
   };
 }
@@ -85,11 +88,13 @@ export default async function RoleLevelPage({ params }: { params: { role: string
   // Sibling bands that DO clear the gate — surfaced in the empty state so a thin
   // page still points somewhere useful.
   const liveSiblings = hub.siblings.filter((s) => s.level !== level && s.median != null);
+  const label = familyLabel(role);
+  const plural = isGroupFamily(role) ? `${label} roles` : `${label}s`;
 
   return (
     <div className="pb-4">
       <div className="pt-8">
-        <Breadcrumbs items={[{ label: "Salaries", href: "/roles" }, { label: role, href: `/roles/${slugify(role)}` }, { label: level }]} />
+        <Breadcrumbs items={[{ label: "Salaries", href: "/roles" }, { label, href: `/roles/${slugify(role)}` }, { label: level }]} />
       </div>
 
       {/* Header */}
@@ -97,10 +102,10 @@ export default async function RoleLevelPage({ params }: { params: { role: string
         <div>
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}><RoleIcon size={22} /></span>
-            <h1 className="t-h2">{level} {role}</h1>
+            <h1 className="t-h2">{level} {label}</h1>
           </div>
           <p className="mt-3 max-w-xl text-ink-muted">
-            Advertised base pay for {level.toLowerCase()} {role} roles across EMEA, live from company job boards.
+            Advertised base pay for {level.toLowerCase()} {label} roles across EMEA, live from company job boards.
           </p>
         </div>
       </header>
@@ -113,15 +118,15 @@ export default async function RoleLevelPage({ params }: { params: { role: string
       {!sp ? (
         /* Honest empty state — no invented number under the gate. */
         <section className="mt-8 space-y-4">
-          <GatedState n={hub.overall.n} what={`${level} ${role} across EMEA`} tracked={hub.trackedN} />
+          <GatedState n={hub.overall.n} what={`${level} ${label} across EMEA`} tracked={hub.trackedN} />
           {liveSiblings.length > 0 && (
             <div className="card">
-              <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.bars size={15} /></span><span className="text-[15px] font-semibold">Levels we can show for {role}</span></div>
+              <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.bars size={15} /></span><span className="text-[15px] font-semibold">Levels we can show for {label}</span></div>
               <ol className="mt-4">
                 {liveSiblings.map((s) => (
                   <li key={s.level} className="border-t first:border-t-0" style={{ borderColor: "var(--border)" }}>
                     <Link href={`/roles/${slugify(role)}/${levelSlug(s.level)}`} className="flex h-10 items-center gap-3 transition-colors hover:bg-[var(--band)]">
-                      <span className="flex-1 text-sm">{s.level} {role}</span>
+                      <span className="flex-1 text-sm">{s.level} {label}</span>
                       <span className="tnum text-sm text-ink-faint">{s.n} salaried</span>
                       <span className="tnum text-sm font-semibold">{eur(s.median!)}</span>
                     </Link>
@@ -131,7 +136,7 @@ export default async function RoleLevelPage({ params }: { params: { role: string
             </div>
           )}
           <div className="text-center">
-            <PillButton href={`/roles/${slugify(role)}`}>See all {role} levels</PillButton>
+            <PillButton href={`/roles/${slugify(role)}`}>See all {label} levels</PillButton>
           </div>
         </section>
       ) : (
@@ -147,11 +152,11 @@ export default async function RoleLevelPage({ params }: { params: { role: string
           {/* Distribution */}
           <section className="mt-8">
             <div className="card">
-              <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.spark size={15} /></span><span className="text-[15px] font-semibold">Salary distribution — {level} {role}</span></div>
+              <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.spark size={15} /></span><span className="text-[15px] font-semibold">Salary distribution — {level} {label}</span></div>
               <div className="mt-4">
                 {hub.dist.length >= 20 ? <DensityCurve values={hub.dist} spread={sp} /> : <MeasureBar spread={sp} />}
               </div>
-              <p className="mt-2 text-[12px] text-ink-faint">{hub.dist.length >= 20 ? `Kernel-smoothed density of ${hub.overall.n} salaried postings.` : `From ${hub.overall.n} salaried postings.`}</p>
+              <p className="mt-2 text-[12px] text-ink-faint">{hub.dist.length >= 20 ? `Kernel-smoothed density of ${hub.overall.n} salaried job ads.` : `From ${hub.overall.n} salaried job ads.`}</p>
             </div>
           </section>
 
@@ -184,13 +189,13 @@ export default async function RoleLevelPage({ params }: { params: { role: string
         <div className="band-dark flex flex-col p-6">
           <span className="flex h-11 w-11 items-center justify-center rounded-full" style={{ background: "rgba(255,255,255,.12)" }}><Icon.users size={20} className="text-white" /></span>
           <h3 className="mt-4 text-xl font-bold text-white">Add your salary</h3>
-          <p className="mt-2 text-[14px] leading-relaxed" style={{ color: "rgba(255,255,255,.72)" }}>Anonymously sharpen the benchmark for {level.toLowerCase()} {role}s across Europe.</p>
+          <p className="mt-2 text-[14px] leading-relaxed" style={{ color: "rgba(255,255,255,.72)" }}>Anonymously sharpen the benchmark for {level.toLowerCase()} {plural} across Europe.</p>
           <div className="mt-auto pt-6"><Link href="/add" className="pill-btn pill-btn-light"><span>Add your salary</span><span className="arw">→</span></Link></div>
         </div>
         <div className="card flex flex-col">
-          <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.target size={15} /></span><span className="text-[15px] font-semibold">All {role} levels</span></div>
-          <p className="mt-3 text-[14px] leading-relaxed text-ink-muted">Compare {role} pay across every seniority band, plus cities, countries and companies.</p>
-          <div className="mt-auto pt-6"><PillButton href={`/roles/${slugify(role)}`}>Open the {role} hub</PillButton></div>
+          <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.target size={15} /></span><span className="text-[15px] font-semibold">All {label} levels</span></div>
+          <p className="mt-3 text-[14px] leading-relaxed text-ink-muted">Compare {label} pay across every seniority band, plus cities, countries and companies.</p>
+          <div className="mt-auto pt-6"><PillButton href={`/roles/${slugify(role)}`}>Open the {label} hub</PillButton></div>
         </div>
       </section>
     </div>

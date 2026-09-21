@@ -4,6 +4,7 @@ import { SectionHeader, RankTable, toPayVMs, TrendBadge, GatedState, Breadcrumbs
 import { MeasureBar } from "@/components/MeasureBar";
 import { Card } from "@/components/ui";
 import { eur } from "@/lib/format";
+import { familyLabel } from "@/lib/roleNames";
 
 export function LocationView({ hub, related = [] }: { hub: LocationHub; related?: { label: string; href: string }[] }) {
   const kindLabel = hub.kind === "city" ? "City" : "Country";
@@ -31,7 +32,7 @@ export function LocationView({ hub, related = [] }: { hub: LocationHub; related?
         </div>
       </div>
       <p className="mt-3 text-[13px] text-ink-muted">
-        We track <span className="tnum font-medium text-ink">{hub.trackedN}</span> live roles in {hub.name};{" "}
+        We track <span className="tnum font-medium text-ink">{hub.trackedN}</span> live job ads in {hub.name};{" "}
         <span className="tnum font-medium text-ink">{hub.disclosedN}</span> disclose pay.
       </p>
 
@@ -39,7 +40,7 @@ export function LocationView({ hub, related = [] }: { hub: LocationHub; related?
         {hub.overall.spread ? (
           <Card>
             <div className="text-sm text-ink-muted">
-              All roles · median <span className="tnum text-ink">{eur(hub.overall.spread.median)}</span> base
+              All role families · median <span className="tnum text-ink">{eur(hub.overall.spread.median)}</span> base
             </div>
             <MeasureBar spread={hub.overall.spread} />
           </Card>
@@ -50,12 +51,12 @@ export function LocationView({ hub, related = [] }: { hub: LocationHub; related?
 
       <div className="mt-16 grid gap-12 md:grid-cols-2">
         <section>
-          <SectionHeader kicker="By role" title="What each role earns here" />
+          <SectionHeader kicker="By role" title="What each role family earns here" />
           <div className="mt-5">
             {hub.byRole.length ? (
-              <RankTable rows={toPayVMs(hub.byRole, (s) => `/roles/${s}`)} />
+              <RankTable rows={toPayVMs(hub.byRole.map((r) => ({ ...r, label: familyLabel(r.label) })), (s) => `/roles/${s}`)} />
             ) : (
-              <p className="text-sm text-ink-faint">No role clears the 8-posting gate here yet.</p>
+              <p className="text-sm text-ink-faint">No role family clears the 8-salaried-ad gate here yet.</p>
             )}
           </div>
         </section>

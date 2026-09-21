@@ -11,6 +11,7 @@ import { Sparkline } from "@/components/Sparkline";
 import { Combobox } from "@/components/Combobox";
 import { Flag } from "@/components/Flag";
 import { eur, slugify } from "@/lib/format";
+import { familyLabel, familySuggestLabel } from "@/lib/roleNames";
 
 // topojson NAME -> our canonical country name
 const NAME_ALIAS: Record<string, string> = { "Czech Republic": "Czechia" };
@@ -67,8 +68,8 @@ export function EuropePayMap({
     <div className="mb-5 flex flex-wrap items-center gap-3">
       {!hideRoleSelect && (
         <>
-          <label className="text-[11px] text-ink-faint">Role</label>
-          <Combobox options={data.roles} value={role} onChange={pickRole} placeholder="All roles" clearValue="All roles" className="w-52" inputClassName="filter-pill w-full" />
+          <label className="text-[11px] text-ink-faint">Role family</label>
+          <Combobox options={data.roles} value={role} onChange={pickRole} labelOf={familyLabel} optionLabelOf={familySuggestLabel} placeholder="All role families" clearValue="All roles" className="w-52" inputClassName="filter-pill w-full" />
         </>
       )}
       {/* Currency mode: normalized (FX→EUR) vs native-EUR only. Reveals the
@@ -242,7 +243,7 @@ export function EuropePayMap({
             <span className="tnum" style={{ color: finding.deltaPct >= 0 ? "var(--mint)" : "var(--ember)" }}>
               {finding.deltaPct >= 0 ? "+" : ""}{finding.deltaPct}%
             </span>{" "}
-            {finding.deltaPct >= 0 ? "above" : "below"} the EMEA median for {role === "All roles" ? "all roles" : role}.
+            {finding.deltaPct >= 0 ? "above" : "below"} the EMEA median for {role === "All roles" ? "all role families" : familyLabel(role)}.
           </p>
           <p className="mt-2 text-sm text-ink-muted">
             Median <span className="tnum text-ink">{eur(finding.median)}</span> base here versus{" "}
@@ -256,7 +257,7 @@ export function EuropePayMap({
           </div>
         </>
       ) : (
-        <p className="mt-4 text-sm text-ink-muted">Not enough data to name a leader for {role === "All roles" ? "all roles" : role} yet. We show one at the 8-posting gate.</p>
+        <p className="mt-4 text-sm text-ink-muted">Not enough data to name a leader for {role === "All roles" ? "all role families" : familyLabel(role)} yet. We show one at the 8-salaried-ad gate.</p>
       )}
     </div>
   );

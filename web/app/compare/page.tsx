@@ -9,6 +9,7 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { Sparkline } from "@/components/Sparkline";
 import { Breadcrumbs } from "@/components/blocks";
 import { Icon } from "@/components/icons";
+import { familyLabel } from "@/lib/roleNames";
 import { scoreColor } from "@/components/ui";
 import { eur, pct } from "@/lib/format";
 import { SITE_URL as SITE } from "@/lib/site";
@@ -116,17 +117,17 @@ export default async function ComparePage({ searchParams }: { searchParams: { co
 
               {roles.length > 0 && (
                 <section>
-                  <div className="mb-4 flex items-center gap-2.5"><span className="icon-chip"><Icon.briefcase size={15} /></span><span className="text-[15px] font-semibold">Median by role</span></div>
+                  <div className="mb-4 flex items-center gap-2.5"><span className="icon-chip"><Icon.briefcase size={15} /></span><span className="text-[15px] font-semibold">Median by role family</span></div>
                   <div className="card overflow-x-auto !p-0">
                     <table className="w-full min-w-[420px] text-sm">
-                      <thead><tr className="border-b" style={{ borderColor: "var(--border)" }}><th className="px-5 py-3 text-left text-[12px] font-normal text-ink-faint">Role</th>{cos.map((c) => <th key={c.slug} className="px-5 py-3 text-right font-medium">{c.company}</th>)}</tr></thead>
+                      <thead><tr className="border-b" style={{ borderColor: "var(--border)" }}><th className="px-5 py-3 text-left text-[12px] font-normal text-ink-faint">Role family</th>{cos.map((c) => <th key={c.slug} className="px-5 py-3 text-right font-medium">{c.company}</th>)}</tr></thead>
                       <tbody>
                         {roles.map((role) => {
                           const vals = cos.map((c) => roleMed(c, role));
                           const best = Math.max(...vals.filter((v): v is number => v != null));
                           return (
                             <tr key={role} className="border-t" style={{ borderColor: "var(--border)" }}>
-                              <td className="px-5 py-3 text-ink-muted">{role}</td>
+                              <td className="px-5 py-3 text-ink-muted">{familyLabel(role)}</td>
                               {cos.map((c) => { const v = roleMed(c, role); return <td key={c.slug} className="px-5 py-3 text-right tnum" style={{ color: v && v === best ? "var(--mint)" : v ? undefined : "var(--ink-faint)" }}>{v ? eur(v) : "—"}</td>; })}
                             </tr>
                           );

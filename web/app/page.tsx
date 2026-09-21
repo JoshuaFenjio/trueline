@@ -16,6 +16,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { Card, Stat, GhostLink } from "@/components/ui";
 import { EuropePayMap } from "@/components/EuropePayMap";
 import { RolePicker } from "@/components/RolePicker";
+import { familyLabel } from "@/lib/roleNames";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { SectionHeader, LinkedSectionHeader, ArrowLink } from "@/components/blocks";
 import { Icon } from "@/components/icons";
@@ -134,7 +135,7 @@ export default async function Home({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <span className="text-[13px] text-ink-faint">Popular searches:</span>
             {topRoles.slice(0, 5).map((r) => (
-              <Link key={r.slug} href={`/roles/${r.slug}`} className="rounded-full border px-3 py-1.5 text-[13px] text-ink-muted transition-colors hover:border-[var(--border-strong)] hover:text-ink" style={{ background: "var(--surface-1)" }}>{r.name}</Link>
+              <Link key={r.slug} href={`/roles/${r.slug}`} className="rounded-full border px-3 py-1.5 text-[13px] text-ink-muted transition-colors hover:border-[var(--border-strong)] hover:text-ink" style={{ background: "var(--surface-1)" }}>{familyLabel(r.name)}</Link>
             ))}
           </div>
 
@@ -158,7 +159,7 @@ export default async function Home({
                 <div className="mb-2 text-xs text-ink-faint">Roles</div>
                 <div className="flex flex-wrap gap-2">
                   {[...roleIdx].filter((r) => r.name !== "Other").sort((a, b) => b.n - a.n).slice(0, 14).map((r) => (
-                    <Link key={r.slug} href={`/roles/${r.slug}`} className="rounded-full border px-3 py-1 text-sm text-ink-muted transition-colors hover:text-ink" style={{ background: "var(--surface-1)" }}>{r.name}</Link>
+                    <Link key={r.slug} href={`/roles/${r.slug}`} className="rounded-full border px-3 py-1 text-sm text-ink-muted transition-colors hover:text-ink" style={{ background: "var(--surface-1)" }}>{familyLabel(r.name)}</Link>
                   ))}
                 </div>
               </div>
@@ -183,7 +184,7 @@ export default async function Home({
               <div className="shrink-0 border-b p-5 md:w-60 md:border-b-0 md:border-r" style={{ borderColor: "var(--border)" }}>
                 <div className="eyebrow">Country spotlight</div>
                 <div className="t-h3 mt-1.5">
-                  <Link href={`/roles/${slugify(heroBand.role)}`} className="hover:text-[var(--accent)]">{heroBand.role}</Link>
+                  <Link href={`/roles/${slugify(heroBand.role)}`} className="hover:text-[var(--accent)]">{familyLabel(heroBand.role)}</Link>
                 </div>
                 <div className="text-[13px] text-ink-muted">Median advertised base · {heroBand.level} · 8+ salaried ads per country · new role family every 3 days</div>
               </div>
@@ -218,7 +219,7 @@ export default async function Home({
             {weekly.topRole && (
               <Link href={`/roles/${weekly.topRole.slug}`} className="card card-hover !p-5">
                 <div className="text-[11px] text-ink-faint">Highest-median role family</div>
-                <div className="mt-1 truncate font-semibold">{weekly.topRole.role}</div>
+                <div className="mt-1 truncate font-semibold">{familyLabel(weekly.topRole.role)}</div>
                 <div className="tnum mt-2 text-2xl font-semibold">{eur(weekly.topRole.median)}</div>
                 <div className="tnum mt-1 text-[11px] text-ink-faint">median · {weekly.topRole.n} salaried ads this week</div>
               </Link>
@@ -234,7 +235,7 @@ export default async function Home({
             {weekly.mover && (
               <Link href={`/roles/${weekly.mover.slug}`} className="card card-hover !p-5">
                 <div className="text-[11px] text-ink-faint">Most new job ads</div>
-                <div className="mt-1 truncate font-semibold">{weekly.mover.role}</div>
+                <div className="mt-1 truncate font-semibold">{familyLabel(weekly.mover.role)}</div>
                 <div className="tnum mt-2 text-2xl font-semibold">+{weekly.mover.n}</div>
                 <div className="tnum mt-1 text-[11px] text-ink-faint">new job ads · last 7 days</div>
               </Link>
@@ -247,11 +248,13 @@ export default async function Home({
           country table+map. One role picker (URL-driven) drives the whole view. */}
       {result !== null && (() => {
         const roleLabel = result.role === "Any" ? "All roles" : result.role;
+        // Display name; roleLabel stays the canonical key for data lookups + URLs.
+        const roleDisplay = result.role === "Any" ? "All role families" : familyLabel(result.role);
         const roleRp = europe.data[roleLabel] ?? europe.data["All roles"];
         return (
           <section id="results" className="mx-auto mt-10 max-w-5xl scroll-mt-20">
             <div className="flex flex-wrap items-end justify-between gap-4">
-              <SectionHeader kicker="Across Europe" title={`${roleLabel} pay`} />
+              <SectionHeader kicker="Across Europe" title={`${roleDisplay} pay`} />
               <div className="flex items-center gap-2">
                 <label className="text-[11px] text-ink-faint">Role</label>
                 <RolePicker roles={europe.roles} role={roleLabel} city={result.city} />
@@ -280,7 +283,7 @@ export default async function Home({
             {/* [Role] pay by company — ranked, logos, 3+ postings gate */}
             {result.topPayers.length > 0 && (
               <section className="mt-14">
-                <SectionHeader kicker="Employers" title={`${roleLabel} pay by company`} sub="Median advertised base for this role, per company. Shown at 3+ postings." />
+                <SectionHeader kicker="Employers" title={`${roleDisplay} pay by company`} sub="Median advertised base for this role, per company. Shown at 3+ postings." />
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   {result.topPayers.map((c, i) => (
                     <Link key={c.slug} href={`/companies/${c.slug}`} className="card card-hover flex items-center gap-3 !p-4">
@@ -320,7 +323,7 @@ export default async function Home({
 
             {/* Country table + map */}
             <section className="mt-14">
-              <SectionHeader kicker="Across Europe" title={`${roleLabel} pay by country`} />
+              <SectionHeader kicker="Across Europe" title={`${roleDisplay} pay by country`} />
               <div className="surface mt-5 rounded-card p-5">
                 <EuropePayMap data={europe} withTable hideRoleSelect initialRole={roleLabel} highlightCountry={result.city} />
               </div>

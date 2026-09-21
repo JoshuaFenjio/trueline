@@ -3,6 +3,7 @@ import { submitSalary } from "./actions";
 import { LEVELS } from "@/lib/levels";
 import { Card, PrimaryButton } from "@/components/ui";
 import { Breadcrumbs } from "@/components/blocks";
+import { familySuggestLabel } from "@/lib/roleNames";
 
 export const metadata: Metadata = {
   title: "Add your salary",
@@ -63,7 +64,7 @@ export default function AddPage({ searchParams }: { searchParams: { submitted?: 
       <Card className="mt-6">
         <form action={submitSalary} className="space-y-4">
           <Row>
-            <FieldSel name="role_family" label="Role family *" options={ROLE_FAMILIES} />
+            <FieldSel name="role_family" label="Role family *" options={ROLE_FAMILIES} labelOf={familySuggestLabel} />
             <FieldSel name="level" label="Level" options={[...LEVELS]} />
           </Row>
           <Row>
@@ -108,12 +109,12 @@ function FieldNum({ name, label, placeholder }: { name: string; label: string; p
     </label>
   );
 }
-function FieldSel({ name, label, options }: { name: string; label: string; options: string[] }) {
+function FieldSel({ name, label, options, labelOf }: { name: string; label: string; options: string[]; labelOf?: (v: string) => string }) {
   return (
     <label className="block"><Label>{label}</Label>
       <select name={name} className="field w-full px-3 py-3" defaultValue="">
         <option value="" disabled>Select…</option>
-        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+        {options.map((o) => <option key={o} value={o}>{labelOf ? labelOf(o) : o}</option>)}
       </select>
     </label>
   );
