@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Breadcrumbs, PillButton } from "@/components/blocks";
+import { allPhotoCredits } from "@/lib/cityImages";
 
 export const metadata: Metadata = {
   title: "Methodology",
@@ -67,6 +68,22 @@ export default function MethodologyPage() {
           </section>
         ))}
       </div>
+
+      {allPhotoCredits().length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-[15px] font-semibold">Photo credits</h2>
+          <p className="mt-1 text-[13px] text-ink-muted">City and country hero photos via Unsplash (Unsplash License).</p>
+          <p className="mt-2 text-[12px] leading-relaxed text-ink-faint">
+            {allPhotoCredits().map((c, i) => (
+              <span key={c.slug}>
+                {i > 0 ? " · " : ""}
+                <span className="capitalize text-ink-muted">{c.slug.replace(/-/g, " ")}</span>:{" "}
+                {c.link ? <a href={c.link} target="_blank" rel="noopener noreferrer" className="hover:text-ink">{c.author}</a> : c.author}
+              </span>
+            ))}
+          </p>
+        </section>
+      )}
 
       <section className="section-y">
         <div className="band-dark flex flex-col gap-6 p-8 md:flex-row md:items-center md:justify-between">

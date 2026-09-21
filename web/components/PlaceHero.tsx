@@ -2,43 +2,40 @@ import { Flag } from "./Flag";
 import { CitySilhouette } from "./CitySilhouette";
 import { placePhoto } from "@/lib/cityImages";
 
-// Full-bleed place hero (city or country). With a curated photo it applies a
-// teal duotone (grayscale → multiply brand teal → screen cream lift) plus a
-// bottom dark scrim so the title stays legible; without one it falls back to the
-// tinted city-silhouette treatment. One component so cities and country headers
-// read identically. See mockup-city.png / mockup-cities-hub.png.
+// Place hero matching mockup-city.png. Desktop: a bright full-colour photo on
+// the right, faded into white toward the left where the title/meta sit (NO teal
+// duotone). Mobile: the photo stacks as a banner on top and the title sits below
+// on white, so text never fights the photo for contrast. Silhouette fallback
+// when the place has no photo yet.
 export function PlaceHero({
   title, photoName, flagCountry, children,
 }: {
   title: string; photoName?: string; flagCountry?: string | null; children?: React.ReactNode;
 }) {
   const src = placePhoto(photoName ?? title);
-  const photo = Boolean(src);
   return (
-    <section className="relative mt-6 flex min-h-[240px] flex-col justify-end overflow-hidden rounded-[20px] p-8">
-      {photo ? (
-        <>
-          <img src={src!} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" style={{ filter: "grayscale(1) contrast(1.05)" }} />
-          <div className="absolute inset-0" style={{ background: "var(--accent-deep)", mixBlendMode: "multiply", opacity: 0.78 }} />
-          <div className="absolute inset-0" style={{ background: "rgba(250,250,247,0.10)", mixBlendMode: "screen" }} />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(11,31,29,0.10) 35%, rgba(11,31,29,0.72) 100%)" }} />
-        </>
+    <section className="relative mt-6 flex flex-col overflow-hidden rounded-[20px] border bg-white md:min-h-[240px] md:justify-center" style={{ borderColor: "var(--border)" }}>
+      {src ? (
+        <div className="relative h-40 w-full md:absolute md:inset-y-0 md:right-0 md:h-auto md:w-[64%]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={src} alt="" className="h-full w-full object-cover" />
+          {/* mobile: fade to white at the BOTTOM (photo above the title) */}
+          <div className="absolute inset-0 md:hidden" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0) 55%, #fff 100%)" }} />
+          {/* desktop: fade to white on the LEFT (title beside the photo) */}
+          <div className="absolute inset-0 hidden md:block" style={{ background: "linear-gradient(90deg, #fff 1%, rgba(255,255,255,0.65) 24%, rgba(255,255,255,0) 58%)" }} />
+        </div>
       ) : (
         <>
           <div className="absolute inset-0" style={{ background: "var(--panel)" }} />
-          <CitySilhouette className="pointer-events-none absolute inset-x-0 bottom-0 h-32 w-full" />
+          <CitySilhouette className="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full" />
         </>
       )}
-      <div className="relative" style={photo ? { color: "#fff" } : undefined}>
+      <div className="relative max-w-xl p-8">
         <div className="flex items-center gap-3">
           {flagCountry && <Flag country={flagCountry} className="!h-6 !w-9 !text-xl" />}
           <h1 className="t-h1">{title}</h1>
         </div>
-        {children && (
-          <div className="mt-2 flex flex-wrap items-center gap-3" style={{ color: photo ? "rgba(255,255,255,0.85)" : "var(--ink-muted)" }}>
-            {children}
-          </div>
-        )}
+        {children && <div className="mt-3 flex flex-wrap items-center gap-3 text-ink-muted">{children}</div>}
       </div>
     </section>
   );
