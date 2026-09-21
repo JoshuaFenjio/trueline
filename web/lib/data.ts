@@ -32,6 +32,10 @@ export interface Posting {
   multiMarket: boolean; // spans an EMEA and a non-EMEA office
   url: string | null;
   dateMs: number; // posted_at parsed (temporal signal for trends)
+  // Advertised EUR band for DISPLAY only (never used in a median). Present only
+  // when the row is trusted enough to count in stats (annual !== null) AND the
+  // pair annualizes sanely — see annualizeRange. Null => show the midpoint.
+  band: { lo: number; hi: number } | null;
 }
 
 function parseDate(s: string | null): number {
@@ -69,13 +73,16 @@ function mapRow(r: any): Posting | null {
   if (annual !== null && isTrainee(r.title)) annual = null;
 
   const place = resolvePlace(r.city || r.location, r.country, r.currency);
+  // Display band: same trust gate as `annual` (so a band never appears on a row
+  // we wouldn't count), annualized as a pair so a monthly range can't invert.
+  const band = annual !== null ? annualizeRange(r.salary_eur_min, r.salary_eur_max, r.salary_period) : null;
   return {
     company: r.company, sector: sectorOf(r.company), roleFamily: r.role_family || "Other",
     title: r.title || "", level: (r.level as Level) || levelBucket(r.title),
     levelExplicit: r.level_source ? r.level_source === "explicit" : levelHasSignal(r.title),
     city: place.city, country: place.country,
     remote: place.remote || !!r.remote, annual, currency: r.currency || null, disclosed: !!disclosed, multiMarket,
-    url: r.url || null, dateMs: parseDate(r.posted_at),
+    url: r.url || null, dateMs: parseDate(r.posted_at), band,
   };
 }
 
@@ -107,7 +114,7 @@ const _fetchShard = unstable_cache(
     }
     return out;
   },
-  ["trueline-shard-v28"],
+  ["trueline-shard-v29"],
   { revalidate: 3600 }
 );
 

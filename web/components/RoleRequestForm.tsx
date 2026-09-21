@@ -2,13 +2,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/icons";
+import { RequestConfirmation, type RequestMatchVM } from "@/components/RequestConfirmation";
 
 // Email-capture for a role we don't track yet. Honest throughout: we don't
 // "summon" data — a role is a new LABEL on postings we largely already track.
-export function RoleRequestForm({ query }: { query: string }) {
+export function RoleRequestForm({ query, known = false }: { query: string; known?: boolean }) {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
-  const [matching, setMatching] = useState<number | null>(null);
+  const [match, setMatch] = useState<RequestMatchVM | null>(null);
   const [emailConfigured, setEmailConfigured] = useState(true);
   const [err, setErr] = useState("");
 
@@ -27,7 +28,12 @@ export function RoleRequestForm({ query }: { query: string }) {
           : "Something went wrong. Please try again.");
         setState("error"); return;
       }
-      setMatching(d.matching ?? 0);
+      setMatch({
+        matching: d.matching ?? 0,
+        postings: d.postings ?? [],
+        families: d.families ?? [],
+        exact: d.exact ?? null,
+      });
       setEmailConfigured(d.emailConfigured !== false);
       setState("done");
     } catch {
@@ -37,33 +43,32 @@ export function RoleRequestForm({ query }: { query: string }) {
 
   if (state === "done") {
     return (
-      <div className="card">
-        <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.check size={15} /></span>
-          <div className="text-[15px] font-semibold">Request logged</div></div>
-        <p className="mt-3 max-w-prose text-[14px] leading-relaxed text-ink-muted">
-          We already track <span className="tnum font-semibold text-ink">{matching?.toLocaleString()}</span> live
-          postings that may match <span className="font-medium text-ink">“{query}”</span>. We&rsquo;ll classify it and
-          email you when it has enough data to publish. A new role is a new label on postings we largely already
-          track — we won&rsquo;t promise data we don&rsquo;t have.
-        </p>
-        <p className="mt-3 text-[13px] text-ink-faint">
-          {emailConfigured
-            ? "Check your inbox for a confirmation link to verify your email."
-            : "We’ve recorded your request. Email verification turns on once our mailer is connected."}
-        </p>
-        <div className="mt-5"><Link href="/roles" className="pill-btn"><span>Browse tracked roles</span><span className="arw">→</span></Link></div>
-      </div>
+      <RequestConfirmation
+        query={query}
+        match={match ?? { matching: 0, postings: [], families: [], exact: null }}
+        note={emailConfigured
+          ? "Check your inbox for a confirmation link to verify your email."
+          : "We’ve recorded your request. Email verification turns on once our mailer is connected."}
+      />
     );
   }
 
   return (
     <form onSubmit={submit} className="card">
       <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.search size={15} /></span>
-        <div className="text-[15px] font-semibold">Request &ldquo;{query}&rdquo;</div></div>
+        <div className="text-[15px] font-semibold">
+          {known ? <>Track &ldquo;{query}&rdquo; more closely</> : <>Request &ldquo;{query}&rdquo;</>}
+        </div></div>
       <p className="mt-3 max-w-prose text-[14px] leading-relaxed text-ink-muted">
-        We don&rsquo;t label <span className="font-medium text-ink">&ldquo;{query}&rdquo;</span> as a role family yet.
-        Leave your email and we&rsquo;ll classify it against the postings we already scrape and tell you when it has
-        enough disclosed salaries to publish honestly.
+        {known ? (
+          <>We already benchmark this family. Leave your email and we&rsquo;ll tell you when the page gains
+          enough disclosed salaries to break <span className="font-medium text-ink">&ldquo;{query}&rdquo;</span> out
+          further — by level, city or company.</>
+        ) : (
+          <>We don&rsquo;t label <span className="font-medium text-ink">&ldquo;{query}&rdquo;</span> as a role family
+          yet. Leave your email and we&rsquo;ll classify it against the postings we already scrape and tell you when
+          it has enough disclosed salaries to publish honestly.</>
+        )}
       </p>
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <input
@@ -73,7 +78,7 @@ export function RoleRequestForm({ query }: { query: string }) {
           style={{ background: "var(--surface-1)", borderColor: "var(--border)" }}
         />
         <button type="submit" disabled={state === "sending"} className="btn-primary shrink-0 rounded-lg px-4 py-2.5 text-sm font-semibold disabled:opacity-60">
-          {state === "sending" ? "Sending…" : "Request this role"}
+          {state === "sending" ? "Sending…" : known ? "Keep me posted" : "Request this role"}
         </button>
       </div>
       {err && <p className="mt-2 text-[13px] text-[var(--danger,#b4432f)]">{err}</p>}

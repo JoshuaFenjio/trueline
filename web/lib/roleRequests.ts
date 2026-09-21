@@ -1,6 +1,10 @@
 import "server-only";
 import crypto from "crypto";
 import { getServiceClient } from "./admin";
+import { getData } from "./data";
+import { latestFor, type PostingVM } from "./postings";
+import { slugify } from "./format";
+import { familyLabel } from "./roleNames";
 
 // HMAC magic-link token — stateless-verifiable AND stored, so a link can't be
 // forged without the server secret. Keyed off the service key (server-only).
@@ -13,21 +17,70 @@ export function normQuery(q: string): string {
   return q.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
-// Live count of active postings whose title contains the query — the honest
+// What we can honestly say about a requested role, derived from the postings we
+// already track (never a promise to summon data):
+//   matching  — live tracked postings whose advertised title carries every word
+//               of the query
+//   postings  — the most recent of those, so the page SHOWS the evidence
+//   families  — the role families those postings already sit in, ranked, so we
+//               can deep-link the closest-matching page(s)
+//   exact     — set when the query IS one of our families (or its display name)
+export interface RequestMatch {
+  matching: number;
+  postings: PostingVM[];
+  families: { name: string; label: string; slug: string; n: number }[];
+  exact: { name: string; label: string; slug: string } | null;
+}
+
+const EMPTY_MATCH: RequestMatch = { matching: 0, postings: [], families: [], exact: null };
+
+export async function matchInfo(query: string, limit = 15): Promise<RequestMatch> {
+  const q = normQuery(query);
+  if (q.length < 2) return EMPTY_MATCH;
+  const rows = await getData();
+
+  // All-words match on the advertised title — "senior data engineer" should hit
+  // "Senior Data Engineer (m/f/d)", which a raw substring never would.
+  const terms = q.split(" ").filter(Boolean);
+  const isHit = (t: string) => { const l = t.toLowerCase(); return terms.every((w) => l.includes(w)); };
+  const hits = rows.filter((r) => isHit(r.title));
+
+  const counts = new Map<string, number>();
+  for (const r of hits) {
+    if (!r.roleFamily || r.roleFamily === "Other") continue;
+    counts.set(r.roleFamily, (counts.get(r.roleFamily) || 0) + 1);
+  }
+  let families = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([name, n]) => ({ name, label: familyLabel(name), slug: slugify(name), n }));
+
+  // Nothing matched on titles? Fall back to families whose own name/label reads
+  // like the query, so the user still lands somewhere real.
+  if (families.length === 0) {
+    const all = [...new Set(rows.map((r) => r.roleFamily))].filter((f) => f && f !== "Other");
+    families = all
+      .filter((f) => isHit(f) || isHit(familyLabel(f)))
+      .slice(0, 3)
+      .map((name) => ({ name, label: familyLabel(name), slug: slugify(name), n: rows.filter((r) => r.roleFamily === name).length }));
+  }
+
+  const exactName = [...new Set(rows.map((r) => r.roleFamily))]
+    .filter((f) => f && f !== "Other")
+    .find((f) => normQuery(f) === q || normQuery(familyLabel(f)) === q || slugify(f) === slugify(q));
+
+  return {
+    matching: hits.length,
+    postings: latestFor(rows, (r) => isHit(r.title), limit),
+    families,
+    exact: exactName ? { name: exactName, label: familyLabel(exactName), slug: slugify(exactName) } : null,
+  };
+}
+
+// Live count of tracked postings that may match the query — the honest
 // "we already track [X] postings that may match" number.
 export async function countMatching(query: string): Promise<number> {
-  const sb = getServiceClient();
-  if (!sb) return 0;
-  const q = normQuery(query);
-  if (q.length < 2) return 0;
-  // escape PostgREST ilike wildcards in the user string
-  const safe = q.replace(/[%_,()*]/g, " ").trim();
-  const { count } = await sb
-    .from("job_postings")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "active")
-    .ilike("title", `%${safe}%`);
-  return count || 0;
+  return (await matchInfo(query, 0)).matching;
 }
 
 // --- per-IP rate limit (in-memory, per warm instance) ----------------------
@@ -50,13 +103,13 @@ export interface RoleRequest {
 
 // Insert (or refresh) a request. Returns the token + matching count. Gracefully
 // reports if the table hasn't been migrated yet.
-export async function createRequest(query: string, email: string):
+export async function createRequest(query: string, email: string, knownMatching?: number):
   Promise<{ ok: boolean; token?: string; matching?: number; error?: string }> {
   const sb = getServiceClient();
   if (!sb) return { ok: false, error: "unconfigured" };
   const qnorm = normQuery(query);
   const token = requestToken(email, qnorm);
-  const matching = await countMatching(query);
+  const matching = knownMatching ?? (await countMatching(query));
   const { error } = await sb.from("role_requests").insert({
     query: query.slice(0, 120), query_norm: qnorm, email: email.slice(0, 200),
     status: "pending", token, matching_n: matching,

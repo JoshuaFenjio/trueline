@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createRequest, requestRate, normQuery } from "@/lib/roleRequests";
+import { createRequest, requestRate, normQuery, matchInfo } from "@/lib/roleRequests";
 import { sendEmail, emailConfigured } from "@/lib/email";
 import { magicLinkEmail } from "@/lib/emailTemplates";
 import { SITE_URL } from "@/lib/site";
@@ -19,7 +19,10 @@ export async function POST(req: Request) {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return NextResponse.json({ error: "invalid_email" }, { status: 400 });
   if (query.length < 2) return NextResponse.json({ error: "invalid_query" }, { status: 400 });
 
-  const r = await createRequest(query, email);
+  // Computed once and reused: the count we store, the postings we SHOW on the
+  // confirmation, and the families we deep-link all come from the same match.
+  const match = await matchInfo(query);
+  const r = await createRequest(query, email, match.matching);
   if (!r.ok) {
     const status = r.error === "not_migrated" ? 503 : 500;
     return NextResponse.json({ error: r.error }, { status });
@@ -30,5 +33,13 @@ export async function POST(req: Request) {
   const mail = magicLinkEmail(query, r.matching ?? 0, link);
   const delivered = await sendEmail(email, mail.subject, mail.html, mail.text);
 
-  return NextResponse.json({ ok: true, matching: r.matching, emailSent: delivered, emailConfigured });
+  return NextResponse.json({
+    ok: true,
+    matching: match.matching,
+    postings: match.postings,
+    families: match.families,
+    exact: match.exact,
+    emailSent: delivered,
+    emailConfigured,
+  });
 }
