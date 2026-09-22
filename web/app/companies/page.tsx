@@ -91,14 +91,27 @@ export default async function CompaniesPage({
         <p className="mt-4 text-lg leading-relaxed text-ink-muted">Every EMEA company we track that discloses salaries, scored 0–100 on how its median advertised base compares to sector peers.</p>
       </header>
 
-      {/* Explainer + scale */}
-      <section className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+      {/* How it works — CLOSED by default so the ranking is the first thing on
+          the page. The explainer used to push the table below the fold, which
+          made a ranked index read like an essay. Native <details> so it works
+          without JS and stays a server component. */}
+      <details className="group mt-8">
+        <summary className="surface flex w-full cursor-pointer list-none items-center gap-3 rounded-card px-4 py-3 text-[14px] font-medium">
+          <span className="icon-chip"><Icon.target size={15} /></span>
+          <span>How the Pay Index works</span>
+          <span className="tnum ml-auto text-[12px] font-normal text-ink-faint">
+            average score {avgScore} across {board.length} ranked companies
+          </span>
+          <span className="arw text-ink-faint transition-transform group-open:rotate-90">›</span>
+        </summary>
+        <div className="mt-4">
+          <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <div className="card">
           <div className="flex items-center gap-4">
             <ScoreDial score={avgScore} />
             <div>
-              <div className="text-[15px] font-semibold">How the Pay Index works</div>
-              <p className="mt-1 text-[13px] text-ink-muted">Average score across the {board.length} ranked companies is <span className="tnum text-ink">{avgScore}</span>. Higher means better-paying for its sector.</p>
+              <div className="text-[15px] font-semibold">Average score {avgScore}</div>
+              <p className="mt-1 text-[13px] text-ink-muted">Across the {board.length} ranked companies. Higher means better-paying for its sector — the score is relative to sector peers, never an absolute salary.</p>
             </div>
           </div>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -122,12 +135,14 @@ export default async function CompaniesPage({
             ))}
           </div>
         </div>
-      </section>
+          </div>
+        </div>
+      </details>
 
       {/* Featured */}
-      <section className="mt-10">
-        <div className="mb-4 text-[13px] font-medium text-ink-muted">Top 5 by Pay Score</div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <section className="mt-8">
+        <div className="mb-3 text-[13px] font-medium text-ink-muted">Top 5 by Pay Score</div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {featured.map((c) => (
             <Link key={c.slug} href={`/companies/${c.slug}`} className="card card-hover flex flex-col items-center text-center">
               <CompanyLogo name={c.company} size={40} rounded="rounded-xl" />
@@ -149,6 +164,9 @@ export default async function CompaniesPage({
         <div className="flex flex-wrap items-center gap-2">
           <Chip href={qs({ sector: undefined, page: undefined })} active={!sector}>All sectors</Chip>
           {sectors.map((s) => <Chip key={s} href={qs({ sector: s, page: undefined })} active={sector === s}>{s}</Chip>)}
+        </div>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-ink-faint">
+          <PayScaleLegend />
         </div>
         <div className="flex items-center gap-2 text-xs text-ink-faint">
           <span>Sort</span>
