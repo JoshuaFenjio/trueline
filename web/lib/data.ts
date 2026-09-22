@@ -1354,3 +1354,45 @@ export async function getNearMiss(): Promise<{ nearMiss: NearMissRow[]; unlocked
   const unlocked = out.filter((r) => r.n < N_MEDIAN && r.combined >= N_MEDIAN).sort((a, b) => b.subs - a.subs);
   return { nearMiss, unlocked };
 }
+
+// ---------------------------------------------------------------------------
+// Role-scoped live postings + a single-role pay map.
+//
+// Both are derived from the already-cached getData() rows, so a role page gets
+// its map and its "latest postings" list without a new Supabase round-trip and
+// under exactly the gates the medians use.
+// ---------------------------------------------------------------------------
+import { latestFor, sortPostings, toVM, dedupe, type PostingVM } from "./postings";
+
+/** EuropePayData containing ONLY this role — keeps the client payload small. */
+export const getRolePayMap = async (role: string): Promise<EuropePayData> => {
+  const all = usable(await getData());
+  const rp = rolePay(all.filter((r) => r.roleFamily === role));
+  // "All roles" is the widget's fallback key; pointing it at the same slice
+  // means a stale/unknown initialRole still renders this role, never all of EMEA.
+  return { roles: [role], data: { [role]: rp, "All roles": rp } };
+};
+
+/** Most recent live postings in a role family. */
+export const getRoleLatest = async (role: string, limit = 12): Promise<PostingVM[]> => {
+  const rows = await getData();
+  return latestFor(rows, (p) => p.roleFamily === role, limit);
+};
+
+/** Up to `per` most recent postings per country, for the map's country view. */
+export const getRolePostingsByCountry = async (role: string, per = 5): Promise<Record<string, PostingVM[]>> => {
+  const rows = await getData();
+  const out: Record<string, PostingVM[]> = {};
+  for (const p of rows) {
+    if (p.roleFamily !== role || !p.country) continue;
+    (out[p.country] ||= []).push(toVM(p));
+  }
+  for (const k of Object.keys(out)) out[k] = dedupe(sortPostings(out[k], "new")).slice(0, per);
+  return out;
+};
+
+/** Every live posting in a role family, for the filterable full list. */
+export const getRolePostingsAll = async (role: string): Promise<PostingVM[]> => {
+  const rows = await getData();
+  return dedupe(sortPostings(rows.filter((p) => p.roleFamily === role).map(toVM), "new"));
+};

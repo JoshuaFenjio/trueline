@@ -21,6 +21,7 @@ export interface Fact { label: string; value: string }
 export function EuropePayMap({
   data, initialRole = "All roles", highlightCountry, withTable = false, facts,
   triptych = false, findings, spark, roleParamMode = false, cityParam, hideRoleSelect = false,
+  onCountryClick, selectedCountry = null,
 }: {
   data: EuropePayData; initialRole?: string; highlightCountry?: string | null;
   withTable?: boolean; facts?: Fact[];
@@ -32,6 +33,11 @@ export function EuropePayMap({
   // Hide only the built-in role combobox (an external picker drives role); the
   // currency toggle stays.
   hideRoleSelect?: boolean;
+  // Intercept a country click instead of navigating to the country page. Used
+  // by the role pages, where clicking a country should open the role x country
+  // view in place rather than leaving for the generic country page.
+  onCountryClick?: (country: string) => void;
+  selectedCountry?: string | null;
 }) {
   const [mounted, setMounted] = useState(false);
   const [role, setRole] = useState(data.data[initialRole] ? initialRole : "All roles");
@@ -58,7 +64,7 @@ export function EuropePayMap({
   const rp = data.data[role] ?? data.data["All roles"];
   const byCountry = useMemo(() => new Map(rp.countries.map((c) => [c.country, c])), [rp]);
   const lookup = (name: string): CountryPay | null => byCountry.get(NAME_ALIAS[name] ?? name) ?? null;
-  const highlight = highlightCountry || null;
+  const highlight = selectedCountry || highlightCountry || null;
   // Currency mode: normalized (FX-converted to EUR) vs EUR-only (native euros).
   const cMed = (c: CountryPay | null) => (c ? (eurOnly ? c.eurMedian : c.median) : null);
   const cN = (c: CountryPay) => (eurOnly ? c.eurN : c.n);
@@ -117,7 +123,7 @@ export function EuropePayMap({
                       setTip({ x: e.clientX - box.left, y: e.clientY - box.top, name, c });
                     }}
                     onMouseLeave={() => setTip(null)}
-                    onClick={() => c && router.push(`/locations/country/${slugify(c.country)}`)}
+                    onClick={() => { if (!c) return; if (onCountryClick) onCountryClick(c.country); else router.push(`/locations/country/${slugify(c.country)}`); }}
                     style={{
                       default: { fill, stroke: isHi ? "var(--ink)" : "var(--bg)", strokeWidth: isHi ? 1.6 : 0.6, outline: "none", cursor: c ? "pointer" : "default" },
                       hover: { fill, stroke: "var(--ink)", strokeWidth: 1, outline: "none", filter: "brightness(0.94)" },
@@ -193,7 +199,7 @@ export function EuropePayMap({
       <ol>
         {ranked.slice(0, 12).map((c, i) => (
           <li key={c.country} className="border-t" style={{ borderColor: "var(--border)" }}>
-            <Link href={`/locations/country/${slugify(c.country)}`} className="flex items-center gap-3 px-4 py-2 transition-colors hover:bg-[var(--band)]" style={{ background: c.country === highlight ? "var(--accent-soft)" : undefined }}>
+            <CountryRow country={c.country} onPick={onCountryClick} className="flex items-center gap-3 px-4 py-2 transition-colors hover:bg-[var(--band)]" style={{ background: c.country === highlight ? "var(--accent-soft)" : undefined }}>
               <span className="tnum w-5 text-right text-sm text-ink-faint">{i + 1}</span>
               <Flag country={c.country} />
               <span className="min-w-0 flex-1">
@@ -204,7 +210,7 @@ export function EuropePayMap({
                 </span>
               </span>
               <span className="tnum w-20 text-right text-sm font-semibold">{eur(cMed(c)!)}</span>
-            </Link>
+            </CountryRow>
           </li>
         ))}
         {ranked.length === 0 && <li className="px-4 py-6 text-sm text-ink-faint">No country clears the 8-salaried-ad gate for this role family yet.</li>}
@@ -297,7 +303,7 @@ export function EuropePayMap({
           <ol>
             {ranked.map((c, i) => (
               <li key={c.country} className="border-t" style={{ borderColor: "var(--border)" }}>
-                <Link href={`/locations/country/${slugify(c.country)}`} className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--band)]" style={{ background: c.country === highlight ? "var(--accent-soft)" : undefined }}>
+                <CountryRow country={c.country} onPick={onCountryClick} className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--band)]" style={{ background: c.country === highlight ? "var(--accent-soft)" : undefined }}>
                   <span className="tnum w-5 text-right text-sm text-ink-faint">{i + 1}</span>
                   <Flag country={c.country} />
                   <span className="min-w-0 flex-1">
@@ -309,7 +315,7 @@ export function EuropePayMap({
                   </span>
                   <span className="tnum w-24 text-right font-semibold">{eur(cMed(c)!)}</span>
                   <span className="tnum hidden w-12 text-right text-sm text-ink-faint sm:block">{cN(c)}</span>
-                </Link>
+                </CountryRow>
               </li>
             ))}
             {ranked.length === 0 && <li className="px-4 py-6 text-sm text-ink-faint">No country clears the 8-salaried-ad gate for this role family yet.</li>}
@@ -319,4 +325,22 @@ export function EuropePayMap({
       </div>
     </div>
   );
+}
+
+// One country row: a link to the country page by default, a button when the
+// host page wants to handle the click itself (role x country view in place).
+function CountryRow({
+  country, onPick, className, style, children,
+}: {
+  country: string; onPick?: (c: string) => void;
+  className?: string; style?: React.CSSProperties; children: React.ReactNode;
+}) {
+  if (onPick) {
+    return (
+      <button type="button" onClick={() => onPick(country)} className={`w-full text-left ${className ?? ""}`} style={style}>
+        {children}
+      </button>
+    );
+  }
+  return <Link href={`/locations/country/${slugify(country)}`} className={className} style={style}>{children}</Link>;
 }

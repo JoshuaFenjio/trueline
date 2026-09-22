@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getRoleHub, roleFromSlug, getRoleFamilies, getLastRefreshed } from "@/lib/data";
+import { getRoleHub, roleFromSlug, getRoleFamilies, getLastRefreshed, getRolePayMap, getRoleLatest, getRolePostingsByCountry } from "@/lib/data";
 import { SectionHeader, RankTable, toPayVMs, LevelLadder, TrendBadge, GatedState, Breadcrumbs, PillButton } from "@/components/blocks";
 import { MeasureBar } from "@/components/MeasureBar";
 import { DensityCurve } from "@/components/DensityCurve";
 import { ShareButton } from "@/components/ShareButton";
+import { PostingList } from "@/components/PostingList";
+import { RolePayMap } from "@/components/RolePayMap";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/icons";
 import { roleBlurb, roleIconName } from "@/lib/roleBlurbs";
@@ -62,7 +64,10 @@ function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: s
 export default async function RolePage({ params }: { params: { role: string } }) {
   const role = await roleFromSlug(params.role);
   if (!role) notFound();
-  const [hub, allRoles, refreshed] = await Promise.all([getRoleHub(role), getRoleFamilies(), getLastRefreshed()]);
+  const [hub, allRoles, refreshed, payMap, latest, byCountry] = await Promise.all([
+    getRoleHub(role), getRoleFamilies(), getLastRefreshed(),
+    getRolePayMap(role), getRoleLatest(role, 12), getRolePostingsByCountry(role, 5),
+  ]);
   const adjacent = allRoles.filter((r) => r !== role).slice(0, 10);
   const sp = hub.overall.spread;
   // Stored family key drives data + URLs; `label` is the only thing rendered.
@@ -113,6 +118,30 @@ export default async function RolePage({ params }: { params: { role: string } })
             <StatCard icon={<Icon.refresh size={15} />} label="Data last refreshed" value={<span className="text-xl">{timeAgo(refreshed)}</span>} sub="Re-scraped 6-hourly" />
           </section>
 
+          {/* Latest live ads for this family — near the top, because "what is
+              actually open right now" is the first question a benchmark raises.
+              Server-renders newest-first; the sort toggle is client-side over
+              the rows already in the HTML. */}
+          <section className="mt-8">
+            <div className="card">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="icon-chip"><Icon.briefcase size={15} /></span>
+                  <span className="text-[15px] font-semibold">Latest {label} postings</span>
+                </div>
+                <Link href={`/roles/${slugify(role)}/postings`} className="arrow-link inline-flex items-center gap-1 text-xs">
+                  <span>All {hub.trackedN.toLocaleString()} live ads</span><span className="arw">→</span>
+                </Link>
+              </div>
+              <p className="mt-1.5 text-[12px] text-ink-faint">
+                Pay shown only where the ad disclosed it. Titles open the employer&rsquo;s own posting.
+              </p>
+              <div className="mt-3">
+                <PostingList postings={latest} sortable emptyNote={`No dated ${label} ads right now.`} />
+              </div>
+            </div>
+          </section>
+
           {/* Distribution curve + by-level */}
           <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_1.1fr]">
             <div className="card">
@@ -141,7 +170,7 @@ export default async function RolePage({ params }: { params: { role: string } })
           <section className="mt-8 grid gap-6 lg:grid-cols-3">
             <div className="card">
               <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.pin size={15} /></span><span className="text-[15px] font-semibold">Top paying cities</span></div>
-              <div className="mt-4">{hub.topCities.length ? <RankTable rows={toPayVMs(hub.topCities, (s) => `/locations/${s}`)} /> : <p className="text-sm text-ink-faint">No city clears the gate yet.</p>}</div>
+              <div className="mt-4">{hub.topCities.length ? <RankTable rows={toPayVMs(hub.topCities, (s) => `/locations/${s}`)} bars={false} /> : <p className="text-sm text-ink-faint">No city clears the gate yet.</p>}</div>
             </div>
             <div className="card">
               <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.globe size={15} /></span><span className="text-[15px] font-semibold">Top paying countries</span></div>
@@ -159,7 +188,24 @@ export default async function RolePage({ params }: { params: { role: string } })
             </div>
             <div className="card">
               <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.building size={15} /></span><span className="text-[15px] font-semibold">Top companies hiring</span></div>
-              <div className="mt-4">{hub.topCompanies.length ? <RankTable rows={toPayVMs(hub.topCompanies, (s) => `/companies/${s}`)} /> : <p className="text-sm text-ink-faint">Needs 3+ postings per company.</p>}</div>
+              <div className="mt-4">{hub.topCompanies.length ? <RankTable rows={toPayVMs(hub.topCompanies, (s) => `/companies/${s}`)} bars={false} /> : <p className="text-sm text-ink-faint">Needs 3+ postings per company.</p>}</div>
+            </div>
+          </section>
+
+          {/* EMEA pay map, scoped to this family. Clicking a country opens the
+              role x country view in place (facts first, then that market's
+              latest ads, then the map) instead of dropping the role by
+              navigating to the generic country page. */}
+          <section className="mt-10">
+            <SectionHeader kicker="Across Europe" title={`${label} pay by country`} sub="Median advertised base per market for this role family, from live job ads." />
+            <div className="mt-5">
+              <RolePayMap
+                data={payMap}
+                role={role}
+                label={label}
+                postingsByCountry={byCountry}
+                postingsHref={`/roles/${slugify(role)}/postings`}
+              />
             </div>
           </section>
 

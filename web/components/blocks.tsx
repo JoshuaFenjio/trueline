@@ -158,29 +158,47 @@ export interface RankVM {
   tone?: string; // optional value color
 }
 
-export function RankTable({ rows, valueHead = "Median base" }: { rows: RankVM[]; valueHead?: string }) {
+/**
+ * Ranked table: rank, name, relative-pay bar, figure.
+ *
+ * The name cell used to be `flex-1` (flex-basis 0) while the rank, bar and
+ * value columns were fixed. Inside a narrow container — the 3-up cards on a
+ * role page are ~309-361px at lg — the fixed columns alone exceeded the width,
+ * so free space went negative, the name collapsed to EXACTLY 0px and every row
+ * rendered as a rank, a decorative bar and a figure with no name at all. It was
+ * invisible below 1024px (where the grid is one column) which is why it kept
+ * surviving mobile checks.
+ *
+ * Two changes make that unreachable: the name now has a real flex-basis so it
+ * shrinks proportionally and truncates instead of vanishing, and the bar shrinks
+ * four times faster so the decoration yields before the data does. `bars={false}`
+ * drops the bar outright where the caller knows the container is narrow.
+ */
+export function RankTable({ rows, valueHead = "Median base", bars = true }: { rows: RankVM[]; valueHead?: string; bars?: boolean }) {
   return (
     <div className="border-y" style={{ borderColor: "var(--border)" }}>
       <div className="flex items-center px-1 py-2.5 text-[12px] text-ink-faint">
-        <span className="w-8 text-right">#</span>
-        <span className="ml-4 flex-1">Name</span>
-        <span className="mx-4 hidden w-28 sm:block lg:w-40" />
-        <span className="w-24 text-right">{valueHead}</span>
+        <span className="w-8 shrink-0 text-right">#</span>
+        <span className="ml-4 min-w-0 flex-[1_1_6rem]">Name</span>
+        {bars && <span className="mx-4 hidden w-28 min-w-0 shrink-[4] sm:block lg:w-40" />}
+        <span className="w-24 shrink-0 text-right">{valueHead}</span>
       </div>
       <ol>
         {rows.map((r, i) => {
           const inner = (
             <div className="relative flex h-10 items-center px-1">
               <span className="tnum w-8 shrink-0 text-right text-sm text-ink-faint">{i + 1}</span>
-              <span className="ml-4 min-w-0 flex-1 truncate">
+              <span className="ml-4 min-w-0 flex-[1_1_6rem] truncate">
                 <span className="text-ink">{r.label}</span>
                 {r.sub && <span className="tnum ml-2 text-xs text-ink-faint">{r.sub}</span>}
               </span>
-              <span className="mx-4 hidden w-28 sm:block lg:w-40">
-                <span className="rank-track block">
-                  <span className="rank-fill" style={{ width: `${Math.max(3, r.barPct * 100)}%`, background: r.tone ?? "var(--accent)" }} />
+              {bars && (
+                <span className="mx-4 hidden w-28 min-w-0 shrink-[4] sm:block lg:w-40">
+                  <span className="rank-track block">
+                    <span className="rank-fill" style={{ width: `${Math.max(3, r.barPct * 100)}%`, background: r.tone ?? "var(--accent)" }} />
+                  </span>
                 </span>
-              </span>
+              )}
               <span className="tnum w-24 shrink-0 text-right font-semibold tabular-nums" style={r.tone ? { color: r.tone } : undefined}>
                 {r.valueLabel}
               </span>
