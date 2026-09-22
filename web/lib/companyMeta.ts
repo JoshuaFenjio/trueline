@@ -1,3 +1,5 @@
+import { COMPANY_DOMAINS } from "./companyDomains";
+
 // Hand-maintained public facts for the best-known companies. Anything unknown is
 // left out and hidden gracefully on the page. Keyed by the stored company name.
 // `description` is a verified, factual one-liner of what the company does — no
@@ -470,4 +472,17 @@ export const COMPANY_META: Record<string, CompanyMeta> = {
 
 export function companyMeta(name: string): CompanyMeta {
   return COMPANY_META[name] || {};
+}
+
+/**
+ * Domain to resolve a LOGO from — the curated website when we have one, else
+ * the machine-resolved domain from lib/companyDomains.
+ *
+ * Deliberately separate from companyMeta().website: `website` is a company
+ * FACT and is rendered as one (the "↗ domain" chip on a company page), so it
+ * stays config-verified or blank. A machine-resolved domain is good enough to
+ * fetch a favicon from and nothing more, so it never leaks into the facts.
+ */
+export function logoDomain(name: string): string | undefined {
+  return COMPANY_META[name]?.website || COMPANY_DOMAINS[name];
 }

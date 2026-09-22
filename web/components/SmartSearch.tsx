@@ -5,6 +5,8 @@ import { parseQuery, parsedHref } from "@/lib/parseQuery";
 import { Combobox } from "@/components/Combobox";
 import { slugify } from "@/lib/format";
 import { familySuggestLabel, familyLabel } from "@/lib/roleNames";
+import { CompanyLogo } from "@/components/CompanyLogo";
+import { Flag } from "@/components/Flag";
 
 interface Props {
   roles: string[];
@@ -97,10 +99,14 @@ export function SmartSearch({ roles, cities, companies, countries = [], compact 
           key={s.kind + s.label}
           onMouseDown={(e) => { e.preventDefault(); pick(s); }}
           onMouseEnter={() => setActive(i)}
-          className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm ${i === active ? "bg-[var(--surface-3)]" : ""}`}
+          className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm ${i === active ? "bg-[var(--surface-3)]" : ""}`}
         >
-          <span>{s.label}</span>
- <span className="text-[10px] text-ink-faint">{s.kind}</span>
+          {/* Company rows carry their logo; the same resolution chain and the
+              same letter-mark fallback as everywhere else, so a row never
+              shows a broken image. */}
+          {s.kind === "company" && <CompanyLogo name={s.label} size={18} rounded="rounded" />}
+          <span className="min-w-0 flex-1 truncate">{s.label}</span>
+          <span className="shrink-0 text-[10px] text-ink-faint">{s.kind}</span>
         </button>
       ))}
       {noRoleMatch && (

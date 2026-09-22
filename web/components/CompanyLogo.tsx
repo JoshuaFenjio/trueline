@@ -1,17 +1,25 @@
 "use client";
 import { useState } from "react";
-import { companyMeta } from "@/lib/companyMeta";
+import { companyMeta, logoDomain } from "@/lib/companyMeta";
 
 // Company logo with a resolution CHAIN: manual override (meta.logo — full URL or
 // local /logos/*) → DuckDuckGo icon (token-free) → Google favicon by domain →
 // letter-mark. Each source that errors advances to the next, so a domain DDG
-// happens to miss still resolves via Google before falling back. A company with
-// no domain at all (and no override) stays a letter-mark.
+// happens to miss still resolves via Google before falling back.
+//
+// The domain itself comes from logoDomain(): the curated companyMeta website
+// first, then the machine-resolved map in lib/companyDomains, which covers
+// every scraped company we could verify (own-domain posting evidence, or a
+// name match confirmed against the site's own homepage title). A company we
+// could not verify stays a letter-mark — a wrong logo is worse than none.
 export function CompanyLogo({
   name, size = 32, rounded = "rounded-md", className = "", domain: domainProp,
 }: { name: string; size?: number; rounded?: string; className?: string; domain?: string }) {
   const meta = companyMeta(name);
-  const domain = domainProp || meta.website;
+  // logoDomain() adds the machine-resolved domains (lib/companyDomains) on top
+  // of the curated websites — good enough to fetch an icon from, never shown
+  // as a company fact.
+  const domain = domainProp || logoDomain(name);
   const [step, setStep] = useState(0);
 
   const sources: string[] = [];
