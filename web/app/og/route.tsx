@@ -2,11 +2,13 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 
-// Load Geist Mono (woff — satori doesn't accept woff2) for on-brand figures.
-// Wrapped so a CDN hiccup never breaks the image (falls back to system sans).
-async function loadFont(weight: number): Promise<ArrayBuffer | null> {
+// Load Geist Mono (woff — satori doesn't accept woff2) for on-brand figures,
+// and Schibsted Grotesk for the brand wordmark, which is set in the site face
+// and looked wrong in a monospace. Wrapped so a CDN hiccup never breaks the
+// image (each falls back independently to the system stack).
+async function loadFont(family: string, weight: number): Promise<ArrayBuffer | null> {
   try {
-    const url = `https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5/files/geist-mono-latin-${weight}-normal.woff`;
+    const url = `https://cdn.jsdelivr.net/npm/@fontsource/${family}@5/files/${family}-latin-${weight}-normal.woff`;
     const res = await fetch(url, { cache: "force-cache" });
     return res.ok ? await res.arrayBuffer() : null;
   } catch {
@@ -20,12 +22,16 @@ export async function GET(req: Request) {
   const title = (searchParams.get("title") || "Know what Europe actually pays").slice(0, 40);
   const value = (searchParams.get("value") || "Live from company job boards").slice(0, 70);
 
-  const [regular, bold] = await Promise.all([loadFont(400), loadFont(700)]);
+  const [regular, bold, brand] = await Promise.all([
+    loadFont("geist-mono", 400), loadFont("geist-mono", 700), loadFont("schibsted-grotesk", 800),
+  ]);
   const fonts = [
     regular && { name: "Geist Mono", data: regular, weight: 400 as const, style: "normal" as const },
     bold && { name: "Geist Mono", data: bold, weight: 700 as const, style: "normal" as const },
+    brand && { name: "Schibsted Grotesk", data: brand, weight: 800 as const, style: "normal" as const },
   ].filter(Boolean) as any[];
-  const ff = fonts.length ? "Geist Mono" : "monospace";
+  const ff = regular || bold ? "Geist Mono" : "monospace";
+  const brandFf = brand ? "Schibsted Grotesk" : "sans-serif";
 
   return new ImageResponse(
     (
@@ -37,15 +43,17 @@ export async function GET(req: Request) {
           fontFamily: ff,
         }}
       >
-        {/* Wordmark — compass mark + SalaryRadar */}
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <svg width="40" height="40" viewBox="0 0 32 32">
-            <circle cx="16" cy="16" r="12" fill="none" stroke="#0F766E" strokeWidth="2.75" />
-            <path d="M16 5.5 L18.6 16 L13.4 16 Z" fill="#0F766E" />
-            <path d="M16 26.5 L18.6 16 L13.4 16 Z" fill="#0F766E" fillOpacity="0.42" />
-            <circle cx="16" cy="16" r="1.8" fill="#0F766E" />
+        {/* Brand lockup — the exact compass from components/BrandMark, at the
+            reference's proportions (gap 0.315H, cap height 0.469H). Flat brand
+            green: Satori renders SVG gradients inconsistently, and the lockup's
+            identity is the geometry, not the shading. */}
+        <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
+          <svg width="48" height="48" viewBox="0 0 64 64">
+            <path d="M48.25 10.44A27 27 0 0 0 13.24 51.42M21.89 57.03A27 27 0 0 0 51.42 13.24" fill="none" stroke="#059C62" strokeWidth="6" />
+            <path fillRule="evenodd" fill="#059C62" d="M27.44 27.82L44.78 18.05L36.56 36.18L18.59 46.63ZM34.08 32A2.08 2.08 0 1 0 29.92 32A2.08 2.08 0 1 0 34.08 32Z" />
+            <circle cx="32" cy="32" r="4.5" fill="none" stroke="#059C62" strokeWidth="4.85" />
           </svg>
-          <div style={{ color: "#171614", fontSize: 32, fontWeight: 700, letterSpacing: -1 }}>SalaryRadar</div>
+          <div style={{ color: "#059C62", fontFamily: brandFf, fontSize: 31, fontWeight: 800, letterSpacing: -1.1 }}>SalaryRadar</div>
         </div>
 
         {/* Headline stat */}

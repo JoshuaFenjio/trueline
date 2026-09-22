@@ -3,7 +3,7 @@ import "server-only";
 // Branded transactional email templates. Table-based, all-inline CSS — the only
 // layout HTML email clients render reliably. The compass mark is inline SVG
 // (renders in Apple Mail / Outlook-mac / many clients; Gmail-web strips SVG, so
-// the teal "SalaryRadar" wordmark beside it is the guaranteed-visible fallback).
+// the "SalaryRadar" wordmark beside it is the guaranteed-visible fallback).
 // Web fonts don't load in most clients, so the Schibsted stack degrades to the
 // system sans — intended, not a bug.
 
@@ -17,12 +17,17 @@ const FONT =
   "'Schibsted Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 const TAGLINE = "Honest salary benchmarks for Europe — built only from disclosed pay, never estimates.";
 
-// The compass/radar mark, geometry kept in sync with components/BrandMark.tsx.
-const MARK = `<svg width="28" height="28" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;display:inline-block">
-  <circle cx="16" cy="16" r="12" fill="none" stroke="${TEAL}" stroke-width="2.75"/>
-  <path d="M16 5.5 L18.6 16 L13.4 16 Z" fill="${TEAL}"/>
-  <path d="M16 26.5 L18.6 16 L13.4 16 Z" fill="${TEAL}" opacity="0.42"/>
-  <circle cx="16" cy="16" r="1.8" fill="${TEAL}"/>
+// The brand lockup's green. The lockup owns it; the rest of the mail (links,
+// rules, the deep footer text) stays on the site's teal.
+const BRAND_GREEN = "#059C62";
+
+// The compass mark, geometry byte-identical to components/BrandMark.tsx, which
+// documents where each number came from. FLAT green, not the gradient: SVG
+// gradient support across mail clients is not worth betting the mark on.
+const MARK = `<svg width="30" height="30" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;display:inline-block">
+  <path d="M48.25 10.44A27 27 0 0 0 13.24 51.42M21.89 57.03A27 27 0 0 0 51.42 13.24" fill="none" stroke="${BRAND_GREEN}" stroke-width="6"/>
+  <path fill-rule="evenodd" fill="${BRAND_GREEN}" d="M27.44 27.82L44.78 18.05L36.56 36.18L18.59 46.63ZM34.08 32A2.08 2.08 0 1 0 29.92 32A2.08 2.08 0 1 0 34.08 32Z"/>
+  <circle cx="32" cy="32" r="4.5" fill="none" stroke="${BRAND_GREEN}" stroke-width="4.85"/>
 </svg>`;
 
 interface Shell {
@@ -59,7 +64,7 @@ function shell({ title, bodyHtml, cta, preheader }: Shell): string {
         <!-- header -->
         <tr><td style="padding:0 4px 20px">
           ${MARK}
-          <span style="font-family:${FONT};font-size:18px;font-weight:700;color:${TEAL};letter-spacing:-.01em;vertical-align:middle;margin-left:8px">SalaryRadar</span>
+          <span style="font-family:${FONT};font-size:20px;font-weight:800;color:${BRAND_GREEN};letter-spacing:-.035em;vertical-align:middle;margin-left:9px">SalaryRadar</span>
         </td></tr>
         <!-- card -->
         <tr><td style="background:#ffffff;border:1px solid ${BORDER};border-radius:14px;padding:32px">

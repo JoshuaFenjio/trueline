@@ -2,17 +2,17 @@ import Link from "next/link";
 import { getLastRefreshed, getFilterOptions, getCompaniesBoard, isConfigured } from "@/lib/data";
 import { timeAgo } from "@/lib/format";
 import { NavEnhancer } from "@/components/NavEnhancer";
-import { BrandMark } from "@/components/BrandMark";
+import { BrandLockup } from "@/components/BrandLockup";
 import { SmartSearch } from "@/components/SmartSearch";
 import { EmailCapture } from "@/components/EmailCapture";
 import { WATCHLIST } from "@/lib/watchlist";
 import { slugify } from "@/lib/format";
 
-export function Logo({ className = "" }: { className?: string }) {
+// The lockup owns its green; the rest of the site stays on the teal accent.
+export function Logo({ className = "", size = 26, tagline = false }: { className?: string; size?: number; tagline?: boolean }) {
   return (
-    <Link href="/" className={`inline-flex items-center gap-2 tracking-tight ${className}`}>
-      <BrandMark size={22} />
-      <span className="text-[17px] font-bold">SalaryRadar</span>
+    <Link href="/" className={`inline-flex items-center ${className}`} aria-label="SalaryRadar — home">
+      <BrandLockup size={size} tagline={tagline} />
     </Link>
   );
 }
@@ -178,8 +178,7 @@ export async function Footer() {
       <div className="container-page py-14">
         <div className="grid gap-10 lg:grid-cols-[1.5fr_repeat(5,1fr)]">
           <div>
-            <Logo />
-            <p className="mt-2 text-[13px] font-medium text-ink-muted">See who pays the most.</p>
+            <Logo size={30} tagline />
             <p className="mt-3 max-w-xs text-sm text-ink-muted">
               Real base salaries from live job postings across Europe, the Middle East and Africa. Honest samples, no invented numbers.
             </p>
