@@ -1,6 +1,6 @@
 import { Flag } from "./Flag";
 import { CitySilhouette } from "./CitySilhouette";
-import { placePhoto } from "@/lib/cityImages";
+import { placePhoto, placeCredit } from "@/lib/cityImages";
 
 // Place hero matching mockup-city.png. Desktop: a bright full-colour photo on
 // the right, faded into white toward the left where the title/meta sit (NO teal
@@ -13,6 +13,7 @@ export function PlaceHero({
   title: string; photoName?: string; flagCountry?: string | null; children?: React.ReactNode;
 }) {
   const src = placePhoto(photoName ?? title);
+  const credit = placeCredit(photoName ?? title);
   return (
     <section className="relative mt-6 flex flex-col overflow-hidden rounded-[20px] border bg-white md:min-h-[240px] md:justify-center" style={{ borderColor: "var(--border)" }}>
       {src ? (
@@ -23,6 +24,17 @@ export function PlaceHero({
           <div className="absolute inset-0 md:hidden" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0) 55%, #fff 100%)" }} />
           {/* desktop: fade to white on the LEFT (title beside the photo) */}
           <div className="absolute inset-0 hidden md:block" style={{ background: "linear-gradient(90deg, #fff 1%, rgba(255,255,255,0.65) 24%, rgba(255,255,255,0) 58%)" }} />
+          {/* Attribution on the photo itself, as Unsplash asks. Small and in
+              the corner, so it credits without competing with the headline. */}
+          {credit && (
+            <span className="absolute bottom-1.5 right-2 text-[10px] leading-none text-white/80 mix-blend-difference">
+              Photo{" "}
+              <a href={credit.link} target="_blank" rel="noopener noreferrer" className="underline decoration-white/40 underline-offset-2">
+                {credit.author}
+              </a>{" "}
+              / {credit.source}
+            </span>
+          )}
         </div>
       ) : (
         <>
