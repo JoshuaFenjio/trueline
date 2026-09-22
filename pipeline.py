@@ -18,6 +18,7 @@
 
 import os
 import re
+import unicodedata
 import html
 import json
 import time
@@ -610,24 +611,102 @@ def classify_role(title: str) -> str:
     return "Other"
 
 
-# Seniority level from the title. Mirrors web/lib/levels.ts levelBucket exactly,
-# so the stored level matches the read-time fallback. "manager" is deliberately
-# NOT a Staff+ cue (it's a role-type, not a tier). Returns (level, source):
-# source is 'explicit' when a real seniority signal was present, 'default' when
-# we fell through to Mid — callers can exclude 'default' rather than guess.
+# Seniority level from the title. Mirrors web/lib/levels.ts classifyLevel
+# EXACTLY, so the stored level always matches the read-time fallback.
+#
+# Two tracks:
+#   IC          Junior, Mid, Senior, Staff+
+#   Management  Manager, Senior Manager, Director, Senior Director, VP+
+#
+# The management track fires on EXPLICIT title signals only — never inferred
+# from a family, a salary or anything else. A bare "Manager" is still NOT a
+# management signal: "Product Manager" / "Account Manager" are IC roles, and
+# mapping every "* Manager" to a management tier collapsed whole families into
+# one band. Only titles that name a management FUNCTION ("Engineering Manager",
+# "Team Lead", "Head of ...", "Leiter", "Responsable") qualify.
+#
+# Returns (level, source): source is 'explicit' when a real seniority signal was
+# present, 'default' when we fell through to Mid — callers exclude 'default'
+# rather than guess a band.
 _LVL_JUNIOR = re.compile(r"\b(intern|internship|working student|apprentice|apprenti|graduate|entry[- ]level|junior|jr\.?|trainee|d[eé]butant|ausbildung|azubi|praktikant|werkstudent)\b", re.I)
-_LVL_STAFF = re.compile(r"\b(staff|principal|distinguished|fellow|lead|head of|head,|director|directeur|directrice|vp|vice president|chief|c[te]o|leiter|leitung|teamleiter|gesch[aä]ftsf[uü]hrer|responsable|chef de|chef d'[eé]quipe|iv)\b", re.I)
+
+# VP+ — the top of the management track. "Chief of Staff" is excluded: it is a
+# strategy IC role, not a C-level officer.
+_LVL_VP = re.compile(
+    r"\b(svp|evp|senior vice president|executive vice president|vice president|vp)\b"
+    r"|\bchief\b"
+    r"|\b(cto|ceo|cfo|coo|cpo|cmo|cro|cio|ciso|cdo|chro)\b"
+    r"|\bc[- ](level|suite)\b"
+    r"|\bmanaging director\b|\bgesch[aä]e?ftsf[uü]e?hrer(in)?\b|\bvorstand\b"
+    r"|\bdirecteur g[eé]n[eé]ral\b",
+    re.I)
+_LVL_CHIEF_IC = re.compile(r"\bchief of staff\b", re.I)
+
+# Team leadership — checked BEFORE Director so "Teamleiter" doesn't read as a
+# department head.
+_LVL_TEAM_LEAD = re.compile(
+    r"\bteam[- ]?(lead|leader|leiter(in)?|leitung|manager)\b"
+    r"|\bgruppenleiter(in)?\b|\bpeople manager\b|\bline manager\b"
+    r"|\bchef d[e\u2019\']\s?[eé]quipe\b|\bresponsable d[e\u2019\']\s?[eé]quipe\b",
+    re.I)
+
+# Director / head-of. "Art Director" and friends are IC craft titles, not heads.
+_LVL_DIRECTOR = re.compile(
+    r"\bdirector\b|\bdirectrice\b|\bdirecteur\b|\bhead of\b|\bhead,\b"
+    r"|\b(bereichs|abteilungs|standort|werks?|niederlassungs|haupt)leiter(in)?\b"
+    r"|\bleiter(in)?\b|\bleitung\b",
+    re.I)
+_LVL_DIRECTOR_IC = re.compile(r"\b(art|creative|casting|music|photography|funeral|film|video|studio|stage)\s+director\b|\bdirector of photography\b", re.I)
+
+# People-management "Manager" titles — an INCLUDE list, so ambiguous "* Manager"
+# roles (product, account, project, marketing…) never enter the track.
+_LVL_MANAGER = re.compile(
+    r"\b(engineering|software|development|dev|platform|infrastructure|data|analytics|design|research|security|qa|test|it|technical|technology)\s+manager\b"
+    r"|\bmanager,?\s+(engineering|software|platform|infrastructure|data|design|security|qa|research|technology)\b"
+    r"|\bpersonalleiter(in)?\b|\bchef de service\b|\bresponsable\b",
+    re.I)
+
+# IC senior track. Leadership words that now belong to the management track
+# (head of / director / vp / chief / leiter / responsable / chef de) were
+# removed from here — they were all collapsing into Staff+.
+_LVL_STAFF = re.compile(r"\b(staff|principal|distinguished|fellow|lead|iv)\b", re.I)
 _LVL_SENIOR = re.compile(r"\b(senior|sr\.?|snr|iii|confirm[eé]|leitender)\b", re.I)
 _LVL_MID = re.compile(r"\b(mid[- ]level|intermediate|medior|ii)\b", re.I)
 
 
+def _lvl_norm(title):
+    """Fold diacritics before matching.
+
+    Python's \b is Unicode-aware ("é" and "ț" are word characters) while
+    JavaScript's is ASCII-only, so the same title classified differently on the
+    two sides ("Développeur confirmé" lost its Senior signal in the browser;
+    "instalații" gained a bogus Roman-numeral "II"). Folding to ASCII letters
+    first makes the two implementations agree AND makes both more correct.
+    web/lib/levels.ts does exactly the same thing."""
+    t = unicodedata.normalize("NFKD", title or "")
+    return "".join(c for c in t if not unicodedata.combining(c))
+
+
 def classify_level(title):
-    t = title or ""
+    t = _lvl_norm(title)
+    # "Chief of Staff" is neither C-level nor Staff+ — it carries no honest
+    # seniority signal of its own, so remove it before the VP+/Staff+ tests
+    # rather than let "chief" or "staff" fire on it.
+    tc = _LVL_CHIEF_IC.sub(" ", t)
+    snr = bool(_LVL_SENIOR.search(t))
     if _LVL_JUNIOR.search(t):
         return "Junior", "explicit"
-    if _LVL_STAFF.search(t):
+    if _LVL_VP.search(tc):
+        return "VP+", "explicit"
+    if _LVL_TEAM_LEAD.search(t):
+        return ("Senior Manager" if snr else "Manager"), "explicit"
+    if _LVL_DIRECTOR.search(t) and not _LVL_DIRECTOR_IC.search(t):
+        return ("Senior Director" if snr else "Director"), "explicit"
+    if _LVL_MANAGER.search(t):
+        return ("Senior Manager" if snr else "Manager"), "explicit"
+    if _LVL_STAFF.search(tc):
         return "Staff+", "explicit"
-    if _LVL_SENIOR.search(t):
+    if snr:
         return "Senior", "explicit"
     if _LVL_MID.search(t):
         return "Mid", "explicit"

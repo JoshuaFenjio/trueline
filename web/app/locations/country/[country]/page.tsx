@@ -9,6 +9,7 @@ import { Flag } from "@/components/Flag";
 import { PlaceHero } from "@/components/PlaceHero";
 import { Icon } from "@/components/icons";
 import { familyLabel } from "@/lib/roleNames";
+import { isManagementLevel } from "@/lib/levels";
 import { eur, slugify } from "@/lib/format";
 
 export const revalidate = 3600;
@@ -137,7 +138,7 @@ export default async function CountryPage({ params }: { params: { country: strin
           <section className="mt-8">
             <div className="card">
               <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.trending size={15} /></span><span className="text-[15px] font-semibold">Compensation by experience</span></div>
-              <div className="mt-5 max-w-2xl"><LevelLadder items={d.byLevel.map((b) => ({ level: b.level, median: b.median, n: b.n }))} /></div>
+              <div className="mt-5 max-w-2xl"><LevelLadder items={d.byLevel.filter((b) => !isManagementLevel(b.level) || b.median != null).map((b) => ({ level: b.level, median: b.median, n: b.n }))} /></div>
             </div>
           </section>
 

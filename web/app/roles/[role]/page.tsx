@@ -9,7 +9,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/icons";
 import { roleBlurb, roleIconName } from "@/lib/roleBlurbs";
-import { levelSlug } from "@/lib/levels";
+import { levelSlug, isManagementLevel } from "@/lib/levels";
 import { eur, eurK, slugify, timeAgo } from "@/lib/format";
 import { familyLabel, isGroupFamily } from "@/lib/roleNames";
 
@@ -70,6 +70,10 @@ export default async function RolePage({ params }: { params: { role: string } })
   // job title that doesn't exist.
   const label = familyLabel(role);
   const plural = isGroupFamily(role) ? `${label} roles` : `${label}s`;
+  // The IC ladder always shows (its empty rungs are informative: "5/8"). The
+  // management track only appears where it actually clears the n>=8 gate —
+  // otherwise every role page would carry five permanently blank rows.
+  const ladder = hub.byLevel.filter((b) => !isManagementLevel(b.level) || b.slice.spread != null);
   const RoleIcon = (Icon as any)[roleIconName(role)] ?? Icon.briefcase;
   const showDemand = hub.trend.dir === "up" || hub.trend.dir === "down" || hub.trend.dir === "flat";
 
@@ -112,10 +116,10 @@ export default async function RolePage({ params }: { params: { role: string } })
           {/* Distribution curve + by-level */}
           <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_1.1fr]">
             <div className="card">
-              <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.bars size={15} /></span><span className="text-[15px] font-semibold">Salary by experience level</span></div>
-              <div className="mt-5"><LevelLadder items={hub.byLevel.map((b) => ({ level: b.level, median: b.slice.spread?.median ?? null, n: b.slice.n }))} /></div>
+              <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.bars size={15} /></span><span className="text-[15px] font-semibold">Salary by seniority</span></div>
+              <div className="mt-5"><LevelLadder items={ladder.map((b) => ({ level: b.level, median: b.slice.spread?.median ?? null, n: b.slice.n }))} /></div>
               <div className="mt-4 flex flex-wrap gap-2 border-t pt-4" style={{ borderColor: "var(--border)" }}>
-                {hub.byLevel.map((b) => (
+                {ladder.map((b) => (
                   <Link key={b.level} href={`/roles/${slugify(role)}/${levelSlug(b.level)}`} className="rounded-full border px-3 py-1 text-[12px] text-ink-muted transition-colors hover:border-[var(--border-strong)] hover:text-ink" style={{ background: "var(--surface-1)" }}>
                     {b.level} <span className="tnum ml-1 text-ink-faint">{b.slice.spread ? eurK(b.slice.spread.median) : `${b.slice.n}·thin`}</span>
                   </Link>

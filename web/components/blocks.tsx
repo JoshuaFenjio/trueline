@@ -251,7 +251,7 @@ export function LevelLadder({ items }: { items: { level: string; median: number 
     <div className="space-y-2.5">
       {items.map((it) => (
         <div key={it.level} className="flex items-center gap-3">
-          <span className="w-16 text-sm text-ink-muted">{it.level}</span>
+          <span className="w-[88px] shrink-0 text-[13px] leading-tight text-ink-muted">{it.level}</span>
           <div className="relative h-7 flex-1 overflow-hidden rounded-lg" style={{ background: "var(--surface-2)" }}>
             {it.median != null && (
               <div className="absolute inset-y-0 left-0 rounded-lg gradient-bg" style={{ width: `${((it.median || 0) / max) * 100}%` }} />

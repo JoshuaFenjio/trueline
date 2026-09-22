@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getRoleLevelHub, roleFromSlug, getRoleFamilies } from "@/lib/data";
-import { LEVELS, levelSlug, levelFromSlug } from "@/lib/levels";
+import { getRoleLevelHub, roleFromSlug, getRoleFamilies, getRoleLevelIndex } from "@/lib/data";
+import { LEVELS, levelSlug, levelFromSlug, isManagementLevel, levelHeading, levelPhrase, levelRolesPhrase, levelTitleStem } from "@/lib/levels";
 import { RankTable, toPayVMs, Breadcrumbs, PillButton, GatedState } from "@/components/blocks";
 import { MeasureBar } from "@/components/MeasureBar";
 import { DensityCurve } from "@/components/DensityCurve";
@@ -18,8 +18,20 @@ export const dynamicParams = true;
 // Pre-render every family × level. Thin combinations still build — they render
 // the honest empty state, not an invented number.
 export async function generateStaticParams() {
-  const roles = await getRoleFamilies();
-  return roles.flatMap((r) => LEVELS.map((l) => ({ role: slugify(r), level: levelSlug(l) })));
+  // Every family x IC level (thin ones still build — they render the honest
+  // empty state), plus management levels ONLY where they clear the median gate.
+  // Pre-rendering 5 blank management pages per family would quintuple the build
+  // for pages that say nothing; dynamicParams keeps the rest reachable.
+  const [roles, index] = await Promise.all([getRoleFamilies(), getRoleLevelIndex()]);
+  const gated = new Set(index.filter((r) => r.hasMedian).map((r) => `${r.slug}/${r.levelSlug}`));
+  const out: { role: string; level: string }[] = [];
+  for (const r of roles) {
+    for (const l of LEVELS) {
+      const key = `${slugify(r)}/${levelSlug(l)}`;
+      if (!isManagementLevel(l) || gated.has(key)) out.push({ role: slugify(r), level: levelSlug(l) });
+    }
+  }
+  return out;
 }
 
 export async function generateMetadata({ params }: { params: { role: string; level: string } }): Promise<Metadata> {
@@ -30,13 +42,13 @@ export async function generateMetadata({ params }: { params: { role: string; lev
   const label = familyLabel(role);
   const plural = isGroupFamily(role) ? `${label} roles` : `${label}s`;
   const med = hub.overall.spread ? eur(hub.overall.spread.median) : "live data";
-  const title = `${level} ${label} salary in Europe 2026, live from job boards`;
+  const title = `${levelTitleStem(level, label)} in Europe 2026, live from job boards`;
   return {
     title,
-    description: `What ${level.toLowerCase()} ${plural} earn across EMEA: median ${med} base, by country and company. Real advertised salaries, gated at 8 postings.`,
+    description: `What ${levelPhrase(level, plural)} earn across EMEA: median ${med} base, by country and company. Real advertised salaries, gated at 8 salaried job ads.`,
     openGraph: {
       title,
-      images: [`/og?kicker=${encodeURIComponent(level + " · " + label)}&title=${encodeURIComponent(level + " " + label)}&value=${encodeURIComponent(hub.overall.spread ? "Median " + med : "Live from job boards")}`],
+      images: [`/og?kicker=${encodeURIComponent(level + " · " + label)}&title=${encodeURIComponent(levelHeading(level, label))}&value=${encodeURIComponent(hub.overall.spread ? "Median " + med : "Live from job boards")}`],
     },
   };
 }
@@ -102,23 +114,23 @@ export default async function RoleLevelPage({ params }: { params: { role: string
         <div>
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}><RoleIcon size={22} /></span>
-            <h1 className="t-h2">{level} {label}</h1>
+            <h1 className="t-h2">{levelHeading(level, label)}</h1>
           </div>
           <p className="mt-3 max-w-xl text-ink-muted">
-            Advertised base pay for {level.toLowerCase()} {label} roles across EMEA, live from company job boards.
+            Advertised base pay for {levelRolesPhrase(level, label)} across EMEA, live from company job boards.
           </p>
         </div>
       </header>
 
       {/* Level switcher */}
       <section className="mt-6">
-        <LevelSwitch role={role} current={level} siblings={hub.siblings} />
+        <LevelSwitch role={role} current={level} siblings={hub.siblings.filter((s) => !isManagementLevel(s.level) || s.median != null || s.level === level)} />
       </section>
 
       {!sp ? (
         /* Honest empty state — no invented number under the gate. */
         <section className="mt-8 space-y-4">
-          <GatedState n={hub.overall.n} what={`${level} ${label} across EMEA`} tracked={hub.trackedN} />
+          <GatedState n={hub.overall.n} what={`${levelHeading(level, label)} across EMEA`} tracked={hub.trackedN} />
           {liveSiblings.length > 0 && (
             <div className="card">
               <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.bars size={15} /></span><span className="text-[15px] font-semibold">Levels we can show for {label}</span></div>
@@ -126,7 +138,7 @@ export default async function RoleLevelPage({ params }: { params: { role: string
                 {liveSiblings.map((s) => (
                   <li key={s.level} className="border-t first:border-t-0" style={{ borderColor: "var(--border)" }}>
                     <Link href={`/roles/${slugify(role)}/${levelSlug(s.level)}`} className="flex h-10 items-center gap-3 transition-colors hover:bg-[var(--band)]">
-                      <span className="flex-1 text-sm">{s.level} {label}</span>
+                      <span className="flex-1 text-sm">{levelHeading(s.level as any, label)}</span>
                       <span className="tnum text-sm text-ink-faint">{s.n} salaried</span>
                       <span className="tnum text-sm font-semibold">{eur(s.median!)}</span>
                     </Link>
@@ -152,7 +164,7 @@ export default async function RoleLevelPage({ params }: { params: { role: string
           {/* Distribution */}
           <section className="mt-8">
             <div className="card">
-              <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.spark size={15} /></span><span className="text-[15px] font-semibold">Salary distribution — {level} {label}</span></div>
+              <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.spark size={15} /></span><span className="text-[15px] font-semibold">Salary distribution — {levelHeading(level, label)}</span></div>
               <div className="mt-4">
                 {hub.dist.length >= 20 ? <DensityCurve values={hub.dist} spread={sp} /> : <MeasureBar spread={sp} />}
               </div>
@@ -189,7 +201,7 @@ export default async function RoleLevelPage({ params }: { params: { role: string
         <div className="band-dark flex flex-col p-6">
           <span className="flex h-11 w-11 items-center justify-center rounded-full" style={{ background: "rgba(255,255,255,.12)" }}><Icon.users size={20} className="text-white" /></span>
           <h3 className="mt-4 text-xl font-bold text-white">Add your salary</h3>
-          <p className="mt-2 text-[14px] leading-relaxed" style={{ color: "rgba(255,255,255,.72)" }}>Anonymously sharpen the benchmark for {level.toLowerCase()} {plural} across Europe.</p>
+          <p className="mt-2 text-[14px] leading-relaxed" style={{ color: "rgba(255,255,255,.72)" }}>Anonymously sharpen the benchmark for {levelPhrase(level, plural)} across Europe.</p>
           <div className="mt-auto pt-6"><Link href="/add" className="pill-btn pill-btn-light"><span>Add your salary</span><span className="arw">→</span></Link></div>
         </div>
         <div className="card flex flex-col">
