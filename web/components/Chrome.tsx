@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getLastRefreshed, getFilterOptions, getCompaniesBoard, isConfigured } from "@/lib/data";
 import { timeAgo } from "@/lib/format";
 import { NavEnhancer } from "@/components/NavEnhancer";
+import { FooterSwitch } from "@/components/FooterSwitch";
 import { BrandLockup } from "@/components/BrandLockup";
 import { SmartSearch } from "@/components/SmartSearch";
 import { EmailCapture } from "@/components/EmailCapture";
@@ -173,6 +174,22 @@ function Social({ label, href, children }: { label: string; href: string; childr
 export async function Footer() {
   const refreshed = await getLastRefreshed();
   const year = new Date().getUTCFullYear();
+  return <FooterSwitch full={<FullFooter refreshed={refreshed} year={year} />} slim={<SlimFooter year={year} />} />;
+}
+
+// Slim variant — admin only. Identity and the legal line, nothing to sell.
+function SlimFooter({ year }: { year: number }) {
+  return (
+    <footer className="mt-24 border-t" style={{ borderColor: "var(--border)" }}>
+      <div className="container-page flex flex-wrap items-center justify-between gap-4 py-8 text-[12px] text-ink-faint">
+        <Logo size={22} />
+        <span>© {year} SalaryRadar · Internal review console</span>
+      </div>
+    </footer>
+  );
+}
+
+function FullFooter({ refreshed, year }: { refreshed: string | null; year: number }) {
   return (
     <footer className="mt-24 border-t" style={{ borderColor: "var(--border)" }}>
       <div className="container-page py-14">

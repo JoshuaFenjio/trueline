@@ -1560,3 +1560,18 @@ export async function getCommunityActivity(company?: string, limit = 6): Promise
     };
   });
 }
+
+// ---------------------------------------------------------------------------
+// Places whose PAGES actually resolve.
+//
+// getCityList/getCountryList return every place with at least one salaried ad,
+// but /locations/[city] and /locations/country/[country] only resolve a slug
+// once the place has PRESENCE (8) ACTIVE ads. Listing the former in the sitemap
+// pointed crawlers at 324 URLs that 404 — including uncanonicalised location
+// strings like "ireland-united-kingdom" and "london-remote". This returns
+// exactly what the pages will serve.
+// ---------------------------------------------------------------------------
+export const getRoutablePlaces = async (): Promise<{ cities: string[]; countries: string[] }> => {
+  const [cities, countries] = await Promise.all([activeNames("city"), activeNames("country")]);
+  return { cities: cities.sort(), countries: countries.sort() };
+};
