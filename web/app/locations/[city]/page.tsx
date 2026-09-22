@@ -6,6 +6,7 @@ import { SectionHeader, RankTable, toPayVMs, Breadcrumbs, PillButton, GatedState
 import { PlaceHero } from "@/components/PlaceHero";
 import { Sparkline } from "@/components/Sparkline";
 import { Flag } from "@/components/Flag";
+import { PlaceTile } from "@/components/PlaceTile";
 import { Icon } from "@/components/icons";
 import { familyLabel } from "@/lib/roleNames";
 import { eur, eurK, slugify } from "@/lib/format";
@@ -118,11 +119,7 @@ export default async function CityPage({ params }: { params: { city: string } })
               <SectionHeader kicker="Related" title={`Other ${d.country ?? "nearby"} cities`} />
               <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {d.related.map((r) => (
-                  <Link key={r.slug} href={`/locations/${r.slug}`} className="card card-hover">
-                    <div className="flex items-center gap-2"><Flag country={r.country} /><span className="truncate font-medium">{r.city}</span></div>
-                    <div className="tnum mt-3 text-lg font-semibold">{eur(r.median)}</div>
-                    <div className="tnum text-[12px] text-ink-faint">median base · n={r.n}</div>
-                  </Link>
+                  <PlaceTile key={r.slug} name={r.city} href={`/locations/${r.slug}`} median={r.median} n={r.n} flagCountry={r.country} />
                 ))}
               </div>
             </section>

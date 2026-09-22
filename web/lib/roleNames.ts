@@ -63,3 +63,38 @@ export function familySuggestLabel(family: string | null | undefined): string {
   const label = familyLabel(family);
   return isGroupFamily(family) ? `${label} — role family` : label;
 }
+
+// ---------------------------------------------------------------------------
+// Broad category per family — the grouping the roles hub browses by, and the
+// chip shown on a role page. Presentation only, like the labels above.
+// ---------------------------------------------------------------------------
+export const FAMILY_CATEGORY: Record<string, string> = {
+  "Software Engineer": "Engineering", Backend: "Engineering", Frontend: "Engineering", Mobile: "Engineering",
+  "DevOps/Platform": "Engineering", "QA/Test": "Engineering", "Engineering Manager": "Engineering",
+  "Security Engineer": "Engineering", SecOps: "Engineering", "Hardware/Embedded": "Engineering",
+  "Solutions Engineer": "Engineering", "IT/SysAdmin": "Engineering",
+  "Data Engineer": "Data", "Data Scientist": "Data", "Data Analyst": "Data",
+  "ML/AI Engineer": "Data", "Research Scientist": "Data",
+  "Product Manager": "Product", "Product Marketing": "Product", Designer: "Design",
+  "Account Executive": "Go-to-market", "Account Manager": "Go-to-market", "SDR/BDR": "Go-to-market",
+  "BizDev/Partnerships": "Go-to-market", Marketing: "Go-to-market", Content: "Go-to-market",
+  Brand: "Go-to-market", "Performance Marketing": "Go-to-market", "Customer Success": "Go-to-market",
+  Support: "Go-to-market",
+  Operations: "Operations", BizOps: "Operations", Strategy: "Operations", Consultant: "Operations",
+  "Office/EA": "Operations",
+  Finance: "Finance", "FP&A": "Finance", Accounting: "Finance", Payroll: "Finance",
+  Legal: "Legal & People", Compliance: "Legal & People", "People/HR": "Legal & People",
+  "Recruiter/TA": "Legal & People",
+  "Real Estate": "Other sectors", Healthcare: "Other sectors", "Skilled Trades": "Other sectors",
+  Retail: "Other sectors", "Health & Safety": "Other sectors", "Teaching/Education": "Other sectors",
+};
+
+/** Display order for the category browse row. */
+export const CATEGORY_ORDER = [
+  "Engineering", "Data", "Product", "Design", "Go-to-market",
+  "Operations", "Finance", "Legal & People", "Other sectors",
+];
+
+export function familyCategory(family: string): string {
+  return FAMILY_CATEGORY[family] ?? "Other sectors";
+}

@@ -5,7 +5,7 @@ import { SectionHeader, RankTable, toPayVMs, toVolumeVMs, Breadcrumbs, PillButto
 import { HubExplorer, HubItem } from "@/components/HubExplorer";
 import { Icon } from "@/components/icons";
 import { eur } from "@/lib/format";
-import { familyLabel } from "@/lib/roleNames";
+import { familyLabel, familyCategory, CATEGORY_ORDER } from "@/lib/roleNames";
 
 export const revalidate = 3600;
 
@@ -31,6 +31,11 @@ export default async function RolesIndex() {
   const mostActive = activity.slice(0, 8);
   const items: HubItem[] = ranked.map((r) => ({ name: familyLabel(r.name), slug: r.slug, median: r.median!, n: r.n, flagCountry: null, href: `/roles/${r.slug}` }));
   const topSectors = sectors.filter((s) => s.sector !== "Other");
+  // Browse-by-category, as in mockup-roles-hub.png. Counts are the real number
+  // of benchmarked families in each category — no category is listed empty.
+  const byCategory = CATEGORY_ORDER
+    .map((cat) => ({ cat, families: ranked.filter((r) => familyCategory(r.name) === cat) }))
+    .filter((c) => c.families.length > 0);
 
   return (
     <div className="pb-4">
@@ -96,6 +101,30 @@ export default async function RolesIndex() {
           <div className="mt-4"><RankTable rows={toVolumeVMs(byVolume.map((r) => ({ ...r, name: familyLabel(r.name) })), (s) => `/roles/${s}`, "")} valueHead="Live job ads" /></div>
         </div>
       </section>
+
+      {/* Browse by category */}
+      {byCategory.length > 0 && (
+        <section className="mt-12">
+          <SectionHeader kicker="Browse" title="Role families by category" />
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {byCategory.map((c) => (
+              <div key={c.cat} className="card">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-[15px] font-semibold">{c.cat}</span>
+                  <span className="tnum text-[12px] text-ink-faint">{c.families.length} benchmarked</span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {c.families.map((r) => (
+                    <Link key={r.slug} href={`/roles/${r.slug}`} className="rounded-full border px-2.5 py-1 text-[12px] text-ink-muted transition-colors hover:border-[var(--border-strong)] hover:text-ink" style={{ background: "var(--surface-1)" }}>
+                      {familyLabel(r.name)}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Explore */}
       <section className="mt-14">

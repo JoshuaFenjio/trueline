@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getCityMapData, getLiveStats, isConfigured } from "@/lib/data";
+import { getCityMapData, getLiveStats, isConfigured, CONCENTRATION_GATE } from "@/lib/data";
 import { SectionHeader, Breadcrumbs, PillButton } from "@/components/blocks";
 import { HubExplorer, HubItem } from "@/components/HubExplorer";
 import { PlaceTile } from "@/components/PlaceTile";
@@ -18,7 +18,11 @@ export const metadata: Metadata = {
 export default async function CitiesIndex() {
   if (!isConfigured) return <p className="py-24 text-center text-ink-muted">Supabase not configured.</p>;
   const [map, stats] = await Promise.all([getCityMapData(), getLiveStats()]);
+  // Headline "top-paying" skips markets where one employer supplies most of
+  // the ads — the homepage's top-city card already does this, and Cardiff
+  // (mostly one bank) was being presented as the best-paying city in Europe.
   const cities = [...map.cities].sort((a, b) => b.median - a.median);
+  const topPaying = cities.filter((c) => !c.concentration || c.concentration.share <= CONCENTRATION_GATE);
   const topMarkets = [...map.cities].sort((a, b) => b.n - a.n).slice(0, 6);
   const items: HubItem[] = cities.map((c) => ({ name: c.city, slug: c.slug, median: c.median, n: c.n, flagCountry: c.country, href: `/locations/${c.slug}` }));
 
@@ -39,7 +43,7 @@ export default async function CitiesIndex() {
           <div className="text-[12px] text-ink-faint">Cities with live job ads</div>
           <div className="tnum mt-1 text-3xl font-semibold">{map.cities.length}</div>
           <div className="mt-4 grid grid-cols-2 gap-4">
-            <div><div className="tnum text-lg font-semibold">{eur(cities[0]?.median ?? 0)}</div><div className="text-[11px] text-ink-faint">Top-paying: {cities[0]?.city}</div></div>
+            <div><div className="tnum text-lg font-semibold">{eur(topPaying[0]?.median ?? 0)}</div><div className="text-[11px] text-ink-faint">Top-paying: {topPaying[0]?.city}</div></div>
             <div><div className="tnum text-lg font-semibold">{stats.salaried.toLocaleString()}</div><div className="text-[11px] text-ink-faint">Salaried job ads tracked</div></div>
           </div>
         </div>

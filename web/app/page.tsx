@@ -18,6 +18,7 @@ import { EuropePayMap } from "@/components/EuropePayMap";
 import { RolePicker } from "@/components/RolePicker";
 import { familyLabel } from "@/lib/roleNames";
 import { CommunityActivity } from "@/components/CommunityActivity";
+import { LensCard } from "@/components/blocks";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { SectionHeader, LinkedSectionHeader, ArrowLink } from "@/components/blocks";
 import { Icon } from "@/components/icons";
@@ -244,6 +245,16 @@ export default async function Home({
           </div>
         </section>
       )}
+
+      {/* Lens cards — the mockup's primary navigation row. Every count is live:
+          nothing here is a placeholder. */}
+      <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-5 md:mt-10">
+        <LensCard href="/roles" kicker="Roles" title="Salaries by role" line={`${roleIdx.filter((r) => r.name !== "Other" && r.median != null).length} role families benchmarked across EMEA.`} accent />
+        <LensCard href="/locations" kicker="Cities" title="Salaries by city" line={`${mapData.cities.length} cities with enough live ads to rank.`} />
+        <LensCard href="/locations/countries" kicker="Countries" title="Salaries by country" line={`${countryNames.length} markets, compared on median base.`} />
+        <LensCard href="/companies" kicker="Companies" title="The Pay Index" line={`${board.length} employers scored against their sector.`} />
+        <LensCard href="/compare" kicker="Compare" title="Side by side" line="Put two or three employers against each other." />
+      </section>
 
       {/* Recently added by the community — APPROVED submissions only, shown as
           bands. Renders nothing at all until 3 approved entries exist, so it

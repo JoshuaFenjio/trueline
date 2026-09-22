@@ -13,7 +13,7 @@ import { Icon } from "@/components/icons";
 import { roleBlurb, roleIconName } from "@/lib/roleBlurbs";
 import { levelSlug, isManagementLevel } from "@/lib/levels";
 import { eur, eurK, slugify, timeAgo } from "@/lib/format";
-import { familyLabel, isGroupFamily } from "@/lib/roleNames";
+import { familyLabel, isGroupFamily, familyCategory } from "@/lib/roleNames";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -36,20 +36,6 @@ export async function generateMetadata({ params }: { params: { role: string } })
   };
 }
 
-const CATEGORY: Record<string, string> = {
-  "Software Engineer": "Engineering", Backend: "Engineering", Frontend: "Engineering", Mobile: "Engineering",
-  "DevOps/Platform": "Engineering", "QA/Test": "Engineering", "Engineering Manager": "Engineering", "Security Engineer": "Engineering",
-  SecOps: "Engineering", "Hardware/Embedded": "Engineering", "Solutions Engineer": "Engineering",
-  "Data Engineer": "Data", "Data Scientist": "Data", "Data Analyst": "Data", "ML/AI Engineer": "Data", "Research Scientist": "Data",
-  "Product Manager": "Product", "Product Marketing": "Product", Designer: "Design",
-  "Account Executive": "Go-to-market", "Account Manager": "Go-to-market", "SDR/BDR": "Go-to-market",
-  "BizDev/Partnerships": "Go-to-market", Marketing: "Go-to-market", Content: "Go-to-market", Brand: "Go-to-market",
-  "Performance Marketing": "Go-to-market", "Customer Success": "Go-to-market", Support: "Go-to-market",
-  Operations: "Operations", BizOps: "Operations", Strategy: "Operations", Consultant: "Operations", "Office/EA": "Operations",
-  Finance: "Finance", "FP&A": "Finance", Accounting: "Finance", Payroll: "Finance",
-  Legal: "Legal & People", Compliance: "Legal & People", "People/HR": "Legal & People", "Recruiter/TA": "Legal & People",
-  "Real Estate": "Other sectors", Healthcare: "Other sectors", "Skilled Trades": "Other sectors", Retail: "Other sectors",
-};
 
 function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: React.ReactNode; sub?: string }) {
   return (
@@ -95,7 +81,7 @@ export default async function RolePage({ params }: { params: { role: string } })
           </div>
           <p className="mt-3 max-w-xl text-ink-muted">{roleBlurb(role)}</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <span className="rounded-full border px-3 py-1 text-[12px] text-ink-muted" style={{ background: "var(--surface-1)" }}>{CATEGORY[role] ?? "Role family"}</span>
+            <span className="rounded-full border px-3 py-1 text-[12px] text-ink-muted" style={{ background: "var(--surface-1)" }}>{familyCategory(role)}</span>
             <span className="rounded-full border px-3 py-1 text-[12px] text-ink-muted" style={{ background: "var(--surface-1)" }}>EMEA</span>
             <span className="rounded-full border px-3 py-1 text-[12px] text-ink-muted" style={{ background: "var(--surface-1)" }}>Advertised base</span>
           </div>
