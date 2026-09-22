@@ -1,60 +1,51 @@
 import type { Metadata } from "next";
 import { submitSalary } from "./actions";
-import { LEVELS } from "@/lib/levels";
-import { Card, PrimaryButton } from "@/components/ui";
+import { Card } from "@/components/ui";
 import { Breadcrumbs } from "@/components/blocks";
-import { familySuggestLabel } from "@/lib/roleNames";
+import { AddSalaryForm } from "@/components/AddSalaryForm";
+import { getRoleFamilies, getCityList, getCountryList, getCompaniesBoard, isConfigured } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: "Add your salary",
   description: "Add your salary anonymously to improve Europe's pay benchmarks. Reviewed by a human, never attributed to you.",
 };
 
-const ROLE_FAMILIES = [
-  "Software Engineer", "Frontend", "Backend", "Mobile", "ML/AI Engineer",
-  "Research Scientist", "Data Engineer", "Data Scientist", "Data Analyst",
-  "DevOps/Platform", "Security Engineer", "SecOps", "Hardware/Embedded",
-  "QA/Test", "Engineering Manager", "Solutions Engineer", "Product Manager",
-  "Product Marketing", "Designer",
-  "Account Executive", "Account Manager", "SDR/BDR", "BizDev/Partnerships",
-  "Marketing", "Content", "Brand", "Performance Marketing",
-  "Customer Success", "Support",
-  "Operations", "BizOps", "Strategy", "Consultant", "Office/EA",
-  "Finance", "FP&A", "Accounting", "Payroll",
-  "Legal", "Compliance", "People/HR", "Recruiter/TA",
-  "Real Estate", "Healthcare", "Skilled Trades", "Retail", "Other",
-];
-const PROOF = ["Offer letter", "Payslip", "Contract", "Verbal offer", "Prefer not to say"];
+export const revalidate = 3600;
 
-export default function AddPage({ searchParams }: { searchParams: { submitted?: string; error?: string; company?: string } }) {
-  const submitted = searchParams.submitted === "1";
+// Families we accept a submission for, over and above the ones currently in the
+// corpus — so someone can tell us about a role we don't label yet.
+const EXTRA_FAMILIES = ["Other"];
+
+export default async function AddPage({ searchParams }: { searchParams: { error?: string; company?: string } }) {
   const error = searchParams.error;
-  const company = searchParams.company || "";
+  const company = (searchParams.company || "").slice(0, 120);
+
+  // Every type-ahead is fed from what we actually track, so a submission lands
+  // on the same entity the benchmarks use instead of a near-miss spelling.
+  const [roles, cities, countries, board] = isConfigured
+    ? await Promise.all([getRoleFamilies(), getCityList(), getCountryList(), getCompaniesBoard()])
+    : [[], [], [], []];
+  const options = {
+    roles: [...new Set([...roles, ...EXTRA_FAMILIES])],
+    cities: cities.map((c) => c.city),
+    countries: countries.map((c) => c.country),
+    companies: board.map((c) => c.company),
+  };
 
   return (
-    <div className="mx-auto max-w-xl pb-4">
+    <div className="mx-auto max-w-2xl pb-4">
       <div className="pt-8"><Breadcrumbs items={[{ label: "Add your salary" }]} /></div>
       <span className="eyebrow-pill mt-6"><span className="eyebrow">Add your salary</span></span>
       <h1 className="t-h1 mt-5">Add your salary <span className="accent-italic">anonymously.</span></h1>
       <p className="mt-4 text-lg leading-relaxed text-ink-muted">
-        Every verified number makes the benchmarks truer. Takes 30 seconds.
+        Advertised ranges tell you what employers offer. What people actually earn is the other half — and only you
+        can tell us that. Takes about a minute.
       </p>
 
-      {submitted && (
-        <div className="mt-6 rounded-card border p-4" style={{ background: "rgba(74,222,156,.08)", borderColor: "rgba(74,222,156,.35)" }}>
-          <p className="text-sm" style={{ color: "var(--mint)" }}>
-            Thank you. Your salary is in the review queue. A human checks each one before it&apos;s ever used.
-          </p>
-          <div className="mt-3 flex gap-4 text-sm">
-            <a href="/" className="text-brand-2 hover:underline">Search the data →</a>
-            <a href="/leaderboards" className="text-brand-2 hover:underline">See who pays most →</a>
-          </div>
-        </div>
-      )}
       {error && (
         <div className="mt-6 rounded-card border p-4" style={{ background: "rgba(255,106,69,.08)", borderColor: "rgba(255,106,69,.35)" }}>
           <p className="text-sm" style={{ color: "var(--ember)" }}>
-            {error === "missing" ? "Please fill in at least role, company and base salary."
+            {error === "missing" ? "Please fill in role family, exact title, company and base salary."
               : error === "config" ? "Submissions aren't configured yet."
               : "Something went wrong saving that. Please try again."}
           </p>
@@ -62,60 +53,8 @@ export default function AddPage({ searchParams }: { searchParams: { submitted?: 
       )}
 
       <Card className="mt-6">
-        <form action={submitSalary} className="space-y-4">
-          <Row>
-            <FieldSel name="role_family" label="Role family *" options={ROLE_FAMILIES} labelOf={familySuggestLabel} />
-            <FieldSel name="level" label="Level" options={[...LEVELS]} />
-          </Row>
-          <Row>
-            <FieldTxt name="company" label="Company *" placeholder="e.g. Monzo" defaultValue={company} />
-            <FieldNum name="base_eur" label="Annual base (EUR) *" placeholder="75000" />
-          </Row>
-          <Row>
-            <FieldTxt name="city" label="City" placeholder="e.g. London" />
-            <FieldTxt name="country" label="Country" placeholder="e.g. United Kingdom" />
-          </Row>
-          <FieldSel name="proof_type" label="Proof type" options={PROOF} />
-
-          <div className="pt-1">
-            <PrimaryButton className="w-full">Submit for review</PrimaryButton>
-          </div>
-          <p className="text-center text-xs text-ink-faint">
-            Anonymous. Reviewed by a human before use. Never attributed to you or shown as an individual data point.
-          </p>
-        </form>
+        <AddSalaryForm action={submitSalary} options={options} defaultCompany={company} />
       </Card>
     </div>
-  );
-}
-
-function Row({ children }: { children: React.ReactNode }) {
-  return <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>;
-}
-function Label({ children }: { children: React.ReactNode }) {
-  return <span className="mb-1.5 block text-xs text-ink-muted">{children}</span>;
-}
-function FieldTxt({ name, label, placeholder, defaultValue }: { name: string; label: string; placeholder?: string; defaultValue?: string }) {
-  return (
-    <label className="block"><Label>{label}</Label>
-      <input name={name} placeholder={placeholder} defaultValue={defaultValue} className="field w-full px-3 py-3" />
-    </label>
-  );
-}
-function FieldNum({ name, label, placeholder }: { name: string; label: string; placeholder?: string }) {
-  return (
-    <label className="block"><Label>{label}</Label>
-      <input name={name} type="number" min={0} step={1000} placeholder={placeholder} className="field tnum w-full px-3 py-3" />
-    </label>
-  );
-}
-function FieldSel({ name, label, options, labelOf }: { name: string; label: string; options: string[]; labelOf?: (v: string) => string }) {
-  return (
-    <label className="block"><Label>{label}</Label>
-      <select name={name} className="field w-full px-3 py-3" defaultValue="">
-        <option value="" disabled>Select…</option>
-        {options.map((o) => <option key={o} value={o}>{labelOf ? labelOf(o) : o}</option>)}
-      </select>
-    </label>
   );
 }

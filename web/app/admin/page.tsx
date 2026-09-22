@@ -66,6 +66,7 @@ export default async function Admin({ searchParams }: { searchParams: { error?: 
           <h1 className="t-h2">Submission review</h1>
           <p className="mt-1 text-sm text-ink-muted">
             <span className="tnum">{rows.length}</span> pending. Approved rows flow into stats as verified (shown at 3+ per slice).
+            {" "}Bonus, equity and comments are context only — never blended into a base median.
           </p>
         </div>
         <form action={logout}><button className="btn-ghost rounded-xl px-4 py-2 text-sm">Sign out</button></form>
@@ -81,11 +82,23 @@ export default async function Admin({ searchParams }: { searchParams: { error?: 
                 <div className="font-medium">
                   {r.company || "—"} <span className="text-ink-muted">· {r.role_family || "—"}{r.level ? ` · ${r.level}` : ""}</span>
                 </div>
+                {r.exact_title && <div className="mt-0.5 text-sm text-ink-muted">&ldquo;{r.exact_title}&rdquo;</div>}
                 <div className="tnum mt-1 text-sm text-ink-muted">
                   {eur(r.base_eur)} base
                   {r.city ? ` · ${r.city}` : ""}{r.country ? `, ${r.country}` : ""}
                   {r.proof_type ? ` · ${r.proof_type}` : ""}
                 </div>
+                {/* Total-comp context: reviewer-visible, never in a median. */}
+                {(r.bonus_eur || r.equity_note || r.comments) && (
+                  <div className="mt-2 rounded-lg border px-3 py-2 text-[12px] leading-relaxed text-ink-muted" style={{ borderColor: "var(--border)", background: "var(--surface-1)" }}>
+                    <span className="text-[10px] uppercase tracking-wide text-ink-faint">Total comp context — not in medians</span>
+                    <div className="mt-1 space-y-0.5">
+                      {r.bonus_eur ? <div className="tnum">Bonus {eur(r.bonus_eur)}</div> : null}
+                      {r.equity_note ? <div>Equity: {r.equity_note}</div> : null}
+                      {r.comments ? <div>{r.comments}</div> : null}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="flex shrink-0 gap-2">
                 <form action={setStatus.bind(null, r.id, "approved")}>

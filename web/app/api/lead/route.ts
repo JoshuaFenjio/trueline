@@ -13,14 +13,21 @@ export async function POST(req: Request) {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return NextResponse.json({ error: "invalid_email" }, { status: 400 });
   }
-  const ALLOWED_SOURCES = new Set(["employer", "candidate", "newsletter"]);
+  const ALLOWED_SOURCES = new Set(["employer", "candidate", "newsletter", "insights"]);
   const source = ALLOWED_SOURCES.has(body.source) ? body.source : "candidate";
   const company = body.company ? String(body.company).trim().slice(0, 120) : null;
+  // Role family this person wants insights for (post-submission opt-in).
+  const role = body.role ? String(body.role).trim().slice(0, 80) : null;
 
   const sb = getSupabase();
   if (!sb) return NextResponse.json({ error: "unconfigured" }, { status: 500 });
 
-  const { error } = await sb.from("leads").insert({ email, company, source });
+  let { error } = await sb.from("leads").insert({ email, company, source, role });
+  if (error && /role/i.test(error.message)) {
+    // migrations/2026-09-submission-context.sql not applied yet — keep the
+    // lead rather than lose it over an optional column.
+    ({ error } = await sb.from("leads").insert({ email, company, source }));
+  }
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

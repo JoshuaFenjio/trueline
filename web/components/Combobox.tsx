@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 // clear row (placeholder text) is always offered so it doubles as a dropdown.
 export function Combobox({
   options, value, onChange, placeholder, clearValue = "", className = "", inputClassName = "field w-full px-3 py-2 text-sm",
-  labelOf, optionLabelOf,
+  labelOf, optionLabelOf, allowFreeText = false,
 }: {
   options: string[]; value: string; onChange: (v: string) => void; placeholder: string;
   clearValue?: string; className?: string; inputClassName?: string;
@@ -19,6 +19,11 @@ export function Combobox({
   // chosen.
   labelOf?: (v: string) => string;
   optionLabelOf?: (v: string) => string;
+  // Submission forms need to accept a company or city we don't track yet, so
+  // typed text that matches no option is committed verbatim instead of being
+  // discarded on blur. Filter/picker uses leave this off: there, a value that
+  // isn't an option would filter to nothing.
+  allowFreeText?: boolean;
 }) {
   const label = labelOf ?? ((v: string) => v);
   const rowLabel = optionLabelOf ?? label;
@@ -26,6 +31,13 @@ export function Combobox({
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
+  // The blur fix-up runs on a 150ms timer (so a mousedown on a row lands
+  // first). Reading `input` from the render closure there is stale, and would
+  // let a just-clicked option be overwritten by whatever was typed before it —
+  // so the latest input and a "we already committed" flag live in refs.
+  const inputRef = useRef(input);
+  inputRef.current = input;
+  const committedRef = useRef(false);
   useEffect(() => { setInput(value === clearValue ? "" : label(value)); }, [value, clearValue, labelOf]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const rows = useMemo(() => {
@@ -43,16 +55,39 @@ export function Combobox({
           return ap - bp || rowLabel(a).localeCompare(rowLabel(b));
         });
     }
-    const out = [{ label: placeholder, v: clearValue, clear: true }, ...opts.slice(0, 30).map((o) => ({ label: rowLabel(o), v: o, clear: false }))];
-    return out;
-  }, [input, options, placeholder, clearValue, optionLabelOf, labelOf]); // eslint-disable-line react-hooks/exhaustive-deps
+    const rowsOut = opts.slice(0, 30).map((o) => ({ label: rowLabel(o), v: o, clear: false }));
+    // The clear row doubles as "show everything" for filter comboboxes. On a
+    // free-text field it is only useful once there is something to clear.
+    const showClear = !allowFreeText || value !== clearValue;
+    return showClear ? [{ label: placeholder, v: clearValue, clear: true }, ...rowsOut] : rowsOut;
+  }, [input, options, placeholder, clearValue, optionLabelOf, labelOf, allowFreeText, value]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function commit(v: string) { onChange(v); setInput(v === clearValue ? "" : label(v)); setOpen(false); }
+  function commit(v: string) {
+    committedRef.current = true;
+    onChange(v);
+    const next = v === clearValue ? "" : label(v);
+    setInput(next); inputRef.current = next;
+    setOpen(false);
+  }
+  // Free text: keep exactly what was typed, as both value and display.
+  function commitFree(v: string) {
+    committedRef.current = true;
+    onChange(v); setInput(v); inputRef.current = v; setOpen(false);
+  }
   function onKey(e: React.KeyboardEvent) {
     if (!open) { if (e.key === "ArrowDown") { setOpen(true); setActive(0); } return; }
     if (e.key === "ArrowDown") { e.preventDefault(); setActive((a) => Math.min(a + 1, rows.length - 1)); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)); }
-    else if (e.key === "Enter") { e.preventDefault(); if (rows[active]) commit(rows[active].v); }
+    else if (e.key === "Enter") {
+      e.preventDefault();
+      // A highlighted real option always wins over free text — otherwise
+      // arrow-down + Enter silently stored the half-typed string instead of
+      // the option the user was looking at.
+      const row = rows[active];
+      if (row && !row.clear) commit(row.v);
+      else if (allowFreeText && input.trim()) commitFree(input.trim());
+      else if (row) commit(row.v);
+    }
     else if (e.key === "Escape") { setOpen(false); setInput(value === clearValue ? "" : label(value)); }
   }
 
@@ -60,10 +95,19 @@ export function Combobox({
     <div ref={ref} className={`relative ${className}`}>
       <input
         value={input}
-        onChange={(e) => { setInput(e.target.value); setOpen(true); setActive(0); }}
+        onChange={(e) => { setInput(e.target.value); setOpen(true); setActive(allowFreeText ? 0 : 0); }}
         onKeyDown={onKey}
         onFocus={() => { setOpen(true); setActive(0); }}
-        onBlur={() => setTimeout(() => { setOpen(false); setInput(value === clearValue ? "" : label(value)); }, 150)}
+        onBlur={() => {
+          committedRef.current = false;
+          setTimeout(() => {
+            setOpen(false);
+            if (committedRef.current) return; // a row was picked; leave it alone
+            const t = inputRef.current.trim();
+            if (allowFreeText && t && t !== label(value)) { onChange(t); return; }
+            setInput(value === clearValue ? "" : label(value));
+          }, 150);
+        }}
         placeholder={placeholder}
         role="combobox"
         aria-expanded={open}
