@@ -7,6 +7,7 @@ import { watchlistBySlug, WatchEntry } from "@/lib/watchlist";
 import { ScoreBadge, scoreColor, Card, Stat } from "@/components/ui";
 import { SectionHeader, Breadcrumbs, ArrowLink, PillButton } from "@/components/blocks";
 import { CompanyLogo } from "@/components/CompanyLogo";
+import { PostingList } from "@/components/PostingList";
 import { CompanyHiresMap } from "@/components/CompanyHiresMap";
 import { GpgModule } from "@/components/GpgModule";
 import { ShareButton } from "@/components/ShareButton";
@@ -60,13 +61,13 @@ export default async function CompanyPage({ params }: { params: { slug: string }
   }
   const refreshed = await getLastRefreshed();
   const meta = companyMeta(c.company);
-  const chips = [c.sector, meta.hqCity, meta.stage, meta.founded ? `Founded ${meta.founded}` : null].filter(Boolean) as string[];
+  const chips = [c.sector, meta.hqCity, meta.stage, meta.founded ? `Founded ${meta.founded}` : null, meta.employees ? `${meta.employees} employees` : null].filter(Boolean) as string[];
   const topPct = c.sectorTotal ? Math.max(1, Math.round((c.sectorRank / c.sectorTotal) * 100)) : null;
 
   // Transparency sub-scores — all from real fields.
   const recentDays = c.latest.reduce((min, p) => {
-    if (!p.postedAt) return min; const d = (Date.now() - Date.parse(p.postedAt)) / 86400000;
-    return Number.isNaN(d) ? min : Math.min(min, d);
+    if (!p.dateMs) return min;
+    return Math.min(min, (Date.now() - p.dateMs) / 86400000);
   }, Infinity);
   const subScores = [
     { label: "Data volume", tier: tier(c.activeN, 30, 10), note: `${c.activeN} live job ads` },
@@ -114,6 +115,13 @@ export default async function CompanyPage({ params }: { params: { slug: string }
             {meta.description && <p className="mt-1.5 max-w-md text-[13px] leading-snug text-ink-muted">{meta.description}</p>}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {chips.map((b) => <span key={b} className="rounded-full border px-2.5 py-0.5 text-[12px] text-ink-muted" style={{ background: "var(--surface-1)" }}>{b}</span>)}
+              {/* Operating markets come from OUR data (countries with live ads),
+                  never from config — so they can't go stale. */}
+              {c.markets.length > 0 && (
+                <a href="#locations" className="rounded-full border px-2.5 py-0.5 text-[12px] text-ink-muted hover:text-ink" style={{ background: "var(--surface-1)" }}>
+                  Hiring in {c.markets.length} EMEA market{c.markets.length === 1 ? "" : "s"}
+                </a>
+              )}
               {meta.website && <a href={`https://${meta.website}`} target="_blank" rel="noopener noreferrer" className="rounded-full border px-2.5 py-0.5 text-[12px] text-ink-muted hover:text-ink" style={{ background: "var(--surface-1)" }}>{meta.website} ↗</a>}
             </div>
           </div>
@@ -146,79 +154,95 @@ export default async function CompanyPage({ params }: { params: { slug: string }
         {tabs.map((t) => <a key={t.id} href={`#${t.id}`} className="pill-btn"><t.icon size={15} /><span>{t.label}</span></a>)}
       </nav>
 
-      {/* Overview */}
-      <section className="mt-10 scroll-mt-24 grid gap-6 lg:grid-cols-[1.3fr_1fr]" id="overview">
-        <div className="card">
+      {/* 1. OPEN JOBS — what most people came for, moved up from the bottom. */}
+      <section className="mt-10 scroll-mt-24" id="jobs">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <SectionHeader kicker="Open jobs" title="Latest salaried postings" />
+          <span className="tnum text-[12px] text-ink-faint">
+            {c.n} of {c.activeN} live ads disclose pay
+          </span>
+        </div>
+        {c.latest.length > 0 ? (
+          <div className="card mt-5">
+            <PostingList postings={c.latest} sortable />
+            <p className="mt-3 text-[12px] text-ink-faint">
+              Only ads with a salary range we can verify appear here. Titles open {c.company}&rsquo;s own posting.
+            </p>
+          </div>
+        ) : (
+          <div className="card mt-5">
+            <p className="text-sm text-ink-muted">
+              No live {c.company} ad currently states a salary range we can verify. We track{" "}
+              <span className="tnum text-ink">{c.activeN}</span> open role{c.activeN === 1 ? "" : "s"} here — the pay
+              just isn&rsquo;t published on them.
+            </p>
+          </div>
+        )}
+      </section>
+
+      {/* 2. ROLES — EVERY family with live ads, not only the salaried ones. */}
+      <section className="mt-16 scroll-mt-24" id="roles">
+        <SectionHeader
+          kicker="Roles"
+          title={`Roles ${c.company} hires for`}
+          sub={`All ${c.roles.length} role famil${c.roles.length === 1 ? "y" : "ies"} with live job ads. Median shown where 3+ of them disclose pay.`}
+        />
+        <div className="card mt-5 !p-0">
+          <div className="flex items-center gap-3 border-b px-4 py-2.5 text-[11px] text-ink-faint" style={{ borderColor: "var(--border)" }}>
+            <span className="min-w-0 flex-1">Role family</span>
+            <span className="w-16 shrink-0 text-right">Live ads</span>
+            <span className="w-20 shrink-0 text-right">Disclose pay</span>
+            <span className="w-24 shrink-0 text-right">Median base</span>
+          </div>
+          <ol>
+            {c.roles.map((r) => (
+              <li key={r.role} className="border-t" style={{ borderColor: "var(--border)" }}>
+                <Link href={`/roles/${r.slug}`} className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--band)]">
+                  <span className="min-w-0 flex-1 truncate">{familyLabel(r.role)}</span>
+                  <span className="tnum w-16 shrink-0 text-right">{r.activeN}</span>
+                  <span className="tnum w-20 shrink-0 text-right text-ink-muted">{r.salariedN || <span className="text-ink-faint">none</span>}</span>
+                  <span className="tnum w-24 shrink-0 text-right font-semibold">
+                    {r.companyMedian != null
+                      ? eur(r.companyMedian)
+                      : <span className="font-normal text-ink-faint">{r.salariedN === 0 ? "no disclosed pay" : `${r.salariedN}/3`}</span>}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* 3. PAY VS MARKET. */}
+      <section className="mt-16 scroll-mt-24" id="salaries">
+        <SectionHeader kicker="Pay vs market" title="How each role compares" accent={`vs ${c.sector}.`} />
+        <div className="card mt-5">
           <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.bars size={15} /></span><span className="text-[15px] font-semibold">Role vs {c.sector} market</span></div>
           <div className="mt-4 space-y-2.5">
-            {c.roles.slice(0, 8).map((r) => {
+            {c.roles.filter((r) => r.companyMedian != null).slice(0, 8).map((r) => {
               const ratio = r.companyMedian && r.sectorMedian ? r.companyMedian / r.sectorMedian : null;
               const w = ratio ? Math.min(100, ratio * 50) : 0;
               const above = ratio != null && ratio >= 1;
               return (
                 <div key={r.role} className="flex items-center gap-3">
-                  <Link href={`/roles/${r.slug}`} className="w-40 truncate text-sm hover:text-ink">{familyLabel(r.role)}</Link>
-                  <span className="rank-track block flex-1"><span className="rank-fill" style={{ width: `${w}%`, background: r.companyMedian ? (above ? "var(--mint)" : "var(--accent)") : "var(--border-strong)" }} /></span>
-                  <span className="tnum w-24 text-right text-sm font-semibold">{r.companyMedian ? eur(r.companyMedian) : <span className="text-ink-faint">n&lt;3</span>}</span>
+                  <Link href={`/roles/${r.slug}`} className="w-40 shrink-0 truncate text-sm hover:text-ink">{familyLabel(r.role)}</Link>
+                  <span className="rank-track block min-w-0 flex-1"><span className="rank-fill" style={{ width: `${w}%`, background: above ? "var(--mint)" : "var(--accent)" }} /></span>
+                  <span className="tnum w-24 shrink-0 text-right text-sm font-semibold">{eur(r.companyMedian!)}</span>
                 </div>
               );
             })}
+            {c.roles.every((r) => r.companyMedian == null) && (
+              <p className="text-sm text-ink-faint">No role family here has 3+ salaried ads yet, so there is nothing to compare.</p>
+            )}
           </div>
-          <p className="mt-3 text-[12px] text-ink-faint">Bar is company median relative to the {c.sector} median. Roles need 3+ salaried postings.</p>
+          <p className="mt-3 text-[12px] text-ink-faint">Bar is the company median relative to the {c.sector} median. A role needs 3+ salaried job ads.</p>
         </div>
-        <div className="card">
-          <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.shield size={15} /></span><span className="text-[15px] font-semibold">Transparency breakdown</span></div>
-          <div className="mt-4 space-y-3">
-            {subScores.map((s) => (
-              <div key={s.label} className="flex items-center gap-3">
-                <span className="w-28 text-sm">{s.label}</span>
-                <span className="flex-1 text-[12px] text-ink-faint">{s.note}</span>
-                <span className="rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ color: tierColor(s.tier), background: `${tierColor(s.tier)}1a` }}>{s.tier}</span>
-              </div>
-            ))}
-          </div>
-          <p className="mt-3 text-[12px] text-ink-faint">Based on {c.activeN} live job ads. No verified employee submissions yet.</p>
-        </div>
-      </section>
 
-      {/* Where they hire — moved directly under role-vs-market + transparency */}
-      {c.markets.length > 0 && (
-        <section className="mt-10 scroll-mt-24" id="locations">
-          <SectionHeader kicker="Locations" title={`Where ${c.company} hires`} sub="Active postings by country. Median shown where 3+ are salaried; dots mark office cities." />
-          <div className="mt-5"><CompanyHiresMap company={c.company} markets={c.markets} offices={c.offices} /></div>
-        </section>
-      )}
-
-      {earlyCoverage && (
-        <section className="mt-6">
-          <div className="card flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-2.5">
-              <span className="icon-chip"><Icon.spark size={15} /></span>
-              <div>
-                <div className="text-[15px] font-semibold">Early coverage</div>
-                <p className="mt-1 max-w-prose text-[14px] text-ink-muted">
-                  We track {c.activeN} live posting{c.activeN === 1 ? "" : "s"} at {c.company}
-                  {c.n > 0 && c.n < c.activeN ? <>, {c.n} disclosing pay</> : null}, across just {c.roles.length} role famil{c.roles.length === 1 ? "y" : "ies"}.
-                  Coverage is still early here — help us sharpen it. Know a number?
-                </p>
-              </div>
-            </div>
-            <Link href={`/add?company=${encodeURIComponent(c.company)}`} className="pill-btn shrink-0"><span>Add yours</span><span className="arw">→</span></Link>
-          </div>
-        </section>
-      )}
-
-      {c.peers.length > 0 && <PeerCompare c={c} />}
-      <SectorContext c={c} />
-
-      {/* Salaries */}
-      <section className="mt-16 scroll-mt-24" id="salaries">
-        <SectionHeader kicker="Salaries" title="How each role compares" accent="vs sector." />
-        <Card className="mt-5 overflow-hidden !p-0">
-          <table className="w-full text-sm">
+        <Card className="mt-5 overflow-x-auto !p-0">
+          <table className="w-full min-w-[520px] text-sm">
             <thead>
               <tr className="text-left text-[12px] text-ink-faint">
-                <th className="px-5 py-3 font-normal">Role</th>
+                <th className="px-5 py-3 font-normal">Role family</th>
                 <th className="px-5 py-3 text-right font-normal">{c.company}</th>
                 <th className="px-5 py-3 text-right font-normal">{c.sector} median</th>
                 <th className="px-5 py-3 text-right font-normal">Δ</th>
@@ -230,7 +254,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
                 const dColor = delta == null ? undefined : delta >= 0 ? "var(--mint)" : "var(--ember)";
                 return (
                   <tr key={r.role} className="border-t" style={{ borderColor: "var(--border)" }}>
-                    <td className="px-5 py-3"><Link href={`/roles/${r.slug}`} className="hover:text-ink">{familyLabel(r.role)}</Link><span className="tnum ml-2 text-xs text-ink-faint">n={r.companyN}</span></td>
+                    <td className="px-5 py-3"><Link href={`/roles/${r.slug}`} className="hover:text-ink">{familyLabel(r.role)}</Link><span className="tnum ml-2 text-xs text-ink-faint">{r.salariedN} salaried</span></td>
                     <td className="px-5 py-3 text-right tnum">{r.companyMedian ? eur(r.companyMedian) : <Link href={`/add?company=${encodeURIComponent(c.company)}`} className="text-xs font-medium hover:underline" style={{ color: "var(--accent)" }}>add yours →</Link>}</td>
                     <td className="px-5 py-3 text-right tnum text-ink-muted">{r.sectorMedian ? eur(r.sectorMedian) : <span className="text-ink-faint">—</span>}</td>
                     <td className="px-5 py-3 text-right tnum" style={{ color: dColor }}>{delta == null ? "—" : `${delta >= 0 ? "+" : "−"}${eur(Math.abs(delta))}`}</td>
@@ -243,36 +267,61 @@ export default async function CompanyPage({ params }: { params: { slug: string }
         {c.history.length >= 2 && <Card className="mt-5"><div className="mb-3 text-[13px] font-medium">Median advertised base over time</div><Sparkline history={c.history} /></Card>}
       </section>
 
-      {/* Roles */}
-      <section className="mt-16 scroll-mt-24" id="roles">
-        <SectionHeader kicker="Roles" title={`Roles ${c.company} hires for`} sub="Role families with live tracked postings; median shown where 3+ are salaried." />
-        <div className="mt-5 flex flex-wrap gap-2">
-          {c.roles.map((r) => (
-            <Link key={r.role} href={`/roles/${r.slug}`} className="pill-btn"><span>{familyLabel(r.role)}</span><span className="tnum text-ink-faint">{r.companyN}</span></Link>
-          ))}
+      {/* 4. TRANSPARENCY. */}
+      <section className="mt-16 scroll-mt-24" id="transparency">
+        <SectionHeader kicker="Transparency" title={`What ${c.company} publishes`} />
+        <div className="card mt-5">
+          <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.shield size={15} /></span><span className="text-[15px] font-semibold">Transparency breakdown</span></div>
+          <div className="mt-4 space-y-3">
+            {subScores.map((s) => (
+              <div key={s.label} className="flex items-center gap-3">
+                <span className="w-28 shrink-0 text-sm">{s.label}</span>
+                <span className="min-w-0 flex-1 truncate text-[12px] text-ink-faint">{s.note}</span>
+                <span className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ color: tierColor(s.tier), background: `${tierColor(s.tier)}1a` }}>{s.tier}</span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-[12px] text-ink-faint">Based on {c.activeN} live job ads. No verified employee submissions yet.</p>
         </div>
       </section>
 
-      {/* Locations */}
-      {/* Jobs */}
-      <section className="mt-16 scroll-mt-24" id="jobs">
-        <SectionHeader kicker="Jobs" title="Latest salaried postings" />
-        {c.latest.length > 0 ? (
-          <Card className="mt-5 overflow-hidden !p-0">
-            <ul>
-              {c.latest.map((p, i) => {
-                const inner = (
-                  <div className="flex items-center justify-between gap-4 px-5 py-3">
-                    <div className="min-w-0"><div className="truncate">{p.title}</div><div className="tnum mt-0.5 text-xs text-ink-faint">{p.city}{p.postedAt ? ` · posted ${timeAgo(p.postedAt)}` : ""}</div></div>
-                    <div className="tnum shrink-0 text-right text-ink">{p.lo === p.hi ? eurK(p.lo) : `${eurK(p.lo)}–${eurK(p.hi)}`}</div>
-                  </div>
-                );
-                return <li key={i} className={i > 0 ? "border-t" : ""} style={{ borderColor: "var(--border)" }}>{p.url ? <a href={p.url} target="_blank" rel="noopener noreferrer" className="block transition-colors hover:bg-[var(--band)]">{inner}</a> : inner}</li>;
-              })}
-            </ul>
-          </Card>
-        ) : <p className="mt-5 text-sm text-ink-faint">No salaried postings with a verifiable range right now.</p>}
-      </section>
+      {/* 5. WHERE THEY HIRE. */}
+      {c.markets.length > 0 && (
+        <section className="mt-16 scroll-mt-24" id="locations">
+          <SectionHeader kicker="Locations" title={`Where ${c.company} hires`} sub="Live job ads by country. Median shown where 3+ disclose pay; dots mark office cities. Click a market for this company's ads there." />
+          <div className="mt-5">
+            <CompanyHiresMap
+              company={c.company}
+              markets={c.markets}
+              offices={c.offices}
+              postingsByCountry={c.postingsByCountry}
+              alsoOperates={c.alsoOperates}
+            />
+          </div>
+        </section>
+      )}
+
+      {earlyCoverage && (
+        <section className="mt-10">
+          <div className="card flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-2.5">
+              <span className="icon-chip"><Icon.spark size={15} /></span>
+              <div>
+                <div className="text-[15px] font-semibold">Early coverage</div>
+                <p className="mt-1 max-w-prose text-[14px] text-ink-muted">
+                  We track {c.activeN} live job ad{c.activeN === 1 ? "" : "s"} at {c.company}
+                  {c.n > 0 && c.n < c.activeN ? <>, {c.n} disclosing pay</> : null}, across just {c.roles.length} role famil{c.roles.length === 1 ? "y" : "ies"}.
+                  Coverage is still early here — help us sharpen it. Know a number?
+                </p>
+              </div>
+            </div>
+            <Link href={`/add?company=${encodeURIComponent(c.company)}`} className="pill-btn shrink-0"><span>Add yours</span><span className="arw">→</span></Link>
+          </div>
+        </section>
+      )}
+
+      {c.peers.length > 0 && <PeerCompare c={c} />}
+      <SectorContext c={c} />
 
       {/* What we don't know */}
       <section className="mt-16">
@@ -310,9 +359,12 @@ function WatchlistCompany({ w }: { w: WatchEntry }) {
         <CompanyLogo name={w.name} domain={w.domain} size={56} rounded="rounded-2xl" />
         <div>
           <h1 className="text-4xl font-extrabold tracking-tight md:text-5xl">{w.name}</h1>
+          {w.description && <p className="mt-1.5 max-w-md text-[13px] leading-snug text-ink-muted">{w.description}</p>}
           <div className="mt-2 flex flex-wrap items-center gap-x-3 text-sm text-ink-muted">
             <span>{w.sector}</span>
             {w.hqCity && <><span className="text-ink-faint/60">·</span><span>{w.hqCity}</span></>}
+            <span className="text-ink-faint/60">·</span>
+            <a href={`https://${w.domain}`} target="_blank" rel="noopener noreferrer" className="hover:text-ink">{w.domain} ↗</a>
           </div>
         </div>
       </div>

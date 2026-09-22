@@ -31,7 +31,7 @@ export async function generateMetadata({ searchParams }: { searchParams: { compa
 }
 
 function recencyDays(c: CompanyDetail): number | null {
-  const ts = c.latest.map((p) => (p.postedAt ? Date.parse(p.postedAt) : NaN)).filter((n) => !Number.isNaN(n));
+  const ts = c.latest.map((p) => p.dateMs).filter((n) => n > 0);
   if (!ts.length) return null;
   return Math.round((Date.now() - Math.max(...ts)) / 86400000);
 }

@@ -87,7 +87,7 @@ export default async function CountryPage({ params }: { params: { country: strin
                   <li key={c.slug} className="border-t first:border-t-0" style={{ borderColor: "var(--border)" }}>
                     <Link href={`/locations/${c.slug}`} className="flex h-10 items-center gap-3 transition-colors hover:bg-[var(--band)]">
                       <span className="tnum w-5 text-right text-sm text-ink-faint">{i + 1}</span>
-                      <span className="flex-1 truncate text-sm">{c.city} <span className="tnum text-[11px] text-ink-faint">n={c.n}</span></span>
+                      <Flag country={country} /><span className="min-w-0 flex-1 truncate text-sm">{c.city} <span className="tnum text-[11px] text-ink-faint">{c.n} ads</span></span>
                       <span className="tnum text-sm font-semibold">{eur(c.median)}</span>
                     </Link>
                   </li>

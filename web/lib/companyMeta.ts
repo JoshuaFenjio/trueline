@@ -6,11 +6,17 @@ import { COMPANY_DOMAINS } from "./companyDomains";
 // funding amounts, no CEO/people facts, nothing that isn't publicly obvious.
 export interface CompanyMeta {
   hqCity?: string;
-  website?: string; // bare domain
+  website?: string; // bare domain — VERIFIED only (see the note below)
   logo?: string; // manual override: full logo URL or local /logos/*.svg (wins over favicon)
   founded?: number;
   stage?: string; // "Series A/B/C…", "Public", "Private"
   description?: string; // short factual one-liner; hidden if absent
+  // Rough headcount, e.g. "1,000-5,000". Deliberately EMPTY everywhere today:
+  // we have no in-config source we can stand behind, and a headcount invented
+  // from memory is exactly the kind of number this project refuses to publish.
+  // The field exists so a verified source can be dropped in without a schema
+  // change; until then every company renders without it.
+  employees?: string;
 }
 
 export const COMPANY_META: Record<string, CompanyMeta> = {
@@ -468,6 +474,31 @@ export const COMPANY_META: Record<string, CompanyMeta> = {
   KNDS: { website: "knds.com", stage: "Private", description: "European land-defence systems." },
   "KNDS Deutschland": { website: "knds.com", description: "German land-defence systems (formerly KMW)." },
   Catawiki: { website: "catawiki.com", stage: "Private", founded: 2008, description: "Online auctions for collectibles." },
+
+  // --- Top-150 enrichment pass -------------------------------------------
+  // Websites here were each confirmed against the site's own homepage: the
+  // domain is reachable and its <title>/og:site_name names the company (see
+  // logo_sweep_all.py's name+identity path and its manual overrides). The
+  // one-liners paraphrase what that same homepage says the company does.
+  //
+  // hqCity, founded and employees are deliberately absent for these: we have
+  // no source in config we can stand behind, and this project does not print
+  // a fact it cannot show its working for. Blanks stay blank.
+  "Allica Bank": { website: "allica.bank", description: "Business bank for established SMEs." },
+  "Atruvia AG": { website: "atruvia.de" },
+  Capgemini: { website: "capgemini.com", stage: "Public", description: "Consulting, technology services and digital transformation." },
+  "cbs Corporate Business Solutions": { website: "cbs-consulting.com", description: "SAP and management consulting." },
+  Deloitte: { website: "deloitte.com", stage: "Private", description: "Audit, consulting, tax and risk advisory." },
+  "FERCHAU GmbH": { website: "ferchau.com", description: "Engineering and IT services provider." },
+  Idealista: { website: "idealista.com", description: "Property listings marketplace." },
+  Moss: { website: "getmoss.com", description: "Corporate cards, invoices and expense management." },
+  Nachhilfeunterricht: { website: "nachhilfeunterricht.de", description: "Marketplace for private tutoring." },
+  "netgo group GmbH": { website: "netgo.de", description: "IT services provider for mid-sized businesses." },
+  "Reply Deutschland SE": { website: "reply.com", description: "Digital services, technology and consulting." },
+  Robco: { website: "robco.de", description: "Modular industrial robotics." },
+  Senacor: { website: "senacor.com", description: "IT consulting and software engineering." },
+  Tusclasesparticulares: { website: "tusclasesparticulares.com", description: "Marketplace for private tutoring." },
+  Zego: { website: "zego.com", description: "Insurance for drivers and businesses." },
 };
 
 export function companyMeta(name: string): CompanyMeta {

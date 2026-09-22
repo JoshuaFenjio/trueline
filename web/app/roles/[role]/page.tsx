@@ -170,7 +170,7 @@ export default async function RolePage({ params }: { params: { role: string } })
           <section className="mt-8 grid gap-6 lg:grid-cols-3">
             <div className="card">
               <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.pin size={15} /></span><span className="text-[15px] font-semibold">Top paying cities</span></div>
-              <div className="mt-4">{hub.topCities.length ? <RankTable rows={toPayVMs(hub.topCities, (s) => `/locations/${s}`)} bars={false} /> : <p className="text-sm text-ink-faint">No city clears the gate yet.</p>}</div>
+              <div className="mt-4">{hub.topCities.length ? <RankTable rows={toPayVMs(hub.topCities, (s) => `/locations/${s}`, { flags: true })} bars={false} /> : <p className="text-sm text-ink-faint">No city clears the gate yet.</p>}</div>
             </div>
             <div className="card">
               <div className="flex items-center gap-2.5"><span className="icon-chip"><Icon.globe size={15} /></span><span className="text-[15px] font-semibold">Top paying countries</span></div>

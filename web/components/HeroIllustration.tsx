@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Flag } from "@/components/Flag";
 import { eur } from "@/lib/format";
 import type { HomeComposition } from "@/lib/data";
 
@@ -41,7 +42,7 @@ export function HeroIllustration({ comp }: { comp: HomeComposition }) {
   if (comp.topCity) {
     cards.push(
       <Card key="city" label="Top-paying city" href={`/locations/${comp.topCity.slug}`}>
-        <div className="text-[15px] font-semibold leading-tight">{comp.topCity.city}</div>
+        <div className="flex items-center gap-1.5 text-[15px] font-semibold leading-tight"><Flag country={comp.topCity.country} /><span className="truncate">{comp.topCity.city}</span></div>
         <div className="tnum mt-0.5 text-[13px] font-semibold">{eur(comp.topCity.median)}</div>
         <div className="tnum mt-0.5 text-[10px] text-ink-faint">median · {comp.topCity.n} salaried ads</div>
       </Card>

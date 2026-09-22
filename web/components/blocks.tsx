@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ReactNode } from "react";
+import { Flag } from "@/components/Flag";
 import { eur, eurK } from "@/lib/format";
 import { Trend } from "@/lib/stats";
 
@@ -156,6 +157,9 @@ export interface RankVM {
   valueLabel: string;
   barPct: number; // 0..1 relative to the leader
   tone?: string; // optional value color
+  // Country whose flag prefixes the row. Every place row on the site carries
+  // one — a city row shows its country's flag, a country row its own.
+  flagCountry?: string | null;
 }
 
 /**
@@ -188,7 +192,8 @@ export function RankTable({ rows, valueHead = "Median base", bars = true }: { ro
           const inner = (
             <div className="relative flex h-10 items-center px-1">
               <span className="tnum w-8 shrink-0 text-right text-sm text-ink-faint">{i + 1}</span>
-              <span className="ml-4 min-w-0 flex-[1_1_6rem] truncate">
+              {r.flagCountry !== undefined && <span className="ml-3 shrink-0"><Flag country={r.flagCountry} /></span>}
+              <span className={`${r.flagCountry !== undefined ? "ml-2" : "ml-4"} min-w-0 flex-[1_1_6rem] truncate`}>
                 <span className="text-ink">{r.label}</span>
                 {r.sub && <span className="tnum ml-2 text-xs text-ink-faint">{r.sub}</span>}
               </span>
@@ -217,8 +222,9 @@ export function RankTable({ rows, valueHead = "Median base", bars = true }: { ro
 
 // Build RankVMs from {label, slug/href, value, n} rows.
 export function toPayVMs(
-  rows: { label: string; slug?: string; value: number; n: number; note?: string }[],
-  hrefBase?: (slug: string) => string
+  rows: { label: string; slug?: string; value: number; n: number; note?: string; country?: string | null }[],
+  hrefBase?: (slug: string) => string,
+  opts?: { flags?: boolean }
 ): RankVM[] {
   const max = Math.max(1, ...rows.map((r) => r.value));
   return rows.map((r) => ({
@@ -227,6 +233,7 @@ export function toPayVMs(
     sub: r.note ? `${r.n} · ${r.note}` : `${r.n}`,
     valueLabel: eur(r.value),
     barPct: r.value / max,
+    ...(opts?.flags ? { flagCountry: r.country ?? null } : {}),
   }));
 }
 

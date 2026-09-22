@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { LiveCard } from "@/lib/data";
 import { CompanyLogo } from "@/components/CompanyLogo";
+import { Flag } from "@/components/Flag";
 import { origPay, timeAgoShort } from "@/lib/format";
 
 // Proof-of-life: the most recent real salaried postings, original currency.
@@ -32,7 +33,7 @@ export function LiveSalaryCards({ cards, viewAllHref = "/roles" }: { cards: Live
           <div className="mt-3">
             <div className="tnum text-lg font-semibold" style={{ color: "var(--accent)" }}>{origPay(c.amount, c.currency)}</div>
             <div className="mt-0.5 flex items-center justify-between text-[11px] text-ink-faint">
-              <span className="truncate">{c.city}</span>
+              <span className="flex min-w-0 items-center gap-1.5"><Flag country={c.country} /><span className="truncate">{c.city}</span></span>
               <span className="tnum shrink-0 pl-2">{timeAgoShort(c.postedAt)}</span>
             </div>
           </div>

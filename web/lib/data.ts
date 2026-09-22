@@ -379,7 +379,7 @@ export const getSectorCounts = async (): Promise<{ sector: Sector; n: number }[]
 // Most-recent salaried postings, in their ORIGINAL currency, for the live
 // proof-of-life cards on the homepage fold.
 export interface LiveCard {
-  company: string; slug: string; role: string; city: string;
+  company: string; slug: string; role: string; city: string; country: string | null;
   currency: string; amount: number; postedAt: string | null;
 }
 export const getRecentSalaried = unstable_cache(
@@ -416,6 +416,7 @@ export const getRecentSalaried = unstable_cache(
       out.push({
         company: r.company, slug: slugify(r.company),
         role: r.role_family || "Role", city: place.city || place.country || "Remote",
+        country: place.country ?? null,
         currency: (r.currency || "EUR").toUpperCase(),
         amount: Math.round((lo + (hi || lo)) / 2),
         postedAt: r.posted_at || null,
@@ -424,7 +425,7 @@ export const getRecentSalaried = unstable_cache(
     }
     return out;
   },
-  ["trueline-recent-v4"],
+  ["trueline-recent-v5"],
   { revalidate: 1800 }
 );
 // Entities that exist in the data at all (>= threshold ACTIVE postings), even
@@ -456,7 +457,7 @@ export async function countryFromSlug(slug: string): Promise<string | null> {
 // ---------------------------------------------------------------------------
 // Ranked helpers (companies / cities / countries) with gates
 // ---------------------------------------------------------------------------
-export interface RankRow { key: string; label: string; slug: string; value: number; n: number; }
+export interface RankRow { key: string; label: string; slug: string; value: number; n: number; country?: string | null; }
 
 function rankCompaniesBy(rows: Posting[], pred: (p: Posting) => boolean, gate = N_COMPANY): RankRow[] {
   const m = new Map<string, number[]>();
@@ -470,12 +471,20 @@ function rankCompaniesBy(rows: Posting[], pred: (p: Posting) => boolean, gate = 
 }
 function rankCitiesBy(rows: Posting[], pred: (p: Posting) => boolean, gate = N_MEDIAN): RankRow[] {
   const m = new Map<string, number[]>();
+  // Home country per city, so every city row can carry a flag.
+  const cc = new Map<string, Map<string, number>>();
   for (const r of usable(rows).filter(pred)) {
     if (!r.city) continue;
     const a = m.get(r.city) || []; a.push(r.annual); m.set(r.city, a);
+    if (r.country) {
+      const t = cc.get(r.city) || new Map<string, number>();
+      t.set(r.country, (t.get(r.country) || 0) + 1); cc.set(r.city, t);
+    }
   }
+  const homeCountry = (city: string) =>
+    [...(cc.get(city)?.entries() ?? [])].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
   return [...m.entries()].filter(([, v]) => v.length >= gate)
-    .map(([city, v]) => ({ key: city, label: city, slug: slugify(city), value: median(v), n: v.length }))
+    .map(([city, v]) => ({ key: city, label: city, slug: slugify(city), value: median(v), n: v.length, country: homeCountry(city) }))
     .sort((a, b) => b.value - a.value);
 }
 function rankCountriesBy(rows: Posting[], pred: (p: Posting) => boolean, gate = N_MEDIAN): RankRow[] {
@@ -829,20 +838,36 @@ export const getCityDetail = async (name: string): Promise<CityDetail> => {
 // ---------------------------------------------------------------------------
 // Company detail (upgraded)
 // ---------------------------------------------------------------------------
+// Superseded by PostingVM (lib/postings) — kept only for any caller that still
+// imports the name.
 export interface LatestPosting {
   title: string; city: string; lo: number; hi: number; postedAt: string | null; url: string | null;
 }
 export interface PeerStat { company: string; slug: string; payScore: number; midpoint: number; disclosurePct: number; }
 export interface CompanyDetail extends CompanyStat {
-  roles: { role: string; slug: string; companyMedian: number | null; companyN: number; sectorMedian: number | null }[];
+  // EVERY family the company has ACTIVE postings in — not only the ones with a
+  // usable salary. activeN is the honest "how many roles are open here" count;
+  // salariedN is how many of those disclosed pay we trust; companyMedian is
+  // null until salariedN clears the 3-posting company gate.
+  roles: {
+    role: string; slug: string;
+    companyMedian: number | null; companyN: number; salariedN: number; activeN: number;
+    sectorMedian: number | null;
+  }[];
   similar: { company: string; slug: string; midpoint: number; sector: Sector }[];
-  latest: LatestPosting[];
+  latest: PostingVM[];
   careersUrl: string | null;
   peers: PeerStat[];                         // 2 nearest sector peers by Pay Score
   sectorPeers: { company: string; slug: string; payScore: number }[]; // whole sector, for the distribution dot
   history: { month: string; n: number; median: number }[];           // monthly buckets, gated
-  markets: { country: string; postings: number; median: number | null }[]; // where they hire
+  markets: { country: string; postings: number; salaried: number; median: number | null }[]; // where they hire
   offices: { city: string; lat: number; lon: number; n: number }[];        // office-city dots
+  // Non-EMEA countries named in this company's MULTI-MARKET postings (an ad
+  // listing e.g. "London; Sunnyvale"). We only store EMEA postings, so this is
+  // the only in-corpus evidence that an employer also hires outside EMEA — it
+  // is presented as "also operates in", never as a market we benchmark.
+  alsoOperates: string[];
+  postingsByCountry: Record<string, PostingVM[]>; // company x country live ads
 }
 
 // Annualize an advertised RANGE as a pair (not per-bound), so a monthly range
@@ -888,20 +913,29 @@ export async function getCompanyBySlug(slug: string): Promise<CompanyDetail | nu
   for (const r of usable(rows).filter((p) => p.sector === stat.sector)) {
     const a = sectorRole.get(r.roleFamily) || []; a.push(r.annual); sectorRole.set(r.roleFamily, a);
   }
-  const companyRole = new Map<string, number[]>();
-  for (const r of usable(rows).filter((p) => p.company === stat.company)) {
-    const a = companyRole.get(r.roleFamily) || []; a.push(r.annual); companyRole.set(r.roleFamily, a);
+  // Built from ALL active postings, not just the salaried ones. Keying off
+  // usable() made a company look like it hired for 3 families when it had ads
+  // open in 12 — OpenAI showed 3 of its 12. Salaried counts ride alongside.
+  const companyActive = new Map<string, { all: number; sal: number[] }>();
+  for (const r of rows) {
+    if (r.company !== stat.company) continue;
+    const g = companyActive.get(r.roleFamily) || { all: 0, sal: [] };
+    g.all++; if (r.annual != null) g.sal.push(r.annual);
+    companyActive.set(r.roleFamily, g);
   }
-  const roles = [...companyRole.entries()]
-    .map(([role, v]) => {
+  const roles = [...companyActive.entries()]
+    .map(([role, g]) => {
       const sec = sectorRole.get(role) || [];
       return {
         role, slug: slugify(role),
-        companyMedian: v.length >= N_COMPANY ? median(v) : null, companyN: v.length,
+        companyMedian: g.sal.length >= N_COMPANY ? median(g.sal) : null,
+        companyN: g.sal.length,      // kept for callers that mean "salaried n"
+        salariedN: g.sal.length,
+        activeN: g.all,
         sectorMedian: sec.length >= N_MEDIAN ? median(sec) : null,
       };
     })
-    .sort((a, b) => b.companyN - a.companyN);
+    .sort((a, b) => b.activeN - a.activeN || b.salariedN - a.salariedN);
 
   // Similar companies = same sector, nearest midpoint.
   const similar = board
@@ -948,8 +982,21 @@ export async function getCompanyBySlug(slug: string): Promise<CompanyDetail | nu
     mByCountry.set(p.country, g);
   }
   const markets = [...mByCountry.entries()]
-    .map(([country, g]) => ({ country, postings: g.all, median: g.sal.length >= N_COMPANY ? Math.round(median(g.sal)) : null }))
+    .map(([country, g]) => ({
+      country, postings: g.all, salaried: g.sal.length,
+      median: g.sal.length >= N_COMPANY ? Math.round(median(g.sal)) : null,
+    }))
     .sort((a, b) => b.postings - a.postings);
+
+  // Company x country live ads, for the company-specific country view.
+  const postingsByCountry: Record<string, PostingVM[]> = {};
+  for (const p of compAll) {
+    if (!p.country) continue;
+    (postingsByCountry[p.country] ||= []).push(toVM(p));
+  }
+  for (const k of Object.keys(postingsByCountry)) {
+    postingsByCountry[k] = dedupe(sortPostings(postingsByCountry[k], "new")).slice(0, 8);
+  }
   const { CITY_COORDS } = await import("./cityCoords");
   const cityCount = new Map<string, number>();
   for (const p of compAll) if (p.city) cityCount.set(p.city, (cityCount.get(p.city) || 0) + 1);
@@ -958,37 +1005,24 @@ export async function getCompanyBySlug(slug: string): Promise<CompanyDetail | nu
     .map(([city, n]) => ({ city, lat: CITY_COORDS[city][0], lon: CITY_COORDS[city][1], n }))
     .sort((a, b) => b.n - a.n).slice(0, 12);
 
-  // Careers link + latest salaried postings from Supabase.
+  // Latest SALARIED ads, straight off the cached rows — same trust gates as the
+  // medians, and one fewer Supabase round-trip than the old dedicated query.
+  const latest = dedupe(sortPostings(compAll.filter((p) => p.annual != null).map(toVM), "new")).slice(0, 8);
+
+  // Careers link (the only thing here that still needs a query).
   let careers: string | null = null;
-  const latest: LatestPosting[] = [];
   const sb = getSupabase();
   if (sb) {
-    const [meta, posts] = await Promise.all([
-      sb.from("companies").select("ats,token").eq("name", stat.company).limit(1),
-      sb.from("job_postings")
-        .select("title,city,location,salary_eur_min,salary_eur_max,salary_period,posted_at,url,multi_market,currency,region,salary_source")
-        .eq("company", stat.company).eq("status", "active").neq("salary_source", "none")
-        .order("posted_at", { ascending: false }).limit(30),
-    ]);
-    const m = meta.data?.[0] as any;
+    const { data } = await sb.from("companies").select("ats,token").eq("name", stat.company).limit(1);
+    const m = data?.[0] as any;
     if (m?.ats && m?.token) careers = careersUrl(m.ats, m.token) || null;
-
-    for (const r of (posts.data as any[]) || []) {
-      if (r.region === "NONEMEA") continue;
-      if (r.salary_source === "parsed_suspect") continue; // untrusted parse
-      if (!EMEA_CURRENCIES.has((r.currency || "EUR").toUpperCase())) continue; // no USD-band leakage
-      const rng = annualizeRange(r.salary_eur_min, r.salary_eur_max, r.salary_period);
-      if (!rng || rng.lo < 20_000 || rng.lo > 500_000) continue; // plausibility + suspect gate
-      const place = resolvePlace(r.city || r.location, null);
-      latest.push({
-        title: r.title || "Role", city: place.city || place.country || "—",
-        lo: rng.lo, hi: rng.hi, postedAt: r.posted_at || null, url: r.url || null,
-      });
-      if (latest.length >= 6) break;
-    }
   }
 
-  return { ...stat, roles, similar, latest, careersUrl: careers, peers, sectorPeers, history, markets, offices };
+  const alsoOperates = await getAlsoOperates(stat.company);
+  return {
+    ...stat, roles, similar, latest, careersUrl: careers, peers, sectorPeers, history,
+    markets, offices, alsoOperates, postingsByCountry,
+  };
 }
 
 export async function getAllCompanySlugs(): Promise<string[]> {
@@ -1066,7 +1100,7 @@ export interface HomeComposition {
   emeaMedian: number;
   salaried: number; // usable salaried postings behind the EMEA median
   spark: number[]; // chronological monthly medians (n>=8 each), for the sparkline
-  topCity: { city: string; slug: string; median: number; n: number } | null;
+  topCity: { city: string; slug: string; median: number; n: number; country: string | null } | null;
   inDemandRole: { name: string; slug: string; activeN: number } | null;
 }
 export const getHomeComposition = async (): Promise<HomeComposition> => {
@@ -1101,7 +1135,12 @@ export const getHomeComposition = async (): Promise<HomeComposition> => {
     const conc = topCompanyShare(rs);
     if (conc && conc.share > 0.6) continue;
     const med = Math.round(median(rs.map((r) => r.annual)));
-    if (!topCity || med > topCity.median) topCity = { city, slug: slugify(city), median: med, n: rs.length };
+    if (!topCity || med > topCity.median) {
+      const cc = new Map<string, number>();
+      for (const r of rs) if (r.country) cc.set(r.country, (cc.get(r.country) || 0) + 1);
+      const country = [...cc.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+      topCity = { city, slug: slugify(city), median: med, n: rs.length, country };
+    }
   }
 
   // Most in-demand role by active posting volume. We deliberately show the live
@@ -1396,3 +1435,64 @@ export const getRolePostingsAll = async (role: string): Promise<PostingVM[]> => 
   const rows = await getData();
   return dedupe(sortPostings(rows.filter((p) => p.roleFamily === role).map(toVM), "new"));
 };
+
+// ---------------------------------------------------------------------------
+// "Also operates in" — non-EMEA markets an employer names in its own ads.
+//
+// We only STORE EMEA postings (pipeline drops the rest at ingest), so a company
+// page could imply Docker or GitLab exists only in the UK. The one piece of
+// in-corpus evidence we do have is the multi-market posting: an ad whose
+// location lists an EMEA office alongside a non-EMEA one ("London; Sunnyvale").
+// Those strings are read back here and matched against an explicit list of
+// non-EMEA places. It is presented as "also operates in" — never as a market we
+// benchmark, because we have no pay data for it.
+// ---------------------------------------------------------------------------
+const NONEMEA_PLACES: [RegExp, string][] = [
+  [/\b(united states|u\.?s\.?a|usa|\bus\b|california|colorado|massachusetts|illinois|texas|washington state|new york|san francisco|mountain view|sunnyvale|palo alto|seattle|boston|denver|austin|chicago|atlanta|miami|los angeles|san diego|bellevue|redmond|remote[, -]+us)\b/i, "United States"],
+  [/\b(canada|ontario|toronto|vancouver|montr[eé]al|quebec|\bcan\b)\b/i, "Canada"],
+  [/\b(australia|sydney|melbourne|brisbane|perth|new south wales|victoria, australia)\b/i, "Australia"],
+  [/\b(new zealand|auckland|wellington, nz)\b/i, "New Zealand"],
+  [/\b(india|bengaluru|bangalore|delhi|gurgaon|gurugram|noida|mumbai|hyderabad|pune|chennai)\b/i, "India"],
+  [/\b(singapore)\b/i, "Singapore"],
+  [/\b(japan|tokyo|osaka)\b/i, "Japan"],
+  [/\b(china|shanghai|beijing|shenzhen)\b/i, "China"],
+  [/\b(hong kong)\b/i, "Hong Kong"],
+  [/\b(south korea|seoul)\b/i, "South Korea"],
+  [/\b(brazil|brasil|s[aã]o paulo|rio de janeiro)\b/i, "Brazil"],
+  [/\b(mexico|m[eé]xico|mexico city|guadalajara)\b/i, "Mexico"],
+  [/\b(argentina|buenos aires)\b/i, "Argentina"],
+  [/\b(chile|santiago, chile)\b/i, "Chile"],
+  [/\b(colombia|bogot[aá]|medell[ií]n)\b/i, "Colombia"],
+  [/\b(philippines|manila)\b/i, "Philippines"],
+  [/\b(vietnam|viet nam|hanoi|ho chi minh)\b/i, "Vietnam"],
+  [/\b(indonesia|jakarta)\b/i, "Indonesia"],
+  [/\b(malaysia|kuala lumpur)\b/i, "Malaysia"],
+  [/\b(thailand|bangkok)\b/i, "Thailand"],
+  [/\b(taiwan|taipei)\b/i, "Taiwan"],
+  [/\b(latam|latin america)\b/i, "Latin America"],
+];
+
+const _multiMarketLocations = unstable_cache(
+  async (): Promise<{ company: string; location: string }[]> => {
+    const sb = getSupabase();
+    if (!sb) return [];
+    const { data } = await sb
+      .from("job_postings")
+      .select("company,location")
+      .eq("status", "active").eq("multi_market", true)
+      .limit(2000);
+    return ((data as any[]) || []).map((r) => ({ company: r.company, location: r.location || "" }));
+  },
+  ["trueline-multimarket-v1"],
+  { revalidate: 3600 }
+);
+
+export async function getAlsoOperates(company: string): Promise<string[]> {
+  const rows = await _multiMarketLocations();
+  const out = new Set<string>();
+  for (const r of rows) {
+    if (r.company !== company || !r.location) continue;
+    for (const [re, name] of NONEMEA_PLACES) if (re.test(r.location)) out.add(name);
+  }
+  return [...out].sort();
+}
