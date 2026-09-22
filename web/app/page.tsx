@@ -3,7 +3,7 @@ import {
   getLiveStats, getFilterOptions, getSectors, getCompaniesBoard,
   getCityMapData, getSectorCounts, getRoleIndex,
   getEuropePayData, getHomeComposition, getHeroBand, topCountryFinding, searchSalaries, isConfigured,
-  pickSpotlightRole, getWeeklyTrends,
+  pickSpotlightRole, getWeeklyTrends, getCommunityActivity,
 } from "@/lib/data";
 import type { Metadata } from "next";
 import { SearchForm } from "@/components/SearchForm";
@@ -17,6 +17,7 @@ import { Card, Stat, GhostLink } from "@/components/ui";
 import { EuropePayMap } from "@/components/EuropePayMap";
 import { RolePicker } from "@/components/RolePicker";
 import { familyLabel } from "@/lib/roleNames";
+import { CommunityActivity } from "@/components/CommunityActivity";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { SectionHeader, LinkedSectionHeader, ArrowLink } from "@/components/blocks";
 import { Icon } from "@/components/icons";
@@ -65,10 +66,10 @@ export default async function Home({
 }) {
   if (!isConfigured) return <NotConfigured />;
 
-  const [stats, options, sectors, board, mapData, sectorCounts, roleIdx, europe, comp, weekly] = await Promise.all([
+  const [stats, options, sectors, board, mapData, sectorCounts, roleIdx, europe, comp, weekly, community] = await Promise.all([
     getLiveStats(), getFilterOptions(), getSectors(), getCompaniesBoard(),
     getCityMapData(), getSectorCounts(), getRoleIndex(),
-    getEuropePayData(), getHomeComposition(), getWeeklyTrends(),
+    getEuropePayData(), getHomeComposition(), getWeeklyTrends(), getCommunityActivity(),
   ]);
   // Country-spotlight band features a role that rotates every 3 days (see
   // pickSpotlightRole) so the homepage stays fresh with no manual curation.
@@ -243,6 +244,11 @@ export default async function Home({
           </div>
         </section>
       )}
+
+      {/* Recently added by the community — APPROVED submissions only, shown as
+          bands. Renders nothing at all until 3 approved entries exist, so it
+          can never read as "the community" on the strength of one person. */}
+      <CommunityActivity entries={community} className="mt-8 md:mt-10" />
 
       {/* Search answer view. Order: facts strip → pay by company → pay by city →
           country table+map. One role picker (URL-driven) drives the whole view. */}

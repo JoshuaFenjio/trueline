@@ -1496,3 +1496,67 @@ export async function getAlsoOperates(company: string): Promise<string[]> {
   }
   return [...out].sort();
 }
+
+// ---------------------------------------------------------------------------
+// "Recently added by the community" — APPROVED submissions only.
+//
+// Pay is shown as a 5k BAND, never the exact figure someone sent us: an exact
+// number plus a role, level and city is identifying, and we promised every
+// contributor their figure would only ever appear inside an aggregate.
+//
+// The module is hidden entirely below MIN_COMMUNITY approved entries in scope,
+// so it can never read as "the community" on the strength of one person.
+// ---------------------------------------------------------------------------
+export const MIN_COMMUNITY = 3;
+const BAND = 5000;
+
+export interface CommunityEntry {
+  role: string;
+  level: string | null;
+  city: string | null;
+  country: string | null;
+  company: string | null;
+  bandLo: number;
+  bandHi: number;
+  addedMs: number;
+}
+
+const _approvedSubmissions = unstable_cache(
+  async (): Promise<any[]> => {
+    const sb = getSupabase();
+    if (!sb) return [];
+    const { data } = await sb
+      .from("submissions")
+      .select("role_family,level,company,city,country,base_eur,created_at")
+      .eq("status", "approved")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    return (data as any[]) || [];
+  },
+  ["trueline-community-v1"],
+  { revalidate: 900 }
+);
+
+/**
+ * Recent approved submissions, newest first. Pass a company to scope it.
+ * Returns [] — so the caller renders nothing at all — until the gate is met.
+ */
+export async function getCommunityActivity(company?: string, limit = 6): Promise<CommunityEntry[]> {
+  const rows = (await _approvedSubmissions()).filter(
+    (r) => r.base_eur > 0 && r.role_family && (!company || r.company === company)
+  );
+  if (rows.length < MIN_COMMUNITY) return [];
+  return rows.slice(0, limit).map((r) => {
+    const lo = Math.floor(r.base_eur / BAND) * BAND;
+    return {
+      role: r.role_family,
+      level: r.level || null,
+      city: r.city || null,
+      country: r.country || null,
+      company: r.company || null,
+      bandLo: lo,
+      bandHi: lo + BAND,
+      addedMs: parseDate(r.created_at),
+    };
+  });
+}

@@ -1,13 +1,14 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCompanyBySlug, getLastRefreshed } from "@/lib/data";
+import { getCompanyBySlug, getLastRefreshed, getCommunityActivity } from "@/lib/data";
 import { companyMeta } from "@/lib/companyMeta";
 import { watchlistBySlug, WatchEntry } from "@/lib/watchlist";
 import { ScoreBadge, scoreColor, Card, Stat } from "@/components/ui";
 import { SectionHeader, Breadcrumbs, ArrowLink, PillButton } from "@/components/blocks";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { PostingList } from "@/components/PostingList";
+import { CommunityActivity } from "@/components/CommunityActivity";
 import { CompanyHiresMap } from "@/components/CompanyHiresMap";
 import { GpgModule } from "@/components/GpgModule";
 import { ShareButton } from "@/components/ShareButton";
@@ -59,7 +60,7 @@ export default async function CompanyPage({ params }: { params: { slug: string }
     if (w) return <WatchlistCompany w={w} />;
     notFound();
   }
-  const refreshed = await getLastRefreshed();
+  const [refreshed, community] = await Promise.all([getLastRefreshed(), getCommunityActivity(c.company)]);
   const meta = companyMeta(c.company);
   const chips = [c.sector, meta.hqCity, meta.stage, meta.founded ? `Founded ${meta.founded}` : null, meta.employees ? `${meta.employees} employees` : null].filter(Boolean) as string[];
   const topPct = c.sectorTotal ? Math.max(1, Math.round((c.sectorRank / c.sectorTotal) * 100)) : null;
@@ -319,6 +320,15 @@ export default async function CompanyPage({ params }: { params: { slug: string }
           </div>
         </section>
       )}
+
+      {/* Approved community submissions for THIS company. Hidden entirely
+          below 3, and shown as bands — never the figure someone sent us. */}
+      <CommunityActivity
+        entries={community}
+        title={`Recently added by ${c.company} employees`}
+        showCompany={false}
+        className="mt-16"
+      />
 
       {c.peers.length > 0 && <PeerCompare c={c} />}
       <SectorContext c={c} />
