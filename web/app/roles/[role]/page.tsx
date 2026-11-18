@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getRoleHub, roleFromSlug, getRoleFamilies, getLastRefreshed, getRolePayMap, getRoleLatest, getRolePostingsByCountry, getRolePlaceIndex, getRoleIndex } from "@/lib/data";
+import { getRoleHub, roleFromSlug, getRoleFamilies, getLastRefreshed, getRolePayMap, getRoleLatest, getRolePostingsByCountry, getRolePlaceIndex, getRoleIndex, getBoardDisclosure } from "@/lib/data";
 import { SectionHeader, RankTable, toPayVMs, LevelLadder, TrendBadge, GatedState, Breadcrumbs, PillButton } from "@/components/blocks";
 import { MeasureBar } from "@/components/MeasureBar";
 import { DensityCurve } from "@/components/DensityCurve";
@@ -66,6 +66,7 @@ export default async function RolePage({ params }: { params: { role: string } })
     getRolePayMap(role), getRoleLatest(role, 12), getRolePostingsByCountry(role, 5),
     getRolePlaceIndex(), getRoleIndex(),
   ]);
+  const board = await getBoardDisclosure((p) => p.roleFamily === role);
   // Related roles: same category first, then the rest by sample size — only
   // families that publish, so every chip lands on a page with a number.
   const publishingRoles = new Set(roleIdx.filter((r) => r.median != null).map((r) => r.name));
@@ -97,7 +98,7 @@ export default async function RolePage({ params }: { params: { role: string } })
   const faqs = quotable ? roleFaqs({
     noun: roleNoun(role), plural: rolePlural(role), place: EMEA_PLACE,
     median: rs!.median, p25: rs!.p25, p75: rs!.p75, p90: rs!.p90, n: rs!.n,
-    trackedN: hub.trackedN, disclosedN: hub.disclosedN,
+    board,
     leader: hub.topCountries[0] ? { kind: "country", name: hub.topCountries[0].label, median: hub.topCountries[0].value } : null,
   }) : [];
   const pctCaption = rs ? `Annual advertised base salary percentiles for ${plural} across EMEA, from ${rs.n} salaried live job ads tracked by SalaryRadar${updated ? ` (updated ${updated})` : ""}.` : "";

@@ -63,7 +63,7 @@ export function RolePlaceView({ hub, refreshed }: { hub: RolePlaceHub; refreshed
   const faqs = rs ? roleFaqs({
     noun: roleNoun(hub.role), plural, place: hub.place,
     median: rs.median, p25: rs.p25, p75: rs.p75, p90: rs.p90, n: rs.n,
-    trackedN: hub.trackedN, disclosedN: hub.disclosedN,
+    board: hub.board,
     leader: leaderRow ? { kind: hub.cities[0] ? "city" : "company", name: leaderRow.label, median: leaderRow.value } : null,
   }) : [];
   const levels = hub.byLevel.filter((l) => l.median != null || (!isManagementLevel(l.level) && l.n > 0));

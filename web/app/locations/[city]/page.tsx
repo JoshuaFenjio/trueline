@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCityDetail, cityFromSlug, getLastRefreshed } from "@/lib/data";
+import { getCityDetail, cityFromSlug, getLastRefreshed, getBoardDisclosure } from "@/lib/data";
 import { AnswerLead, FaqBlock } from "@/components/Seo";
 import { monthYear, currentYear, eurExact, robotsFor } from "@/lib/seo";
 import { answerSentence, placeFaqs } from "@/lib/seoCopy";
@@ -48,12 +48,12 @@ function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: s
 export default async function CityPage({ params }: { params: { city: string } }) {
   const city = await cityFromSlug(params.city);
   if (!city) notFound();
-  const [d, refreshed] = await Promise.all([getCityDetail(city), getLastRefreshed()]);
+  const [d, refreshed, board] = await Promise.all([getCityDetail(city), getLastRefreshed(), getBoardDisclosure((p) => p.city === city)]);
   const updated = monthYear(refreshed);
   const topRole = d.topRoles.find((r) => r.role !== "Other");
   const lead = d.median != null ? answerSentence({ subject: "all tracked roles", place: city, median: d.median, n: d.n, updated }) : null;
   const faqs = d.median != null ? placeFaqs({
-    place: city, median: d.median, n: d.n, disclosurePct: d.disclosurePct, trackedN: d.trackedN,
+    place: city, median: d.median, n: d.n, board,
     topRole: topRole ? { label: familyLabel(topRole.role), median: topRole.median } : null,
     topCompany: d.topCompanies[0] ? { name: d.topCompanies[0].label, median: d.topCompanies[0].value } : null,
   }) : [];

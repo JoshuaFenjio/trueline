@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCountryDetail, getEuropePayData, countryFromSlug, getLastRefreshed } from "@/lib/data";
+import { getCountryDetail, getEuropePayData, countryFromSlug, getLastRefreshed, getBoardDisclosure } from "@/lib/data";
 import { AnswerLead, FaqBlock } from "@/components/Seo";
 import { monthYear, currentYear, eurExact, robotsFor } from "@/lib/seo";
 import { answerSentence, placeFaqs, inPlace } from "@/lib/seoCopy";
@@ -50,11 +50,11 @@ function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: s
 export default async function CountryPage({ params }: { params: { country: string } }) {
   const country = await countryFromSlug(params.country);
   if (!country) notFound();
-  const [d, europe, refreshed] = await Promise.all([getCountryDetail(country), getEuropePayData(), getLastRefreshed()]);
+  const [d, europe, refreshed, board] = await Promise.all([getCountryDetail(country), getEuropePayData(), getLastRefreshed(), getBoardDisclosure((p) => p.country === country)]);
   const updated = monthYear(refreshed);
   const lead = d.median != null ? answerSentence({ subject: "all tracked roles", place: country, median: d.median, n: d.n, updated }) : null;
   const faqs = d.median != null ? placeFaqs({
-    place: country, median: d.median, n: d.n, disclosurePct: d.disclosurePct, trackedN: d.trackedN,
+    place: country, median: d.median, n: d.n, board,
     topRole: d.topRoles[0] ? { label: familyLabel(d.topRoles[0].role), median: d.topRoles[0].median } : null,
     topCompany: d.companies[0] ? { name: d.companies[0].label, median: d.companies[0].value } : null,
   }) : [];

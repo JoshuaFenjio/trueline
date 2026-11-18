@@ -63,7 +63,7 @@ export function answerSentence(p: { subject: string; place: string; median: numb
 export function roleFaqs(p: {
   noun: string; plural: string; place: string;
   median: number; p25: number; p75: number; p90: number; n: number;
-  trackedN: number; disclosedN: number;
+  board: { tracked: number; disclosed: number }; // complete employer feeds only
   leader?: { kind: "country" | "city" | "company"; name: string; median: number } | null;
 }): Faq[] {
   const out: Faq[] = [
@@ -83,10 +83,10 @@ export function roleFaqs(p: {
       a: `${p.leader.name} has the highest median advertised base for ${p.plural} in ${inPlace(p.place)} that clears our sample gate, at ${eurExact(p.leader.median)}.`,
     });
   }
-  if (p.trackedN > 0) {
+  if (p.board.tracked >= 20) {
     out.push({
       q: `How many ${p.noun} job ads in ${inPlace(p.place)} disclose salary?`,
-      a: `${p.disclosedN.toLocaleString("en-IE")} of the ${p.trackedN.toLocaleString("en-IE")} live ${p.noun} job ads in ${inPlace(p.place)} tracked by ${BRAND} disclose pay (${Math.round((p.disclosedN / p.trackedN) * 100)}%).`,
+      a: `On employers' own job boards, ${p.board.disclosed.toLocaleString("en-IE")} of the ${p.board.tracked.toLocaleString("en-IE")} live ${p.noun} job ads in ${inPlace(p.place)} tracked by ${BRAND} state a salary (${Math.round((p.board.disclosed / p.board.tracked) * 100)}%).`,
     });
   }
   return out;
@@ -94,7 +94,8 @@ export function roleFaqs(p: {
 
 /** FAQ for a place page (city or country, all roles). */
 export function placeFaqs(p: {
-  place: string; median: number; n: number; disclosurePct: number; trackedN: number;
+  place: string; median: number; n: number;
+  board: { tracked: number; disclosed: number }; // complete employer feeds only
   topRole?: { label: string; median: number } | null;
   topCompany?: { name: string; median: number } | null;
 }): Faq[] {
@@ -110,9 +111,9 @@ export function placeFaqs(p: {
     q: `Which company pays the most in ${inPlace(p.place)}?`,
     a: `${p.topCompany.name} has the highest median advertised base in ${inPlace(p.place)} among employers with at least 3 salaried ads, at ${eurExact(p.topCompany.median)}.`,
   });
-  out.push({
+  if (p.board.tracked >= 20) out.push({
     q: `What share of job ads in ${inPlace(p.place)} disclose salary?`,
-    a: `${p.disclosurePct}% of the ${p.trackedN.toLocaleString("en-IE")} live job ads in ${inPlace(p.place)} tracked by ${BRAND} disclose pay.`,
+    a: `On employers' own job boards, ${Math.round((p.board.disclosed / p.board.tracked) * 100)}% of the ${p.board.tracked.toLocaleString("en-IE")} live job ads in ${inPlace(p.place)} tracked by ${BRAND} state a salary.`,
   });
   return out;
 }

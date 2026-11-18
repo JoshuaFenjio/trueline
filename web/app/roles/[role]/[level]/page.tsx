@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getRoleLevelHub, roleFromSlug, getRoleFamilies, getRoleLevelIndex, getLastRefreshed } from "@/lib/data";
+import { getRoleLevelHub, roleFromSlug, getRoleFamilies, getRoleLevelIndex, getLastRefreshed, getBoardDisclosure } from "@/lib/data";
 import { JsonLd, PercentileStrip, AnswerLead, FaqBlock } from "@/components/Seo";
 import { occupationLd, roundSpread, monthYear, currentYear, eurExact, robotsFor } from "@/lib/seo";
 import { occupationEligible, answerSentence, roleFaqs, levelNoun, withArticle, EMEA_PLACE } from "@/lib/seoCopy";
@@ -104,7 +104,10 @@ export default async function RoleLevelPage({ params }: { params: { role: string
   const level = levelFromSlug(params.level);
   if (!role || !level) notFound();
 
-  const [hub, refreshed] = await Promise.all([getRoleLevelHub(role, level), getLastRefreshed()]);
+  const [hub, refreshed, board] = await Promise.all([
+    getRoleLevelHub(role, level), getLastRefreshed(),
+    getBoardDisclosure((p) => p.roleFamily === role && p.level === level && p.levelExplicit),
+  ]);
   const sp = hub.overall.spread;
   const rs = sp ? roundSpread(sp) : null;
   const updated = monthYear(refreshed);
@@ -121,7 +124,7 @@ export default async function RoleLevelPage({ params }: { params: { role: string
   const faqs = quotable ? roleFaqs({
     noun: lnoun, plural: levelPhrase(level, plural), place: EMEA_PLACE,
     median: rs!.median, p25: rs!.p25, p75: rs!.p75, p90: rs!.p90, n: rs!.n,
-    trackedN: hub.trackedN, disclosedN: hub.disclosedN,
+    board,
     leader: hub.topCountries[0] ? { kind: "country", name: hub.topCountries[0].label, median: hub.topCountries[0].value } : null,
   }) : [];
   const pctCaption = rs ? `Annual advertised base salary percentiles for ${levelPhrase(level, plural)} across EMEA, from ${rs.n} salaried live job ads tracked by SalaryRadar${updated ? ` (updated ${updated})` : ""}.` : "";

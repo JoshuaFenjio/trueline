@@ -19,6 +19,7 @@ export { isConfigured };
 export interface Posting {
   company: string;
   ats: string | null; // source platform (greenhouse, ashby, personio, …)
+  fullFeed: boolean; // complete employer feed (counts toward disclosure rates)
   sector: Sector;
   roleFamily: string;
   title: string; // raw advertised title (for distinct-title counts)
@@ -55,6 +56,14 @@ const EMEA_CURRENCIES = new Set([
   "NGN", "KES", "MAD", "TND", "TRY", "UAH", "GEL", "RSD",
 ]);
 
+// Feeds that only ever hand us ads WITH a salary (filtered at ingest in
+// new_sources.py, or salary-mandatory boards). Their salaries are real and
+// count in medians, but they must never count toward a disclosure RATE —
+// a feed that is 100% salaried by construction says nothing about how often
+// employers publish pay. Rates use complete employer feeds (ATS boards,
+// Personio) only: there we read every ad a company publishes.
+export const SALARY_FILTERED_FEEDS = new Set(["germantechjobs", "himalayas", "landing_jobs", "itjobs", "adzuna", "reed"]);
+
 function mapRow(r: any): Posting | null {
   // region / multi_market are tagged by the pipeline (see classify_region)
   // and stored in Supabase — read them directly, no recompute.
@@ -78,7 +87,7 @@ function mapRow(r: any): Posting | null {
   // we wouldn't count), annualized as a pair so a monthly range can't invert.
   const band = annual !== null ? annualizeRange(r.salary_eur_min, r.salary_eur_max, r.salary_period) : null;
   return {
-    company: r.company, ats: r.ats || null, sector: sectorOf(r.company), roleFamily: r.role_family || "Other",
+    company: r.company, ats: r.ats || null, fullFeed: !SALARY_FILTERED_FEEDS.has(r.ats || ""), sector: sectorOf(r.company), roleFamily: r.role_family || "Other",
     title: r.title || "", level: (r.level as Level) || levelBucket(r.title),
     levelExplicit: r.level_source ? r.level_source === "explicit" : levelHasSignal(r.title),
     city: place.city, country: place.country,
@@ -118,7 +127,7 @@ const _fetchShard = unstable_cache(
     }
     return out;
   },
-  ["trueline-shard-v30"],
+  ["trueline-shard-v31"],
   { revalidate: 3600 }
 );
 
@@ -676,6 +685,7 @@ export interface RolePlaceHub {
   roleMedian: number | null; // this role across EMEA (n >= gate)
   placeMedian: number | null; // all roles in this place (n >= gate)
   latest: PostingVM[];
+  board: { tracked: number; disclosed: number }; // complete employer feeds only
 }
 
 export async function getRolePlaceHub(role: string, kind: PlaceKind, place: string): Promise<RolePlaceHub> {
@@ -718,6 +728,7 @@ export async function getRolePlaceHub(role: string, kind: PlaceKind, place: stri
     roleMedian: roleSlice.spread ? roleSlice.spread.median : null,
     placeMedian: placeSlice.spread ? placeSlice.spread.median : null,
     latest: latestFor(rows, match, 8),
+    board: { tracked: all.filter((p) => p.fullFeed).length, disclosed: all.filter((p) => p.fullFeed && p.disclosed).length },
   };
 }
 
@@ -1696,4 +1707,70 @@ export async function getCommunityActivity(company?: string, limit = 6): Promise
 export const getRoutablePlaces = async (): Promise<{ cities: string[]; countries: string[] }> => {
   const [cities, countries] = await Promise.all([activeNames("city"), activeNames("country")]);
   return { cities: cities.sort(), countries: countries.sort() };
+};
+
+// ---------------------------------------------------------------------------
+// Salary-transparency statistics (/insights/salary-transparency-statistics).
+// Disclosure = the ad stated any salary we could read (same `disclosed` flag
+// the rest of the site uses); medians use the usual n >= 8 gate.
+// ---------------------------------------------------------------------------
+const EU27 = new Set([
+  "Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czechia", "Czech Republic", "Denmark", "Estonia", "Finland",
+  "France", "Germany", "Greece", "Hungary", "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg", "Malta",
+  "Netherlands", "Poland", "Portugal", "Romania", "Slovakia", "Slovenia", "Spain", "Sweden",
+]);
+export interface DisclosureRow { name: string; tracked: number; disclosed: number; pct: number }
+export interface TransparencyStats {
+  tracked: number; disclosed: number; pct: number; // complete employer feeds only
+  allTracked: number; filteredTracked: number;     // every live ad / ads from salary-filtered feeds
+  salaried: number; emeaMedian: number | null;
+  eu: DisclosureRow; nonEu: DisclosureRow; nonEuCountries: string[];
+  byCountry: (DisclosureRow & { median: number | null; n: number })[]; // >= 100 full-feed ads
+  byAts: (DisclosureRow & { filtered: boolean })[]; // platforms with >= 100 ads
+}
+function disc(name: string, rows: Posting[]): DisclosureRow {
+  const d = rows.filter((p) => p.disclosed).length;
+  return { name, tracked: rows.length, disclosed: d, pct: rows.length ? Math.round((d / rows.length) * 100) : 0 };
+}
+/** Disclosure over complete employer feeds only, for any slice. */
+export async function getBoardDisclosure(pred: (p: Posting) => boolean): Promise<DisclosureRow> {
+  return disc("", (await getData()).filter((p) => p.fullFeed && pred(p)));
+}
+export const getTransparencyStats = async (): Promise<TransparencyStats> => {
+  const rows = await getData();
+  const full = rows.filter((p) => p.fullFeed);
+  const u = usable(rows);
+  const withCountry = full.filter((p) => p.country);
+  const euRows = withCountry.filter((p) => EU27.has(p.country!));
+  const nonEuRows = withCountry.filter((p) => !EU27.has(p.country!));
+  const nonEuCount = new Map<string, number>();
+  for (const p of nonEuRows) nonEuCount.set(p.country!, (nonEuCount.get(p.country!) || 0) + 1);
+
+  // Medians use every usable salary (real pay, whatever the feed); the rate
+  // and the >=100-ad threshold use complete feeds only.
+  const salByCountry = new Map<string, number[]>();
+  for (const p of u) { if (!p.country) continue; const a = salByCountry.get(p.country) || []; a.push(p.annual); salByCountry.set(p.country, a); }
+  const byC = new Map<string, Posting[]>();
+  for (const p of withCountry) { const a = byC.get(p.country!) || []; a.push(p); byC.set(p.country!, a); }
+  const byCountry = [...byC.entries()].filter(([, v]) => v.length >= 100).map(([c, v]) => {
+    const vals = salByCountry.get(c) || [];
+    return { ...disc(c, v), n: vals.length, median: vals.length >= N_MEDIAN ? Math.round(median(vals)) : null };
+  }).sort((a, b) => b.pct - a.pct || b.tracked - a.tracked);
+
+  const byA = new Map<string, Posting[]>();
+  for (const p of rows) { if (!p.ats) continue; const a = byA.get(p.ats) || []; a.push(p); byA.set(p.ats, a); }
+  const byAts = [...byA.entries()].filter(([, v]) => v.length >= 100)
+    .map(([a, v]) => ({ ...disc(a, v), filtered: SALARY_FILTERED_FEEDS.has(a) }))
+    .sort((x, y) => Number(x.filtered) - Number(y.filtered) || y.pct - x.pct);
+
+  const all = disc("All", full);
+  return {
+    tracked: all.tracked, disclosed: all.disclosed, pct: all.pct,
+    allTracked: rows.length, filteredTracked: rows.length - full.length,
+    salaried: u.length,
+    emeaMedian: u.length >= N_MEDIAN ? Math.round(median(u.map((p) => p.annual))) : null,
+    eu: disc("EU member states", euRows), nonEu: disc("Outside the EU", nonEuRows),
+    nonEuCountries: [...nonEuCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([c]) => c),
+    byCountry, byAts,
+  };
 };
