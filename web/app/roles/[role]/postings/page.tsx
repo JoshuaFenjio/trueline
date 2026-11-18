@@ -21,7 +21,7 @@ const PAGE_SIZE = 100;
 export async function generateMetadata({ params }: { params: { role: string } }): Promise<Metadata> {
   const role = await roleFromSlug(params.role);
   if (!role) return { title: "Role not found", robots: { index: false } };
-  return { title: `Live ${familyLabel(role)} job ads`, robots: { index: false, follow: true } };
+  return { title: `Live ${familyLabel(role)} job ads`, alternates: { canonical: `/roles/${params.role}/postings` }, robots: { index: false, follow: true } };
 }
 
 export default async function RolePostingsPage({

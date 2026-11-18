@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getCityMapData, getLiveStats, isConfigured, CONCENTRATION_GATE } from "@/lib/data";
+import { getCityMapData, getLiveStats, getCityIndex, isConfigured, CONCENTRATION_GATE } from "@/lib/data";
 import { SectionHeader, Breadcrumbs, PillButton } from "@/components/blocks";
 import { HubExplorer, HubItem } from "@/components/HubExplorer";
 import { PlaceTile } from "@/components/PlaceTile";
@@ -10,10 +10,19 @@ import { eur, slugify } from "@/lib/format";
 
 export const revalidate = 3600;
 
-export const metadata: Metadata = {
-  title: "Salaries by city in Europe",
-  description: "What tech roles pay in each European city, ranked by median advertised base, live from company job postings.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const y = new Date().getUTCFullYear();
+  const base = { alternates: { canonical: "/locations" } };
+  if (!isConfigured) return { ...base, title: `Salaries by City in Europe ${y}` };
+  const idx = await getCityIndex();
+  const pub = idx.filter((c) => c.median != null);
+  const n = pub.reduce((s, c) => s + c.n, 0);
+  return {
+    ...base,
+    title: `Salaries by City in Europe ${y}: ${pub.length} cities ranked`,
+    description: `Median advertised base salary in ${pub.length} EMEA cities, ranked, from ${n.toLocaleString("en-IE")} salaried live job ads. A city median needs 8 salaried ads before it shows.`,
+  };
+}
 
 export default async function CitiesIndex() {
   if (!isConfigured) return <p className="py-24 text-center text-ink-muted">Supabase not configured.</p>;

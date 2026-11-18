@@ -3,8 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCountryDetail, getEuropePayData, countryFromSlug, getLastRefreshed } from "@/lib/data";
 import { AnswerLead, FaqBlock } from "@/components/Seo";
-import { monthYear } from "@/lib/seo";
-import { answerSentence, placeFaqs } from "@/lib/seoCopy";
+import { monthYear, currentYear, eurExact, robotsFor } from "@/lib/seo";
+import { answerSentence, placeFaqs, inPlace } from "@/lib/seoCopy";
 import { SectionHeader, RankTable, toPayVMs, LevelLadder, Breadcrumbs, PillButton, GatedState } from "@/components/blocks";
 import { EuropePayMap } from "@/components/EuropePayMap";
 import { Donut } from "@/components/Donut";
@@ -23,10 +23,15 @@ export async function generateMetadata({ params }: { params: { country: string }
   if (!country) return { title: "Country not found" };
   const d = await getCountryDetail(country);
   const med = d.median ? eur(d.median) : "live data";
-  const title = `Tech salaries in ${country} 2026, live from company job boards`;
+  const y = currentYear();
+  const at = inPlace(country);
+  const title = d.median != null ? `Salaries in ${at} ${y}: ${eurExact(d.median)} median` : `Salaries in ${at} ${y}: live job ads`;
   return {
     title,
-    description: `What tech roles pay across ${country}: median ${med} base, by role, city and the top local payers. Real advertised salaries from live job boards.`,
+    alternates: { canonical: `/locations/country/${params.country}` },
+    description: d.median != null
+      ? `Median advertised base salary in ${at} across all tracked roles: ${eurExact(d.median)}, from ${d.n.toLocaleString("en-IE")} salaried live job ads. Pay by role family, city and top-paying employers.`
+      : `${country}: ${d.trackedN.toLocaleString("en-IE")} live job ads tracked, not yet 8 salaried ads to publish a median.`,
     openGraph: { title, images: [`/og?kicker=${encodeURIComponent(country + " · EMEA")}&title=${encodeURIComponent("Salaries in " + country)}&value=${encodeURIComponent(d.median ? "Median " + med : "Live from job boards")}`] },
   };
 }

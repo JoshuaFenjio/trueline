@@ -11,10 +11,17 @@ import { eur, pct, timeAgo } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "The Pay Index",
-  description: "Every EMEA company we track that discloses salaries, ranked 0–100 on how their advertised base pay compares to sector peers.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const y = new Date().getUTCFullYear();
+  const base = { alternates: { canonical: "/companies" } };
+  if (!isConfigured) return { ...base, title: `The Pay Index ${y}` };
+  const board = await getCompaniesBoard();
+  return {
+    ...base,
+    title: `The Pay Index ${y}: ${board.length.toLocaleString("en-IE")} companies ranked on pay`,
+    description: `${board.length.toLocaleString("en-IE")} EMEA employers that disclose salaries, ranked 0–100 on how their median advertised base compares with sector peers. Each needs 3+ salaried live job ads.`,
+  };
+}
 
 const FACTORS = [
   { icon: Icon.bars, t: "Sector-relative base", d: "How a company's median advertised base compares to its sector peers — not an absolute figure." },

@@ -11,10 +11,18 @@ import { eur, slugify } from "@/lib/format";
 
 export const revalidate = 3600;
 
-export const metadata: Metadata = {
-  title: "Salaries by country in Europe",
-  description: "How tech pay compares across EMEA countries, ranked by median advertised base, live from company job postings.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const y = new Date().getUTCFullYear();
+  const base = { alternates: { canonical: "/locations/countries" } };
+  if (!isConfigured) return { ...base, title: `Salaries by Country in Europe ${y}` };
+  const board = await getCountryLeaderboard();
+  const n = board.reduce((s, c) => s + c.n, 0);
+  return {
+    ...base,
+    title: `Salaries by Country in Europe ${y}: ${board.length} countries ranked`,
+    description: `Median advertised base salary in ${board.length} EMEA countries, each with at least 8 salaried ads, ranked, from ${n.toLocaleString("en-IE")} salaried live job ads.`,
+  };
+}
 
 export default async function CountriesIndex() {
   if (!isConfigured) return <p className="py-24 text-center text-ink-muted">Supabase not configured.</p>;

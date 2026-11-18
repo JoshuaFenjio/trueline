@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCityDetail, cityFromSlug, getLastRefreshed } from "@/lib/data";
 import { AnswerLead, FaqBlock } from "@/components/Seo";
-import { monthYear } from "@/lib/seo";
+import { monthYear, currentYear, eurExact, robotsFor } from "@/lib/seo";
 import { answerSentence, placeFaqs } from "@/lib/seoCopy";
 import { SectionHeader, RankTable, toPayVMs, Breadcrumbs, PillButton, GatedState } from "@/components/blocks";
 import { PlaceHero } from "@/components/PlaceHero";
@@ -22,10 +22,14 @@ export async function generateMetadata({ params }: { params: { city: string } })
   if (!city) return { title: "City not found" };
   const d = await getCityDetail(city);
   const med = d.median ? eur(d.median) : "live data";
-  const title = `Tech salaries in ${city} 2026, live from company job boards`;
+  const y = currentYear();
+  const title = d.median != null ? `Salaries in ${city} ${y}: ${eurExact(d.median)} median` : `Salaries in ${city} ${y}: live job ads`;
   return {
     title,
-    description: `What tech roles pay in ${city}: median ${med} base, by role, and the top local payers. Real advertised salaries from live job boards.`,
+    alternates: { canonical: `/locations/${params.city}` },
+    description: d.median != null
+      ? `Median advertised base salary in ${city} across all tracked roles: ${eurExact(d.median)}, from ${d.n.toLocaleString("en-IE")} salaried live job ads. Pay by role family, top-paying employers${d.country ? ` and how ${city} compares with ${d.country}` : ""}.`
+      : `${city}: ${d.trackedN.toLocaleString("en-IE")} live job ads tracked, not yet 8 salaried ads to publish a median.`,
     openGraph: { title, images: [`/og?kicker=${encodeURIComponent(city + " · EMEA")}&title=${encodeURIComponent("Salaries in " + city)}&value=${encodeURIComponent(d.median ? "Median " + med : "Live from job boards")}`] },
   };
 }

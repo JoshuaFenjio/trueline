@@ -6,7 +6,7 @@ import { InsightsOptIn } from "@/components/InsightsOptIn";
 import { familyLabel } from "@/lib/roleNames";
 import { roleFromSlug } from "@/lib/data";
 
-export const metadata: Metadata = { title: "Thanks — your salary is in review", robots: { index: false } };
+export const metadata: Metadata = { alternates: { canonical: "/add/thanks" }, title: "Thanks — your salary is in review", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 // What actually happens next, in order, with the real gate stated. No progress

@@ -15,7 +15,7 @@ import { levelSlug, isManagementLevel } from "@/lib/levels";
 import { eur, eurK, slugify, timeAgo } from "@/lib/format";
 import { familyLabel, isGroupFamily, familyCategory } from "@/lib/roleNames";
 import { JsonLd, PercentileStrip, AnswerLead, FaqBlock } from "@/components/Seo";
-import { occupationLd, roundSpread, monthYear } from "@/lib/seo";
+import { occupationLd, roundSpread, monthYear, currentYear, eurExact, robotsFor } from "@/lib/seo";
 import { withArticle } from "@/lib/seoCopy";
 import { occupationEligible, answerSentence, roleFaqs, roleNoun, rolePlural, EMEA_PLACE } from "@/lib/seoCopy";
 
@@ -28,11 +28,17 @@ export async function generateMetadata({ params }: { params: { role: string } })
   const hub = await getRoleHub(role);
   const label = familyLabel(role);
   const plural = isGroupFamily(role) ? `${label} roles` : `${label}s`;
-  const med = hub.overall.spread ? eur(hub.overall.spread.median) : "live data";
-  const title = `${label} salary in Europe 2026, live from company job boards`;
+  const sp = hub.overall.spread;
+  const med = sp ? eur(sp.median) : "live data";
+  const name = role === "Other" ? "Other Roles" : label;
+  const y = currentYear();
+  const title = sp ? `${name} Salary in Europe ${y}: ${eurExact(sp.median)} median` : `${name} Salary in Europe ${y}: live job ads`;
   return {
     title,
-    description: `What ${plural} earn across EMEA: median ${med} base, by level, city, country and company. Real advertised salaries from live job boards.`,
+    alternates: { canonical: `/roles/${params.role}` },
+    description: sp
+      ? `Median advertised base salary for ${plural} across EMEA: ${eurExact(sp.median)}, from ${sp.n.toLocaleString("en-IE")} salaried live job ads (middle 50% ${eurExact(sp.p25)}–${eurExact(sp.p75)}). By level, country, city and company.`
+      : `${plural} across EMEA: ${hub.trackedN.toLocaleString("en-IE")} live job ads tracked, not yet 8 salaried ads to publish a median.`,
     openGraph: {
       title,
       images: [`/og?kicker=${encodeURIComponent(label + " · EMEA")}&title=${encodeURIComponent(label + " salaries")}&value=${encodeURIComponent(hub.overall.spread ? "Median " + med : "Live from job boards")}`],

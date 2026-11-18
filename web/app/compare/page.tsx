@@ -22,12 +22,12 @@ function parseSlugs(sp: { companies?: string }): string[] {
 
 export async function generateMetadata({ searchParams }: { searchParams: { companies?: string } }): Promise<Metadata> {
   const slugs = parseSlugs(searchParams);
-  if (slugs.length < 2) return { title: "Compare companies", description: "Compare tech companies side by side on pay, transparency and role-by-role medians." };
+  if (slugs.length < 2) return { title: "Compare companies", alternates: { canonical: "/compare" }, description: "Compare tech companies side by side on pay, transparency and role-by-role medians." };
   const cos = (await Promise.all(slugs.map((s) => getCompanyBySlug(s)))).filter(Boolean) as CompanyDetail[];
   const names = cos.map((c) => c.company);
   const title = `${names.join(" vs ")}: who pays more?`;
   const og = `/og?kicker=${encodeURIComponent("Compare · EMEA")}&title=${encodeURIComponent(names.join(" vs "))}&value=${encodeURIComponent("Pay, transparency and role medians")}`;
-  return { title, description: `${names.join(", ")} compared on Pay Score, median base, transparency and role-by-role pay.`, openGraph: { title: `${title} · SalaryRadar`, images: [og] }, twitter: { card: "summary_large_image", images: [og] } };
+  return { title, alternates: { canonical: `/compare?companies=${[...slugs].sort().join(",")}` }, description: `${names.join(", ")} compared on Pay Score, median base, transparency and role-by-role pay.`, openGraph: { title: `${title} · SalaryRadar`, images: [og] }, twitter: { card: "summary_large_image", images: [og] } };
 }
 
 function recencyDays(c: CompanyDetail): number | null {

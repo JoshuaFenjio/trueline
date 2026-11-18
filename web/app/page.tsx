@@ -45,17 +45,26 @@ export async function generateMetadata({
   searchParams: { role?: string; level?: string; city?: string; base?: string };
 }): Promise<Metadata> {
   const hasQuery = Boolean(searchParams.role || searchParams.city || searchParams.level);
-  if (!isConfigured || !hasQuery) return {};
+  if (!isConfigured) return { alternates: { canonical: "/" } };
+  if (!hasQuery) {
+    const comp = await getHomeComposition();
+    return {
+      alternates: { canonical: "/" },
+      title: { absolute: `SalaryRadar: Europe salary benchmarks ${new Date().getUTCFullYear()} · ${eur(comp.emeaMedian)} EMEA median` },
+      description: `Real salary benchmarks from live job ads across Europe, the Middle East and Africa: an EMEA median advertised base of ${eur(comp.emeaMedian)} from ${comp.salaried.toLocaleString("en-IE")} salaried ads. Search by role, level and city.`,
+    };
+  }
   const r = await searchSalaries({ role: searchParams.role, level: searchParams.level, city: searchParams.city });
   const slice = sliceLabel(r.role, r.level, r.city);
   if (!r.enough || !r.spread) {
-    return { title: `${slice} salary · SalaryRadar` };
+    return { title: `${slice} salary · SalaryRadar`, alternates: { canonical: "/" } };
   }
   const figure = `${eurK(r.spread.median)} median`;
   const title = `${slice}: ${figure} · SalaryRadar`;
   const og = `/og?kicker=${encodeURIComponent(slice)}&title=${encodeURIComponent(figure)}&value=${encodeURIComponent(`${r.n} salaried postings`)}`;
   return {
     title,
+    alternates: { canonical: "/" },
     description: `${slice}: ${figure} base, from ${r.n} live job postings. Real EMEA salary benchmarks.`,
     openGraph: { title, images: [og] },
     twitter: { card: "summary_large_image", title, images: [og] },

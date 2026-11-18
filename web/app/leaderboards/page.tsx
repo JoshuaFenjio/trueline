@@ -21,13 +21,14 @@ export async function generateMetadata({
 }: {
   searchParams: { sector?: string; role?: string; crole?: string };
 }): Promise<Metadata> {
-  let kicker = "Leaderboards", title = "Who pays most", value = "Live from company job boards";
+  let kicker = "Leaderboards", title = `Who pays most in Europe ${new Date().getUTCFullYear()}`, value = "Live from company job boards";
   if (searchParams.sector) { kicker = "Top payers · by sector"; title = searchParams.sector; value = "Highest-paying companies"; }
   else if (searchParams.role) { kicker = "Top payers · by role"; title = searchParams.role; value = "Who pays this role most"; }
   else if (searchParams.crole) { kicker = "By country · " + searchParams.crole; title = "Which countries pay most"; value = searchParams.crole; }
   const og = `/og?kicker=${encodeURIComponent(kicker)}&title=${encodeURIComponent(title)}&value=${encodeURIComponent(value)}`;
   return {
     title: `${title} · EMEA salary leaderboards`,
+    alternates: { canonical: "/leaderboards" },
     description: "Live leaderboards of the top-paying tech companies in EMEA, by sector, role and country, plus the most transparent employers.",
     openGraph: { title, images: [og] },
     twitter: { card: "summary_large_image", images: [og] },

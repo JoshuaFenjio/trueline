@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getRoleIndex, getRoleActivity, getLiveStats, getSectorCounts, getCountryLeaderboard, isConfigured } from "@/lib/data";
+import { getRoleIndex, getRoleActivity, getLiveStats, getSectorCounts, getCountryLeaderboard, getHomeComposition, isConfigured } from "@/lib/data";
 import { SectionHeader, RankTable, toPayVMs, toVolumeVMs, Breadcrumbs, PillButton } from "@/components/blocks";
 import { HubExplorer, HubItem } from "@/components/HubExplorer";
 import { Icon } from "@/components/icons";
@@ -9,10 +9,18 @@ import { familyLabel, familyCategory, CATEGORY_ORDER } from "@/lib/roleNames";
 
 export const revalidate = 3600;
 
-export const metadata: Metadata = {
-  title: "Salaries by role in Europe",
-  description: "Median advertised base pay for every tech role we track across EMEA, ranked, from live company job postings.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const y = new Date().getUTCFullYear();
+  const base = { alternates: { canonical: "/roles" } };
+  if (!isConfigured) return { ...base, title: `Salaries by Role in Europe ${y}` };
+  const [roles, comp] = await Promise.all([getRoleIndex(), getHomeComposition()]);
+  const pub = roles.filter((r) => r.median != null && r.name !== "Other").length;
+  return {
+    ...base,
+    title: `Salaries by Role in Europe ${y}: ${pub} role families benchmarked`,
+    description: `Median advertised base salary for ${pub} role families across EMEA, ranked, from ${comp.salaried.toLocaleString("en-IE")} salaried live job ads (EMEA median ${eur(comp.emeaMedian)}).`,
+  };
+}
 
 export default async function RolesIndex() {
   if (!isConfigured) return <p className="py-24 text-center text-ink-muted">Supabase not configured.</p>;

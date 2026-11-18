@@ -39,13 +39,14 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const c = await getCompanyBySlug(params.slug);
   if (!c) {
     const w = watchlistBySlug(params.slug);
-    if (w) return { title: `${w.name} salaries — not published`, description: `${w.name} doesn't publish salary ranges on the public job boards we read, so we have no pay data. No invented numbers.` };
+    if (w) return { title: `${w.name} salaries — not published`, alternates: { canonical: `/companies/${params.slug}` }, robots: { index: false, follow: true }, description: `${w.name} doesn't publish salary ranges on the public job boards we read, so we have no pay data. No invented numbers.` };
     return { title: "Company not found" };
   }
-  const title = `${c.company} salaries 2026 · Pay Score ${c.payScore}/100`;
+  const title = `${c.company} Salaries ${new Date().getUTCFullYear()}: ${eur(c.midpoint)} median · Pay Score ${c.payScore}/100`;
   return {
     title,
-    description: `${c.company}: median advertised base ${eur(c.midpoint)}, ${ordinal(c.sectorRank)} of ${c.sectorTotal} in ${c.sector}, ${pct(c.disclosurePct)} of ads disclose pay.`,
+    alternates: { canonical: `/companies/${params.slug}` },
+    description: `${c.company}: median advertised base ${eur(c.midpoint)} from ${c.n} salaried live job ads, ${ordinal(c.sectorRank)} of ${c.sectorTotal} in ${c.sector}; ${pct(c.disclosurePct)} of its ${c.activeN} live ads disclose pay.`,
     openGraph: {
       title,
       images: [`/og?kicker=${encodeURIComponent(c.sector + " · Pay Score " + c.payScore)}&title=${encodeURIComponent(c.company)}&value=${encodeURIComponent("Median " + eur(c.midpoint))}`],

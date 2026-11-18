@@ -6,7 +6,7 @@ import { PostingList } from "@/components/PostingList";
 import { Icon } from "@/components/icons";
 import { matchInfo } from "@/lib/roleRequests";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: { canonical: "/request" },
   title: "Request a role",
   robots: { index: false },
 };

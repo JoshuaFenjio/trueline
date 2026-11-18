@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRoleLevelHub, roleFromSlug, getRoleFamilies, getRoleLevelIndex, getLastRefreshed } from "@/lib/data";
 import { JsonLd, PercentileStrip, AnswerLead, FaqBlock } from "@/components/Seo";
-import { occupationLd, roundSpread, monthYear } from "@/lib/seo";
+import { occupationLd, roundSpread, monthYear, currentYear, eurExact, robotsFor } from "@/lib/seo";
 import { occupationEligible, answerSentence, roleFaqs, levelNoun, withArticle, EMEA_PLACE } from "@/lib/seoCopy";
 import { LEVELS, levelSlug, levelFromSlug, isManagementLevel, levelHeading, levelPhrase, levelRolesPhrase, levelTitleStem } from "@/lib/levels";
 import { RankTable, toPayVMs, Breadcrumbs, PillButton, GatedState } from "@/components/blocks";
@@ -44,11 +44,17 @@ export async function generateMetadata({ params }: { params: { role: string; lev
   const hub = await getRoleLevelHub(role, level);
   const label = familyLabel(role);
   const plural = isGroupFamily(role) ? `${label} roles` : `${label}s`;
-  const med = hub.overall.spread ? eur(hub.overall.spread.median) : "live data";
-  const title = `${levelTitleStem(level, label)} in Europe 2026, live from job boards`;
+  const sp = hub.overall.spread;
+  const med = sp ? eur(sp.median) : "live data";
+  const stem = levelTitleStem(level, label).replace(/ salary/, " Salary");
+  const y = currentYear();
+  const title = sp ? `${stem} in Europe ${y}: ${eurExact(sp.median)} median` : `${stem} in Europe ${y}: live job ads`;
   return {
     title,
-    description: `What ${levelPhrase(level, plural)} earn across EMEA: median ${med} base, by country and company. Real advertised salaries, gated at 8 salaried job ads.`,
+    alternates: { canonical: `/roles/${params.role}/${params.level}` },
+    description: sp
+      ? `Median advertised base salary for ${levelPhrase(level, plural)} across EMEA: ${eurExact(sp.median)}, from ${sp.n.toLocaleString("en-IE")} salaried live job ads (middle 50% ${eurExact(sp.p25)}–${eurExact(sp.p75)}). By country and company.`
+      : `${levelPhrase(level, plural)} across EMEA: ${hub.trackedN.toLocaleString("en-IE")} live job ads tracked, not yet 8 salaried ads with a stated level to publish a median.`,
     openGraph: {
       title,
       images: [`/og?kicker=${encodeURIComponent(level + " · " + label)}&title=${encodeURIComponent(levelHeading(level, label))}&value=${encodeURIComponent(hub.overall.spread ? "Median " + med : "Live from job boards")}`],

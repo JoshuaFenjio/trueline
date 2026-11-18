@@ -3,7 +3,7 @@ import { EmailCapture } from "@/components/EmailCapture";
 import { Breadcrumbs } from "@/components/blocks";
 import { Icon } from "@/components/icons";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: { canonical: "/for-companies" },
   title: "For companies",
   description: "Benchmark your pay against your sector with live market data, set directive-ready ranges, and see how candidates rate your transparency. Join the waitlist.",
   openGraph: {

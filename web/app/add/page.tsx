@@ -5,7 +5,7 @@ import { Breadcrumbs } from "@/components/blocks";
 import { AddSalaryForm } from "@/components/AddSalaryForm";
 import { getRoleFamilies, getCityList, getCountryList, getCompaniesBoard, isConfigured } from "@/lib/data";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: { canonical: "/add" },
   title: "Add your salary",
   description: "Add your salary anonymously to improve Europe's pay benchmarks. Reviewed by a human, never attributed to you.",
 };
