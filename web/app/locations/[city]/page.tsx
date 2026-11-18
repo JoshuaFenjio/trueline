@@ -102,7 +102,7 @@ export default async function CityPage({ params }: { params: { city: string } })
               <ol className="mt-4">
                 {d.topRoles.length ? d.topRoles.map((r, i) => (
                   <li key={r.slug} className="border-t first:border-t-0" style={{ borderColor: "var(--border)" }}>
-                    <Link href={`/roles/${r.slug}`} className="flex h-11 items-center gap-3 transition-colors hover:bg-[var(--band)]">
+                    <Link href={r.role === "Other" ? `/roles/${r.slug}` : `/roles/${r.slug}/city/${d.slug}`} className="flex h-11 items-center gap-3 transition-colors hover:bg-[var(--band)]">
                       <span className="tnum w-5 text-right text-sm text-ink-faint">{i + 1}</span>
                       <span className="min-w-0 flex-1"><span className="block truncate text-sm">{familyLabel(r.role)} <span className="tnum text-[11px] text-ink-faint">n={r.n}</span></span><span className="rank-track mt-1 block"><span className="rank-fill" style={{ width: `${(r.median / maxRole) * 100}%`, background: "var(--accent)" }} /></span></span>
                       <span className="tnum text-sm font-semibold">{eur(r.median)}</span>

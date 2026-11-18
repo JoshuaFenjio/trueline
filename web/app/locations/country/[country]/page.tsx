@@ -132,6 +132,26 @@ export default async function CountryPage({ params }: { params: { country: strin
             </div>
           </section>
 
+          {/* Top-paying role families -> role × country pages */}
+          {d.topRoles.length > 0 && (
+            <section className="mt-8">
+              <div className="card">
+                <div className="text-[15px] font-semibold">Top-paying role families in {country}</div>
+                <ol className="mt-4">
+                  {d.topRoles.map((r, i) => (
+                    <li key={r.slug} className="border-t first:border-t-0" style={{ borderColor: "var(--border)" }}>
+                      <Link href={`/roles/${r.slug}/country/${d.slug}`} className="flex h-10 items-center gap-3 transition-colors hover:bg-[var(--band)]">
+                        <span className="tnum w-5 text-right text-sm text-ink-faint">{i + 1}</span>
+                        <span className="min-w-0 flex-1 truncate text-sm">{familyLabel(r.role)} <span className="tnum text-[11px] text-ink-faint">n={r.n}</span></span>
+                        <span className="tnum text-sm font-semibold">{eur(r.median)}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </section>
+          )}
+
           {/* How country compares */}
           {d.compare.length > 1 && (
             <section className="mt-8">

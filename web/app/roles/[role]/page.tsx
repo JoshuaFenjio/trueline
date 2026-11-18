@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getRoleHub, roleFromSlug, getRoleFamilies, getLastRefreshed, getRolePayMap, getRoleLatest, getRolePostingsByCountry } from "@/lib/data";
+import { getRoleHub, roleFromSlug, getRoleFamilies, getLastRefreshed, getRolePayMap, getRoleLatest, getRolePostingsByCountry, getRolePlaceIndex, getRoleIndex } from "@/lib/data";
 import { SectionHeader, RankTable, toPayVMs, LevelLadder, TrendBadge, GatedState, Breadcrumbs, PillButton } from "@/components/blocks";
 import { MeasureBar } from "@/components/MeasureBar";
 import { DensityCurve } from "@/components/DensityCurve";
@@ -61,11 +61,23 @@ function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: s
 export default async function RolePage({ params }: { params: { role: string } }) {
   const role = await roleFromSlug(params.role);
   if (!role) notFound();
-  const [hub, allRoles, refreshed, payMap, latest, byCountry] = await Promise.all([
+  const [hub, allRoles, refreshed, payMap, latest, byCountry, placeIdx, roleIdx] = await Promise.all([
     getRoleHub(role), getRoleFamilies(), getLastRefreshed(),
     getRolePayMap(role), getRoleLatest(role, 12), getRolePostingsByCountry(role, 5),
+    getRolePlaceIndex(), getRoleIndex(),
   ]);
-  const adjacent = allRoles.filter((r) => r !== role).slice(0, 10);
+  // Related roles: same category first, then the rest by sample size — only
+  // families that publish, so every chip lands on a page with a number.
+  const publishingRoles = new Set(roleIdx.filter((r) => r.median != null).map((r) => r.name));
+  const cat = familyCategory(role);
+  const adjacent = [
+    ...allRoles.filter((r) => r !== role && r !== "Other" && publishingRoles.has(r) && familyCategory(r) === cat),
+    ...allRoles.filter((r) => r !== role && r !== "Other" && publishingRoles.has(r) && familyCategory(r) !== cat),
+  ].slice(0, 10);
+  // Role × place pages that publish for this family (index is median-sorted).
+  const markets = placeIdx.filter((p) => p.role === role && p.hasMedian);
+  const marketCountries = markets.filter((p) => p.kind === "country");
+  const marketCities = markets.filter((p) => p.kind === "city");
   const sp = hub.overall.spread;
   // Stored family key drives data + URLs; `label` is the only thing rendered.
   // Group families ("Operations") never take a plural "s" — they'd read as a
@@ -244,9 +256,43 @@ export default async function RolePage({ params }: { params: { role: string } })
 
       {faqs.length > 0 && <FaqBlock faqs={faqs} />}
 
-      {/* Adjacent roles */}
+      {/* Role × place pages — top 5 of each, then every publishing market so
+          no role × place page is an orphan. */}
+      {markets.length > 0 && (
+        <section className="mt-8">
+          <SectionHeader kicker="By market" title={`${label} salary by country and city`} />
+          <div className="mt-5 grid gap-6 lg:grid-cols-2">
+            {([["Top countries", marketCountries], ["Top cities", marketCities]] as const).map(([h, list]) => list.length > 0 && (
+              <div key={h} className="card">
+                <div className="text-[15px] font-semibold">{h} for {label}</div>
+                <ol className="mt-3">
+                  {list.slice(0, 5).map((m) => (
+                    <li key={m.placeSlug} className="border-t first:border-t-0" style={{ borderColor: "var(--border)" }}>
+                      <Link href={`/roles/${m.slug}/${m.kind}/${m.placeSlug}`} className="flex h-10 items-center gap-3 transition-colors hover:bg-[var(--band)]">
+                        <span className="min-w-0 flex-1 truncate text-sm">{label} in {m.place}</span>
+                        <span className="tnum text-[12px] text-ink-faint">n={m.n}</span>
+                        <span className="tnum text-sm font-semibold">{eur(m.median!)}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ))}
+          </div>
+          {markets.length > 10 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="text-[12px] text-ink-faint">All markets:</span>
+              {markets.map((m) => (
+                <Link key={m.kind + m.placeSlug} href={`/roles/${m.slug}/${m.kind}/${m.placeSlug}`} className="rounded-full border px-2.5 py-1 text-[12px] text-ink-muted hover:text-ink" style={{ background: "var(--surface-1)" }}>{m.place}</Link>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Related roles */}
       <section className="mt-8">
-        <SectionHeader kicker="Related" title="Adjacent roles" />
+        <SectionHeader kicker="Related" title="Related roles" />
         <div className="mt-4 flex flex-wrap gap-2">
           {adjacent.map((r) => (
             <Link key={r} href={`/roles/${slugify(r)}`} className="rounded-full border px-3 py-1.5 text-[13px] text-ink-muted transition-colors hover:border-[var(--border-strong)] hover:text-ink" style={{ background: "var(--surface-1)" }}>{familyLabel(r)}</Link>

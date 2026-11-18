@@ -151,6 +151,7 @@ const FOOTER_COLS: { title: string; links: { href: string; label: string }[] }[]
       { href: "/methodology", label: "Methodology" },
       { href: "/methodology#who-pays", label: "How Pay Score works" },
       { href: "/methodology#sample-gates", label: "Sample gates" },
+      { href: "/sitemap", label: "All pages" },
     ],
   },
   {

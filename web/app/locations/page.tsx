@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getCityMapData, getLiveStats, getCityIndex, isConfigured, CONCENTRATION_GATE } from "@/lib/data";
+import { getCityMapData, getLiveStats, getCityIndex, getRoutablePlaces, isConfigured, CONCENTRATION_GATE } from "@/lib/data";
 import { SectionHeader, Breadcrumbs, PillButton } from "@/components/blocks";
 import { HubExplorer, HubItem } from "@/components/HubExplorer";
 import { PlaceTile } from "@/components/PlaceTile";
@@ -26,14 +26,19 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function CitiesIndex() {
   if (!isConfigured) return <p className="py-24 text-center text-ink-muted">Supabase not configured.</p>;
-  const [map, stats] = await Promise.all([getCityMapData(), getLiveStats()]);
+  const [map, stats, cityIdx, places] = await Promise.all([getCityMapData(), getLiveStats(), getCityIndex(), getRoutablePlaces()]);
   // Headline "top-paying" skips markets where one employer supplies most of
   // the ads — the homepage's top-city card already does this, and Cardiff
   // (mostly one bank) was being presented as the best-paying city in Europe.
   const cities = [...map.cities].sort((a, b) => b.median - a.median);
   const topPaying = cities.filter((c) => !c.concentration || c.concentration.share <= CONCENTRATION_GATE);
   const topMarkets = [...map.cities].sort((a, b) => b.n - a.n).slice(0, 6);
-  const items: HubItem[] = cities.map((c) => ({ name: c.city, slug: c.slug, median: c.median, n: c.n, flagCountry: c.country, href: `/locations/${c.slug}` }));
+  // Every city whose page publishes (median at n>=8 and a routable page) —
+  // including ones without map coordinates, which the map data drops.
+  const routable = new Set(places.cities);
+  const mapCountry = new Map(map.cities.map((c) => [c.city, c.country]));
+  const items: HubItem[] = cityIdx.filter((c) => c.median != null && routable.has(c.name))
+    .map((c) => ({ name: c.name, slug: c.slug, median: c.median!, n: c.n, flagCountry: mapCountry.get(c.name) ?? null, href: `/locations/${c.slug}` }));
 
   const regionCounts = SUBREGIONS.map((r) => ({ region: r, n: map.cities.filter((c) => subregionOf(c.country) === r).length })).filter((r) => r.n > 0);
 
