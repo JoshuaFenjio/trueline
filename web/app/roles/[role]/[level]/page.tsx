@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRoleLevelHub, roleFromSlug, getRoleFamilies, getRoleLevelIndex, getLastRefreshed } from "@/lib/data";
-import { JsonLd, PercentileStrip } from "@/components/Seo";
+import { JsonLd, PercentileStrip, AnswerLead, FaqBlock } from "@/components/Seo";
 import { occupationLd, roundSpread, monthYear } from "@/lib/seo";
-import { occupationEligible } from "@/lib/seoCopy";
+import { occupationEligible, answerSentence, roleFaqs, levelNoun, withArticle, EMEA_PLACE } from "@/lib/seoCopy";
 import { LEVELS, levelSlug, levelFromSlug, isManagementLevel, levelHeading, levelPhrase, levelRolesPhrase, levelTitleStem } from "@/lib/levels";
 import { RankTable, toPayVMs, Breadcrumbs, PillButton, GatedState } from "@/components/blocks";
 import { MeasureBar } from "@/components/MeasureBar";
@@ -108,6 +108,15 @@ export default async function RoleLevelPage({ params }: { params: { role: string
   const label = familyLabel(role);
   const plural = isGroupFamily(role) ? `${label} roles` : `${label}s`;
   const heading = levelHeading(level, label);
+  const quotable = rs && role !== "Other";
+  const lnoun = levelNoun(level, role, isManagementLevel(level));
+  const lead = quotable ? answerSentence({ subject: withArticle(lnoun), place: EMEA_PLACE, median: rs!.median, n: rs!.n, updated }) : null;
+  const faqs = quotable ? roleFaqs({
+    noun: lnoun, plural: levelPhrase(level, plural), place: EMEA_PLACE,
+    median: rs!.median, p25: rs!.p25, p75: rs!.p75, p90: rs!.p90, n: rs!.n,
+    trackedN: hub.trackedN, disclosedN: hub.disclosedN,
+    leader: hub.topCountries[0] ? { kind: "country", name: hub.topCountries[0].label, median: hub.topCountries[0].value } : null,
+  }) : [];
   const pctCaption = rs ? `Annual advertised base salary percentiles for ${levelPhrase(level, plural)} across EMEA, from ${rs.n} salaried live job ads tracked by SalaryRadar${updated ? ` (updated ${updated})` : ""}.` : "";
 
   return (
@@ -128,6 +137,7 @@ export default async function RoleLevelPage({ params }: { params: { role: string
           </p>
         </div>
       </header>
+      {lead && <AnswerLead text={lead} />}
 
       {/* Level switcher */}
       <section className="mt-6">
@@ -210,6 +220,8 @@ export default async function RoleLevelPage({ params }: { params: { role: string
           </section>
         </>
       )}
+
+      {faqs.length > 0 && <FaqBlock faqs={faqs} />}
 
       {/* CTA + parent role */}
       <section className="section-y grid grid-cols-1 gap-5 md:grid-cols-2">

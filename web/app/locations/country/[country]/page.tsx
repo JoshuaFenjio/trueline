@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCountryDetail, getEuropePayData, countryFromSlug } from "@/lib/data";
+import { getCountryDetail, getEuropePayData, countryFromSlug, getLastRefreshed } from "@/lib/data";
+import { AnswerLead, FaqBlock } from "@/components/Seo";
+import { monthYear } from "@/lib/seo";
+import { answerSentence, placeFaqs } from "@/lib/seoCopy";
 import { SectionHeader, RankTable, toPayVMs, LevelLadder, Breadcrumbs, PillButton, GatedState } from "@/components/blocks";
 import { EuropePayMap } from "@/components/EuropePayMap";
 import { Donut } from "@/components/Donut";
@@ -41,7 +44,14 @@ function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: s
 export default async function CountryPage({ params }: { params: { country: string } }) {
   const country = await countryFromSlug(params.country);
   if (!country) notFound();
-  const [d, europe] = await Promise.all([getCountryDetail(country), getEuropePayData()]);
+  const [d, europe, refreshed] = await Promise.all([getCountryDetail(country), getEuropePayData(), getLastRefreshed()]);
+  const updated = monthYear(refreshed);
+  const lead = d.median != null ? answerSentence({ subject: "all tracked roles", place: country, median: d.median, n: d.n, updated }) : null;
+  const faqs = d.median != null ? placeFaqs({
+    place: country, median: d.median, n: d.n, disclosurePct: d.disclosurePct, trackedN: d.trackedN,
+    topRole: d.topRoles[0] ? { label: familyLabel(d.topRoles[0].role), median: d.topRoles[0].median } : null,
+    topCompany: d.companies[0] ? { name: d.companies[0].label, median: d.companies[0].value } : null,
+  }) : [];
 
   const nonOther = d.roleDist.filter((r) => r.role !== "Other");
   const top = nonOther.slice(0, 6);
@@ -58,6 +68,7 @@ export default async function CountryPage({ params }: { params: { country: strin
       <PlaceHero title={country} photoName={country} flagCountry={country}>
         <span><span className="tnum">{d.rolesBenchmarked}</span> benchmarked role families · <span className="tnum">{d.companyCount}</span> companies</span>
       </PlaceHero>
+      {lead && <AnswerLead text={lead} />}
       <div className="mt-6 flex flex-wrap gap-3">
         <PillButton href="#cities">Explore salaries</PillButton>
         <Link href="/locations/countries" className="pill-btn"><Icon.scale size={15} /><span>Compare countries</span></Link>
@@ -156,6 +167,8 @@ export default async function CountryPage({ params }: { params: { country: strin
           )}
         </>
       )}
+
+      {faqs.length > 0 && <FaqBlock faqs={faqs} />}
 
       {/* CTA band */}
       <section className="section-y grid gap-5 md:grid-cols-2">

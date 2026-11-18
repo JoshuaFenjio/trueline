@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCityDetail, cityFromSlug } from "@/lib/data";
+import { getCityDetail, cityFromSlug, getLastRefreshed } from "@/lib/data";
+import { AnswerLead, FaqBlock } from "@/components/Seo";
+import { monthYear } from "@/lib/seo";
+import { answerSentence, placeFaqs } from "@/lib/seoCopy";
 import { SectionHeader, RankTable, toPayVMs, Breadcrumbs, PillButton, GatedState } from "@/components/blocks";
 import { PlaceHero } from "@/components/PlaceHero";
 import { Sparkline } from "@/components/Sparkline";
@@ -40,7 +43,15 @@ function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: s
 export default async function CityPage({ params }: { params: { city: string } }) {
   const city = await cityFromSlug(params.city);
   if (!city) notFound();
-  const d = await getCityDetail(city);
+  const [d, refreshed] = await Promise.all([getCityDetail(city), getLastRefreshed()]);
+  const updated = monthYear(refreshed);
+  const topRole = d.topRoles.find((r) => r.role !== "Other");
+  const lead = d.median != null ? answerSentence({ subject: "all tracked roles", place: city, median: d.median, n: d.n, updated }) : null;
+  const faqs = d.median != null ? placeFaqs({
+    place: city, median: d.median, n: d.n, disclosurePct: d.disclosurePct, trackedN: d.trackedN,
+    topRole: topRole ? { label: familyLabel(topRole.role), median: topRole.median } : null,
+    topCompany: d.topCompanies[0] ? { name: d.topCompanies[0].label, median: d.topCompanies[0].value } : null,
+  }) : [];
   const vsCountry = d.median != null && d.countryMedian ? Math.round(((d.median - d.countryMedian) / d.countryMedian) * 100) : null;
   const maxRole = Math.max(1, ...d.topRoles.map((r) => r.median));
 
@@ -59,6 +70,7 @@ export default async function CityPage({ params }: { params: { city: string } })
         <section className="mt-8"><GatedState n={d.n} what={city} tracked={d.trackedN} /></section>
       ) : (
         <>
+          {lead && <AnswerLead text={lead} />}
           {/* Stat cards */}
           <section className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard icon={<Icon.bars size={15} />} label="Median advertised base" value={eur(d.median)} sub={`from ${d.n} salaried job ads`} />
@@ -126,6 +138,8 @@ export default async function CityPage({ params }: { params: { city: string } })
           )}
         </>
       )}
+
+      {faqs.length > 0 && <FaqBlock faqs={faqs} />}
 
       {/* Dual CTA */}
       <section className="section-y grid gap-5 md:grid-cols-2">

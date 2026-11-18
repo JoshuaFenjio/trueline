@@ -14,9 +14,10 @@ import { roleBlurb, roleIconName } from "@/lib/roleBlurbs";
 import { levelSlug, isManagementLevel } from "@/lib/levels";
 import { eur, eurK, slugify, timeAgo } from "@/lib/format";
 import { familyLabel, isGroupFamily, familyCategory } from "@/lib/roleNames";
-import { JsonLd, PercentileStrip } from "@/components/Seo";
+import { JsonLd, PercentileStrip, AnswerLead, FaqBlock } from "@/components/Seo";
 import { occupationLd, roundSpread, monthYear } from "@/lib/seo";
-import { occupationEligible } from "@/lib/seoCopy";
+import { withArticle } from "@/lib/seoCopy";
+import { occupationEligible, answerSentence, roleFaqs, roleNoun, rolePlural, EMEA_PLACE } from "@/lib/seoCopy";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -72,6 +73,14 @@ export default async function RolePage({ params }: { params: { role: string } })
   const showDemand = hub.trend.dir === "up" || hub.trend.dir === "down" || hub.trend.dir === "flat";
   const rs = sp ? roundSpread(sp) : null;
   const updated = monthYear(refreshed);
+  const quotable = rs && role !== "Other";
+  const lead = quotable ? answerSentence({ subject: withArticle(roleNoun(role)), place: EMEA_PLACE, median: rs!.median, n: rs!.n, updated }) : null;
+  const faqs = quotable ? roleFaqs({
+    noun: roleNoun(role), plural: rolePlural(role), place: EMEA_PLACE,
+    median: rs!.median, p25: rs!.p25, p75: rs!.p75, p90: rs!.p90, n: rs!.n,
+    trackedN: hub.trackedN, disclosedN: hub.disclosedN,
+    leader: hub.topCountries[0] ? { kind: "country", name: hub.topCountries[0].label, median: hub.topCountries[0].value } : null,
+  }) : [];
   const pctCaption = rs ? `Annual advertised base salary percentiles for ${plural} across EMEA, from ${rs.n} salaried live job ads tracked by SalaryRadar${updated ? ` (updated ${updated})` : ""}.` : "";
 
   return (
@@ -97,6 +106,7 @@ export default async function RolePage({ params }: { params: { role: string } })
           <ShareButton />
         </div>
       </header>
+      {lead && <AnswerLead text={lead} />}
 
       {!sp ? (
         <section className="mt-8"><GatedState n={hub.overall.n} what={`${label} across EMEA`} tracked={hub.trackedN} /></section>
@@ -224,6 +234,8 @@ export default async function RolePage({ params }: { params: { role: string } })
           )}
         </>
       )}
+
+      {faqs.length > 0 && <FaqBlock faqs={faqs} />}
 
       {/* Adjacent roles */}
       <section className="mt-8">

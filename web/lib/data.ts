@@ -810,6 +810,7 @@ export interface CountryDetail {
   roleDist: { role: string; n: number; pct: number }[];
   compare: { country: string; code: string | null; median: number; isSelf: boolean }[];
   insights: { icon: string; text: string }[];
+  topRoles: { role: string; slug: string; median: number; n: number }[]; // gated, excl. "Other"
 }
 export const getCountryDetail = async (name: string): Promise<CountryDetail> => {
   const rows = await getData();
@@ -884,6 +885,13 @@ export const getCountryDetail = async (name: string): Promise<CountryDetail> => 
     companyCount: new Set(all.map((p) => p.company)).size,
     companies: rankCompaniesBy(rows, inC).slice(0, 8),
     cities, byLevel, roleDist, compare, insights,
+    topRoles: (() => {
+      const m = new Map<string, number[]>();
+      for (const p of sal) { if (p.roleFamily === "Other") continue; const a = m.get(p.roleFamily) || []; a.push(p.annual); m.set(p.roleFamily, a); }
+      return [...m.entries()].filter(([, v]) => v.length >= N_MEDIAN)
+        .map(([role, v]) => ({ role, slug: slugify(role), median: Math.round(median(v)), n: v.length }))
+        .sort((a, b) => b.median - a.median).slice(0, 10);
+    })(),
   };
 };
 

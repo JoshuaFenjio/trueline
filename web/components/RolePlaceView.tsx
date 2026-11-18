@@ -5,12 +5,12 @@ import { SectionHeader, RankTable, toPayVMs, Breadcrumbs, PillButton, GatedState
 import { PostingList } from "@/components/PostingList";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/icons";
-import { JsonLd, PercentileStrip } from "@/components/Seo";
+import { JsonLd, PercentileStrip, AnswerLead, FaqBlock } from "@/components/Seo";
 import { familyLabel } from "@/lib/roleNames";
 import { isManagementLevel } from "@/lib/levels";
 import { eur, eurK, slugify } from "@/lib/format";
 import { occupationLd, roundSpread, monthYear, robotsFor, currentYear, eurExact } from "@/lib/seo";
-import { rolePlural, occupationEligible } from "@/lib/seoCopy";
+import { rolePlural, occupationEligible, answerSentence, roleFaqs, roleNoun, withArticle } from "@/lib/seoCopy";
 import { CONCENTRATION_GATE } from "@/lib/payScale";
 
 export function rolePlacePath(slug: string, kind: "city" | "country", placeSlug: string) {
@@ -46,7 +46,7 @@ function StatCard({ label, value, sub }: { label: string; value: React.ReactNode
   );
 }
 
-export function RolePlaceView({ hub, refreshed, lead, faq }: { hub: RolePlaceHub; refreshed: string | null; lead?: React.ReactNode; faq?: React.ReactNode }) {
+export function RolePlaceView({ hub, refreshed }: { hub: RolePlaceHub; refreshed: string | null }) {
   const label = familyLabel(hub.role);
   const plural = rolePlural(hub.role);
   const sp = hub.overall.spread;
@@ -57,6 +57,14 @@ export function RolePlaceView({ hub, refreshed, lead, faq }: { hub: RolePlaceHub
   const caption = rs
     ? `Annual advertised base salary percentiles for ${plural} in ${hub.place}, from ${rs.n} salaried live job ads tracked by SalaryRadar${updated ? ` (updated ${updated})` : ""}.`
     : "";
+  const lead = rs ? answerSentence({ subject: withArticle(roleNoun(hub.role)), place: hub.place, median: rs.median, n: rs.n, updated }) : null;
+  const leaderRow = hub.cities[0] ?? hub.topCompanies[0] ?? null;
+  const faqs = rs ? roleFaqs({
+    noun: roleNoun(hub.role), plural, place: hub.place,
+    median: rs.median, p25: rs.p25, p75: rs.p75, p90: rs.p90, n: rs.n,
+    trackedN: hub.trackedN, disclosedN: hub.disclosedN,
+    leader: leaderRow ? { kind: hub.cities[0] ? "city" : "company", name: leaderRow.label, median: leaderRow.value } : null,
+  }) : [];
   const levels = hub.byLevel.filter((l) => l.median != null || (!isManagementLevel(l.level) && l.n > 0));
   const concentrated = hub.concentration && hub.concentration.share > CONCENTRATION_GATE ? hub.concentration : null;
   const vsRole = sp && hub.roleMedian ? Math.round(((sp.median - hub.roleMedian) / hub.roleMedian) * 100) : null;
@@ -94,7 +102,7 @@ export function RolePlaceView({ hub, refreshed, lead, faq }: { hub: RolePlaceHub
         </section>
       ) : (
         <>
-          {lead}
+          {lead && <AnswerLead text={lead} />}
           <section className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard label="Median advertised base" value={eurExact(rs.median)} sub={`from ${rs.n} salaried job ads`} />
             <StatCard label="Middle 50% of ads" value={`${eurK(rs.p25)}–${eurK(rs.p75)}`} sub="25th to 75th percentile" />
@@ -142,7 +150,7 @@ export function RolePlaceView({ hub, refreshed, lead, faq }: { hub: RolePlaceHub
             </div>
           </section>
 
-          {faq}
+          {faqs.length > 0 && <FaqBlock faqs={faqs} />}
 
           {occupationEligible(hub.role) && (
             <JsonLd data={occupationLd({
