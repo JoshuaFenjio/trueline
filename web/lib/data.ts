@@ -18,6 +18,7 @@ export { isConfigured };
 // ---------------------------------------------------------------------------
 export interface Posting {
   company: string;
+  ats: string | null; // source platform (greenhouse, ashby, personio, …)
   sector: Sector;
   roleFamily: string;
   title: string; // raw advertised title (for distinct-title counts)
@@ -77,7 +78,7 @@ function mapRow(r: any): Posting | null {
   // we wouldn't count), annualized as a pair so a monthly range can't invert.
   const band = annual !== null ? annualizeRange(r.salary_eur_min, r.salary_eur_max, r.salary_period) : null;
   return {
-    company: r.company, sector: sectorOf(r.company), roleFamily: r.role_family || "Other",
+    company: r.company, ats: r.ats || null, sector: sectorOf(r.company), roleFamily: r.role_family || "Other",
     title: r.title || "", level: (r.level as Level) || levelBucket(r.title),
     levelExplicit: r.level_source ? r.level_source === "explicit" : levelHasSignal(r.title),
     city: place.city, country: place.country,
@@ -92,9 +93,12 @@ function mapRow(r: any): Posting | null {
 // well under 2MB) cached independently and keyed by shard index; getData()
 // stitches them. SHARDS gives ample headroom above the current ~9.3k rows.
 const SHARD_ROWS = 2000;
-const SHARDS = 14; // 28k-row capacity; ~15.3k active today. Bump if the count nears this.
+// 40k-row capacity. Was 14 (28k) with ~27.3k active rows on 2026-11-18 —
+// within a few hundred ads of silently truncating every median. getData()
+// now warns loudly if the last shard ever fills.
+const SHARDS = 20;
 const SELECT_COLS =
-  "company,role_family,title,city,location,country,remote,salary_eur_min,salary_eur_max,salary_period,salary_source,currency,level,level_source,url,posted_at,region,multi_market";
+  "company,ats,role_family,title,city,location,country,remote,salary_eur_min,salary_eur_max,salary_period,salary_source,currency,level,level_source,url,posted_at,region,multi_market";
 
 const _fetchShard = unstable_cache(
   async (shard: number): Promise<Posting[]> => {
@@ -114,7 +118,7 @@ const _fetchShard = unstable_cache(
     }
     return out;
   },
-  ["trueline-shard-v29"],
+  ["trueline-shard-v30"],
   { revalidate: 3600 }
 );
 
@@ -123,6 +127,8 @@ export async function getData(): Promise<Posting[]> {
   // (no Supabase round-trip); a stable company/url ordering keeps shard windows
   // deterministic across requests so the same rows land in the same shard.
   const shards = await Promise.all(Array.from({ length: SHARDS }, (_, i) => _fetchShard(i)));
+  // A full last shard means rows beyond capacity were not fetched.
+  if (shards[SHARDS - 1].length >= SHARD_ROWS * 0.9) console.error(`[data] shard capacity nearly exhausted: raise SHARDS (${SHARDS})`);
   return shards.flat();
 }
 
