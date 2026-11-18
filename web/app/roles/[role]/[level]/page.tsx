@@ -52,6 +52,7 @@ export async function generateMetadata({ params }: { params: { role: string; lev
   return {
     title,
     alternates: { canonical: `/roles/${params.role}/${params.level}` },
+    robots: robotsFor(!!sp),
     description: sp
       ? `Median advertised base salary for ${levelPhrase(level, plural)} across EMEA: ${eurExact(sp.median)}, from ${sp.n.toLocaleString("en-IE")} salaried live job ads (middle 50% ${eurExact(sp.p25)}–${eurExact(sp.p75)}). By country and company.`
       : `${levelPhrase(level, plural)} across EMEA: ${hub.trackedN.toLocaleString("en-IE")} live job ads tracked, not yet 8 salaried ads with a stated level to publish a median.`,

@@ -57,7 +57,7 @@ export async function generateMetadata({
   const r = await searchSalaries({ role: searchParams.role, level: searchParams.level, city: searchParams.city });
   const slice = sliceLabel(r.role, r.level, r.city);
   if (!r.enough || !r.spread) {
-    return { title: `${slice} salary · SalaryRadar`, alternates: { canonical: "/" } };
+    return { title: `${slice} salary · SalaryRadar`, alternates: { canonical: "/" }, robots: { index: false, follow: true } };
   }
   const figure = `${eurK(r.spread.median)} median`;
   const title = `${slice}: ${figure} · SalaryRadar`;
@@ -65,6 +65,9 @@ export async function generateMetadata({
   return {
     title,
     alternates: { canonical: "/" },
+    // On-site search results: not indexed (they duplicate the real role×city
+    // pages), but links are followed.
+    robots: { index: false, follow: true },
     description: `${slice}: ${figure} base, from ${r.n} live job postings. Real EMEA salary benchmarks.`,
     openGraph: { title, images: [og] },
     twitter: { card: "summary_large_image", title, images: [og] },

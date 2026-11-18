@@ -36,6 +36,7 @@ export async function generateMetadata({ params }: { params: { role: string } })
   return {
     title,
     alternates: { canonical: `/roles/${params.role}` },
+    robots: robotsFor(!!sp),
     description: sp
       ? `Median advertised base salary for ${plural} across EMEA: ${eurExact(sp.median)}, from ${sp.n.toLocaleString("en-IE")} salaried live job ads (middle 50% ${eurExact(sp.p25)}–${eurExact(sp.p75)}). By level, country, city and company.`
       : `${plural} across EMEA: ${hub.trackedN.toLocaleString("en-IE")} live job ads tracked, not yet 8 salaried ads to publish a median.`,

@@ -29,6 +29,7 @@ export async function generateMetadata({ params }: { params: { country: string }
   return {
     title,
     alternates: { canonical: `/locations/country/${params.country}` },
+    robots: robotsFor(d.median != null),
     description: d.median != null
       ? `Median advertised base salary in ${at} across all tracked roles: ${eurExact(d.median)}, from ${d.n.toLocaleString("en-IE")} salaried live job ads. Pay by role family, city and top-paying employers.`
       : `${country}: ${d.trackedN.toLocaleString("en-IE")} live job ads tracked, not yet 8 salaried ads to publish a median.`,

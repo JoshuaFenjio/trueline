@@ -1,69 +1,47 @@
 import type { MetadataRoute } from "next";
 import {
-  getRoleFamilies, getCityList, getAllCompanySlugs, getRoleLevelIndex, getRoutablePlaces, isConfigured,
+  getRoleIndex, getCityIndex, getCountryIndex, getAllCompanySlugs, getRoleLevelIndex, getRolePlaceIndex,
+  getRoutablePlaces, getLastRefreshed, isConfigured,
 } from "@/lib/data";
-import { slugify } from "@/lib/format";
 import { SITE_URL as BASE } from "@/lib/site";
 
 export const revalidate = 3600;
 
+// ONLY publishing pages: every URL here renders a real median (or, for the
+// hubs and content pages, real live content) and is indexable. Gated pages are
+// noindex and left out; they enter the sitemap on their own the hour their
+// slice clears the gate, because both read the same index functions.
+//
+// lastmod is the real last data refresh (max job_postings.last_seen) for every
+// data-driven page. Pages whose content is not data-driven (/add,
+// /for-companies) carry no lastmod rather than an invented one.
+// No #fragment URLs (crawlers drop the fragment — they were duplicates of
+// /leaderboards) and no /?role=&city= query URLs (on-site search, noindex;
+// replaced by the real role×city pages).
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const staticPages: MetadataRoute.Sitemap = [
-    { url: `${BASE}/`, changeFrequency: "daily", priority: 1 },
-    { url: `${BASE}/leaderboards`, changeFrequency: "daily", priority: 0.9 },
-    { url: `${BASE}/companies`, changeFrequency: "daily", priority: 0.8 },
-    { url: `${BASE}/add`, changeFrequency: "monthly", priority: 0.4 },
-    { url: `${BASE}/methodology`, changeFrequency: "monthly", priority: 0.5 },
+  const refreshed = isConfigured ? await getLastRefreshed() : null;
+  const lastModified = refreshed ? new Date(refreshed) : undefined;
+  const page = (path: string, priority: number, live = true): MetadataRoute.Sitemap[number] =>
+    ({ url: `${BASE}${path}`, priority, ...(live && lastModified ? { lastModified } : {}) });
+
+  const out: MetadataRoute.Sitemap = [
+    page("/", 1), page("/roles", 0.9), page("/locations", 0.9), page("/locations/countries", 0.9),
+    page("/companies", 0.8), page("/leaderboards", 0.8), page("/methodology", 0.5),
+    page("/for-companies", 0.3, false), page("/add", 0.3, false),
   ];
-  // Leaderboard section anchors
-  for (const a of ["overall", "by-sector", "by-role", "countries", "transparent"]) {
-    staticPages.push({ url: `${BASE}/leaderboards#${a}`, changeFrequency: "daily", priority: 0.6 });
-  }
-  if (!isConfigured) return staticPages;
+  if (!isConfigured) return out;
 
-  // Places come from getRoutablePlaces, not getCityList/getCountryList: the
-  // latter include places whose page 404s, and a sitemap must only contain URLs
-  // that resolve. getCityList is still used for the role x city combinations,
-  // which are homepage queries rather than place pages.
-  const [roles, cityRanked, places, companySlugs, roleLevels] = await Promise.all([
-    getRoleFamilies(), getCityList(), getRoutablePlaces(), getAllCompanySlugs(), getRoleLevelIndex(),
+  const [roles, roleLevels, rolePlaces, cities, countries, places, companySlugs] = await Promise.all([
+    getRoleIndex(), getRoleLevelIndex(), getRolePlaceIndex(), getCityIndex(), getCountryIndex(),
+    getRoutablePlaces(), getAllCompanySlugs(),
   ]);
-  const { cities, countries } = places;
+  const routableCity = new Set(places.cities), routableCountry = new Set(places.countries);
 
-  const roleUrls: MetadataRoute.Sitemap = roles.map((r) => ({
-    url: `${BASE}/roles/${slugify(r)}`, changeFrequency: "daily", priority: 0.8,
-  }));
-  // Role × level pages — only the combinations that clear the median gate, so we
-  // never point search engines at an honest empty state.
-  const roleLevelUrls: MetadataRoute.Sitemap = roleLevels
-    .filter((rl) => rl.hasMedian)
-    .map((rl) => ({
-      url: `${BASE}/roles/${rl.slug}/${rl.levelSlug}`, changeFrequency: "weekly", priority: 0.6,
-    }));
-  const cityUrls: MetadataRoute.Sitemap = cities.map((c) => ({
-    url: `${BASE}/locations/${slugify(c)}`, changeFrequency: "weekly", priority: 0.6,
-  }));
-  const countryUrls: MetadataRoute.Sitemap = countries.map((c) => ({
-    url: `${BASE}/locations/country/${slugify(c)}`, changeFrequency: "weekly", priority: 0.6,
-  }));
-  const companyUrls: MetadataRoute.Sitemap = companySlugs.map((s) => ({
-    url: `${BASE}/companies/${s}`, changeFrequency: "weekly", priority: 0.7,
-  }));
-
-  // Role × city landing combinations (top cities only, keeps it tight).
-  // Only cities that also have their own page, so a query URL never advertises
-  // a market we can't stand behind.
-  const routable = new Set(cities);
-  const topCities = cityRanked.filter((c) => routable.has(c.city)).slice(0, 15);
-  const roleCity: MetadataRoute.Sitemap = [];
-  for (const r of roles) {
-    for (const c of topCities) {
-      roleCity.push({
-        url: `${BASE}/?role=${encodeURIComponent(r)}&city=${encodeURIComponent(c.city)}`,
-        changeFrequency: "daily", priority: 0.5,
-      });
-    }
-  }
-
-  return [...staticPages, ...roleUrls, ...roleLevelUrls, ...cityUrls, ...countryUrls, ...companyUrls, ...roleCity];
+  for (const r of roles) if (r.median != null) out.push(page(`/roles/${r.slug}`, 0.8));
+  for (const rl of roleLevels) if (rl.hasMedian) out.push(page(`/roles/${rl.slug}/${rl.levelSlug}`, 0.6));
+  for (const rp of rolePlaces) if (rp.hasMedian) out.push(page(`/roles/${rp.slug}/${rp.kind}/${rp.placeSlug}`, 0.7));
+  for (const c of cities) if (c.median != null && routableCity.has(c.name)) out.push(page(`/locations/${c.slug}`, 0.6));
+  for (const c of countries) if (c.median != null && routableCountry.has(c.name)) out.push(page(`/locations/country/${c.slug}`, 0.7));
+  for (const s of companySlugs) out.push(page(`/companies/${s}`, 0.6));
+  return out;
 }
