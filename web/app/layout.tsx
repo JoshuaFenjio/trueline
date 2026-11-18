@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
-import { Schibsted_Grotesk } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { NavBar, Footer } from "@/components/Chrome";
 import { SITE_URL } from "@/lib/site";
 
-const schibsted = Schibsted_Grotesk({
-  subsets: ["latin"],
-  weight: ["400", "500", "700", "800"],
-  style: ["normal", "italic"],
+// Self-hosted (see app/fonts/README.md): next/font/google broke the build.
+// Same Schibsted Grotesk files Google serves; one variable file per style
+// covers the 400/500/700/800 weights the site uses.
+const schibsted = localFont({
+  src: [
+    { path: "./fonts/SchibstedGrotesk-latin.woff2", weight: "400 900", style: "normal" },
+    { path: "./fonts/SchibstedGrotesk-Italic-latin.woff2", weight: "400 900", style: "italic" },
+  ],
   variable: "--font-schibsted",
   display: "swap",
 });
