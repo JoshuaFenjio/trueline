@@ -14,6 +14,9 @@ import { roleBlurb, roleIconName } from "@/lib/roleBlurbs";
 import { levelSlug, isManagementLevel } from "@/lib/levels";
 import { eur, eurK, slugify, timeAgo } from "@/lib/format";
 import { familyLabel, isGroupFamily, familyCategory } from "@/lib/roleNames";
+import { JsonLd, PercentileStrip } from "@/components/Seo";
+import { occupationLd, roundSpread, monthYear } from "@/lib/seo";
+import { occupationEligible } from "@/lib/seoCopy";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -67,6 +70,9 @@ export default async function RolePage({ params }: { params: { role: string } })
   const ladder = hub.byLevel.filter((b) => !isManagementLevel(b.level) || b.slice.spread != null);
   const RoleIcon = (Icon as any)[roleIconName(role)] ?? Icon.briefcase;
   const showDemand = hub.trend.dir === "up" || hub.trend.dir === "down" || hub.trend.dir === "flat";
+  const rs = sp ? roundSpread(sp) : null;
+  const updated = monthYear(refreshed);
+  const pctCaption = rs ? `Annual advertised base salary percentiles for ${plural} across EMEA, from ${rs.n} salaried live job ads tracked by SalaryRadar${updated ? ` (updated ${updated})` : ""}.` : "";
 
   return (
     <div className="pb-4">
@@ -103,6 +109,14 @@ export default async function RolePage({ params }: { params: { role: string } })
             <StatCard icon={<Icon.briefcase size={15} />} label="Live job ads tracked" value={hub.trackedN.toLocaleString()} sub={`${hub.disclosedN} disclose pay`} />
             <StatCard icon={<Icon.refresh size={15} />} label="Data last refreshed" value={<span className="text-xl">{timeAgo(refreshed)}</span>} sub="Re-scraped 6-hourly" />
           </section>
+
+          {rs && <section className="mt-6"><PercentileStrip spread={rs} caption={pctCaption} /></section>}
+          {rs && occupationEligible(role) && (
+            <JsonLd data={occupationLd({
+              name: label, path: `/roles/${slugify(role)}`, description: pctCaption, pageTitle: `${label} salary in Europe`,
+              location: { kind: "emea" }, spread: rs, lastRefreshedIso: refreshed,
+            })} />
+          )}
 
           {/* Latest live ads for this family — near the top, because "what is
               actually open right now" is the first question a benchmark raises.

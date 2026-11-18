@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getRoleLevelHub, roleFromSlug, getRoleFamilies, getRoleLevelIndex } from "@/lib/data";
+import { getRoleLevelHub, roleFromSlug, getRoleFamilies, getRoleLevelIndex, getLastRefreshed } from "@/lib/data";
+import { JsonLd, PercentileStrip } from "@/components/Seo";
+import { occupationLd, roundSpread, monthYear } from "@/lib/seo";
+import { occupationEligible } from "@/lib/seoCopy";
 import { LEVELS, levelSlug, levelFromSlug, isManagementLevel, levelHeading, levelPhrase, levelRolesPhrase, levelTitleStem } from "@/lib/levels";
 import { RankTable, toPayVMs, Breadcrumbs, PillButton, GatedState } from "@/components/blocks";
 import { MeasureBar } from "@/components/MeasureBar";
@@ -94,14 +97,18 @@ export default async function RoleLevelPage({ params }: { params: { role: string
   const level = levelFromSlug(params.level);
   if (!role || !level) notFound();
 
-  const hub = await getRoleLevelHub(role, level);
+  const [hub, refreshed] = await Promise.all([getRoleLevelHub(role, level), getLastRefreshed()]);
   const sp = hub.overall.spread;
+  const rs = sp ? roundSpread(sp) : null;
+  const updated = monthYear(refreshed);
   const RoleIcon = (Icon as any)[roleIconName(role)] ?? Icon.briefcase;
   // Sibling bands that DO clear the gate — surfaced in the empty state so a thin
   // page still points somewhere useful.
   const liveSiblings = hub.siblings.filter((s) => s.level !== level && s.median != null);
   const label = familyLabel(role);
   const plural = isGroupFamily(role) ? `${label} roles` : `${label}s`;
+  const heading = levelHeading(level, label);
+  const pctCaption = rs ? `Annual advertised base salary percentiles for ${levelPhrase(level, plural)} across EMEA, from ${rs.n} salaried live job ads tracked by SalaryRadar${updated ? ` (updated ${updated})` : ""}.` : "";
 
   return (
     <div className="pb-4">
@@ -160,6 +167,14 @@ export default async function RoleLevelPage({ params }: { params: { role: string
             <StatCard icon={<Icon.spark size={15} />} label="Top 10% of ads (P90)" value={eurK(sp.p90)} sub="Best-paid tenth" />
             <StatCard icon={<Icon.briefcase size={15} />} label="Live job ads tracked" value={hub.trackedN.toLocaleString()} sub={`${hub.disclosedN} disclose pay`} />
           </section>
+
+          {rs && <section className="mt-6"><PercentileStrip spread={rs} caption={pctCaption} /></section>}
+          {rs && occupationEligible(role) && (
+            <JsonLd data={occupationLd({
+              name: heading, path: `/roles/${slugify(role)}/${levelSlug(level)}`, description: pctCaption, pageTitle: `${heading} salary in Europe`,
+              location: { kind: "emea" }, spread: rs, lastRefreshedIso: refreshed,
+            })} />
+          )}
 
           {/* Distribution */}
           <section className="mt-8">

@@ -648,6 +648,114 @@ export const getRoleLevelIndex = async (): Promise<
 };
 
 // ---------------------------------------------------------------------------
+// Role × place (country or city) — one family in one market.
+//
+// A real, server-rendered page per combination (/roles/[role]/country/[c] and
+// /roles/[role]/city/[c]). Publishes under the same N_MEDIAN gate as every
+// other median; below it the page renders an honest empty state and is
+// noindexed. "Other" is a bucket, not a role, so it never gets a role × place
+// page. Only places that resolve to their own page (PRESENCE active ads) are
+// eligible, so every link out of here lands on a real market page.
+// ---------------------------------------------------------------------------
+export type PlaceKind = "city" | "country";
+export interface RolePlaceHub {
+  role: string; slug: string; kind: PlaceKind; place: string; placeSlug: string;
+  country: string | null; // home country for a city; the country itself for a country
+  overall: Slice; trackedN: number; disclosedN: number;
+  concentration: Concentration | null;
+  topCompanies: RankRow[];
+  byLevel: { level: Level; median: number | null; n: number }[];
+  cities: RankRow[]; // role within cities of this country (country pages only)
+  peers: RankRow[]; // same role, other places of the same kind, publishing only
+  roleMedian: number | null; // this role across EMEA (n >= gate)
+  placeMedian: number | null; // all roles in this place (n >= gate)
+  latest: PostingVM[];
+}
+
+export async function getRolePlaceHub(role: string, kind: PlaceKind, place: string): Promise<RolePlaceHub> {
+  const rows = await getData();
+  const inPlace = (p: Posting) => (kind === "city" ? p.city === place : p.country === place);
+  const match = (p: Posting) => p.roleFamily === role && inPlace(p);
+  const overall = sliceOf(rows, match);
+  const sal = usable(rows).filter(match);
+  const all = rows.filter(match);
+
+  let country: string | null = kind === "country" ? place : null;
+  if (kind === "city") {
+    const cc = new Map<string, number>();
+    for (const p of rows) if (p.city === place && p.country) cc.set(p.country, (cc.get(p.country) || 0) + 1);
+    country = [...cc.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  }
+
+  const routable = new Set(await activeNames(kind));
+  const inRole = (p: Posting) => p.roleFamily === role;
+  const peers = (kind === "city" ? rankCitiesBy(rows, inRole) : rankCountriesBy(rows, inRole))
+    .filter((r) => r.label !== place && routable.has(r.label)).slice(0, 8);
+  const routableCities = new Set(await activeNames("city"));
+  const cities = kind === "country"
+    ? rankCitiesBy(rows, (p) => inRole(p) && p.country === place).filter((r) => routableCities.has(r.label)).slice(0, 8)
+    : [];
+
+  const roleSlice = sliceOf(rows, inRole);
+  const placeSlice = sliceOf(rows, inPlace);
+
+  return {
+    role, slug: slugify(role), kind, place, placeSlug: slugify(place), country,
+    overall, trackedN: all.length, disclosedN: all.filter((p) => p.disclosed).length,
+    concentration: topCompanyShare(sal),
+    topCompanies: rankCompaniesBy(rows, match).slice(0, 8),
+    byLevel: LEVELS.map((level) => {
+      const v = sal.filter((p) => p.level === level && p.levelExplicit).map((p) => p.annual);
+      return { level, median: v.length >= N_MEDIAN ? Math.round(median(v)) : null, n: v.length };
+    }),
+    cities, peers,
+    roleMedian: roleSlice.spread ? roleSlice.spread.median : null,
+    placeMedian: placeSlice.spread ? placeSlice.spread.median : null,
+    latest: latestFor(rows, match, 8),
+  };
+}
+
+/** Every role × routable place combination with ANY live ad, and whether it
+ *  clears the median gate. Drives the sitemap (publishing only), the role
+ *  page's market links, the HTML sitemap, and route resolution. */
+export interface RolePlaceEntry { role: string; slug: string; kind: PlaceKind; place: string; placeSlug: string; n: number; trackedN: number; median: number | null; hasMedian: boolean }
+export const getRolePlaceIndex = async (): Promise<RolePlaceEntry[]> => {
+  const rows = await getData();
+  const [cities, countries] = await Promise.all([activeNames("city"), activeNames("country")]);
+  const okCity = new Set(cities), okCountry = new Set(countries);
+  const acc = new Map<string, { role: string; kind: PlaceKind; place: string; tracked: number; vals: number[] }>();
+  const add = (role: string, kind: PlaceKind, place: string, annual: number | null) => {
+    const k = `${kind}|${role}|${place}`;
+    const e = acc.get(k) || (acc.set(k, { role, kind, place, tracked: 0, vals: [] }), acc.get(k)!);
+    e.tracked++; if (annual !== null) e.vals.push(annual);
+  };
+  for (const p of rows) {
+    if (!p.roleFamily || p.roleFamily === "Other") continue;
+    if (p.city && okCity.has(p.city)) add(p.roleFamily, "city", p.city, p.annual);
+    if (p.country && okCountry.has(p.country)) add(p.roleFamily, "country", p.country, p.annual);
+  }
+  return [...acc.values()].map((e) => {
+    const has = e.vals.length >= N_MEDIAN;
+    return {
+      role: e.role, slug: slugify(e.role), kind: e.kind, place: e.place, placeSlug: slugify(e.place),
+      n: e.vals.length, trackedN: e.tracked, median: has ? Math.round(median(e.vals)) : null, hasMedian: has,
+    };
+  }).sort((a, b) => (b.median ?? 0) - (a.median ?? 0) || b.n - a.n);
+};
+
+/** Resolve a role × place URL. Null => 404 (unknown role/place, "Other", or
+ *  no live ad at all in the combination — we don't mint empty pages). */
+export async function resolveRolePlace(roleSlug: string, kind: PlaceKind, placeSlug: string): Promise<{ role: string; place: string } | null> {
+  const role = await roleFromSlug(roleSlug);
+  if (!role || role === "Other") return null;
+  const place = kind === "city" ? await cityFromSlug(placeSlug) : await countryFromSlug(placeSlug);
+  if (!place) return null;
+  const rows = await getData();
+  const any = rows.some((p) => p.roleFamily === role && (kind === "city" ? p.city === place : p.country === place));
+  return any ? { role, place } : null;
+}
+
+// ---------------------------------------------------------------------------
 // Location hubs (city + country)
 // ---------------------------------------------------------------------------
 export interface LocationHub {
