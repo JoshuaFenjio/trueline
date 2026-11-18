@@ -5,6 +5,8 @@ import {
   getLastRefreshed, isConfigured, RankRow,
 } from "@/lib/data";
 import { SectionHeader, RankTable, toPayVMs, Chip, Breadcrumbs, PillButton } from "@/components/blocks";
+import { JsonLd } from "@/components/Seo";
+import { itemListLd } from "@/lib/seo";
 import { PayIndexTable, IndexRow } from "@/components/PayIndex";
 import { TopCities } from "@/components/TopCities";
 import { Flag } from "@/components/Flag";
@@ -146,6 +148,7 @@ export default async function Leaderboards({
           </ol>
           <div className="border-t px-4 py-2.5 text-[12px] text-ink-faint" style={{ borderColor: "var(--border)" }}>Source: SalaryRadar data · Updated {timeAgo(refreshed)}</div>
         </div>
+        <JsonLd data={itemListLd("Top paying countries in Europe", countries.slice(0, 15).map((c) => ({ name: c.country, href: `/locations/country/${slugify(c.country)}` })))} />
       </section>
 
       {/* By sector */}
@@ -175,6 +178,7 @@ export default async function Leaderboards({
       <section className="mt-16 scroll-mt-24" id="overall">
         <SectionHeader kicker="Overall" title="Top-paying companies" sub="Highest median advertised base across every sector. Company midpoints need 3+ salaried postings." />
         <div className="mt-6"><RankTable rows={toPayVMs(lb.topCompanies, (s) => `/companies/${s}`)} /></div>
+        <JsonLd data={itemListLd("Top-paying companies", lb.topCompanies.map((c) => ({ name: c.label, href: `/companies/${c.slug}` })))} />
       </section>
 
       {/* Transparency */}

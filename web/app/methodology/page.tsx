@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
 import { Breadcrumbs, PillButton } from "@/components/blocks";
 import { allPhotoCredits } from "@/lib/cityImages";
+import { getLiveStats, getCountryIndex, getCityIndex, getRoleIndex, getLastRefreshed, isConfigured } from "@/lib/data";
+import { JsonLd } from "@/components/Seo";
+import { datasetLd, monthYear } from "@/lib/seo";
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Methodology",
   description:
     "How SalaryRadar builds its salary benchmarks: sources, base pay vs total comp, city-level data, sample gates, advertised vs offered, and how Pay Score works.",
+  alternates: { canonical: "/methodology" },
 };
 
 const SECTIONS = [
@@ -41,7 +47,28 @@ const SECTIONS = [
   },
 ];
 
-export default function MethodologyPage() {
+// Live dataset facts — the visible card and the Dataset JSON-LD are built from
+// these same numbers, so the markup can never claim a count the page doesn't.
+async function datasetFacts() {
+  if (!isConfigured) return null;
+  const [stats, countries, cities, roles, refreshed] = await Promise.all([
+    getLiveStats(), getCountryIndex(), getCityIndex(), getRoleIndex(), getLastRefreshed(),
+  ]);
+  const f = {
+    postings: stats.postings, salaried: stats.salaried, disclosed: stats.disclosed, companies: stats.companies,
+    countries: countries.filter((c) => c.median != null).length,
+    cities: cities.filter((c) => c.median != null).length,
+    roles: roles.filter((r) => r.median != null && r.name !== "Other").length,
+    refreshed, updated: monthYear(refreshed),
+  };
+  const description =
+    `SalaryRadar's live salary dataset: ${f.postings.toLocaleString("en-IE")} live job ads from ${f.companies.toLocaleString("en-IE")} employers across Europe, the Middle East and Africa, of which ${f.disclosed.toLocaleString("en-IE")} disclose pay and ${f.salaried.toLocaleString("en-IE")} carry an annual base salary usable for a median. ` +
+    `Medians are published for ${f.roles} role families, ${f.countries} countries and ${f.cities} cities, each only once it has at least 8 salaried ads${f.updated ? `. Updated ${f.updated}` : ""}.`;
+  return { ...f, description };
+}
+
+export default async function MethodologyPage() {
+  const ds = await datasetFacts();
   return (
     <div className="mx-auto max-w-2xl pb-4">
       <div className="pt-8"><Breadcrumbs items={[{ label: "Methodology" }]} /></div>
@@ -68,6 +95,28 @@ export default function MethodologyPage() {
           </section>
         ))}
       </div>
+
+      {ds && (
+        <section id="dataset" className="card mt-8 scroll-mt-24" data-dataset>
+          <h2 className="text-[17px] font-semibold">The dataset</h2>
+          <p className="mt-2.5 leading-relaxed text-ink-muted">{ds.description}</p>
+          <dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {([
+              ["Live job ads", ds.postings], ["Disclose pay", ds.disclosed], ["Usable salaries", ds.salaried], ["Employers", ds.companies],
+              ["Role families published", ds.roles], ["Countries published", ds.countries], ["Cities published", ds.cities],
+            ] as [string, number][]).map(([k, v]) => (
+              <div key={k}><dt className="text-[11px] text-ink-faint">{k}</dt><dd className="tnum mt-1 text-lg font-semibold">{v.toLocaleString("en-IE")}</dd></div>
+            ))}
+          </dl>
+          <JsonLd data={datasetLd({
+            name: "SalaryRadar EMEA advertised salary dataset",
+            description: ds.description, path: "/methodology", dateModified: ds.refreshed,
+            variableMeasured: ["Median advertised annual base salary (EUR)", "Salary percentiles (P10, P25, P75, P90)", "Pay disclosure rate", "Salaried job-ad sample size"],
+            spatialCoverage: "Europe, the Middle East and Africa (EMEA)",
+            keywords: ["salary", "pay transparency", "job postings", "EMEA", "salary benchmark"],
+          })} />
+        </section>
+      )}
 
       {allPhotoCredits().length > 0 && (
         <section className="mt-8">

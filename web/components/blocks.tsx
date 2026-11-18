@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ReactNode } from "react";
 import { Flag } from "@/components/Flag";
+import { JsonLd } from "@/components/Seo";
+import { breadcrumbLd } from "@/lib/seo";
 import { eur, eurK } from "@/lib/format";
 import { Trend } from "@/lib/stats";
 
@@ -50,6 +52,8 @@ export function Breadcrumbs({ items }: { items: { label: string; href?: string }
           {it.href ? <Link href={it.href} className="hover:text-ink">{it.label}</Link> : <span className="text-ink-muted">{it.label}</span>}
         </span>
       ))}
+      {/* BreadcrumbList built from the same items array as the visible trail. */}
+      <JsonLd data={breadcrumbLd(items)} />
     </nav>
   );
 }

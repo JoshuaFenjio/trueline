@@ -26,6 +26,8 @@ import { EmailCapture } from "@/components/EmailCapture";
 import { parseQuery } from "@/lib/parseQuery";
 import { WATCHLIST } from "@/lib/watchlist";
 import { eur, eurK, slugify } from "@/lib/format";
+import { JsonLd } from "@/components/Seo";
+import { organizationLd, websiteLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -106,6 +108,8 @@ export default async function Home({
     <div className="pb-4">
       {/* Page canvas matched to the hero artwork's cream — see .home-canvas. */}
       <div className="home-canvas" aria-hidden="true" />
+      <JsonLd data={organizationLd()} />
+      <JsonLd data={websiteLd()} />
 
       {/* Hero — two columns: search-led text left (45%), illustration right
           (55%). The illustration is hidden below 1024px and the hero falls back
