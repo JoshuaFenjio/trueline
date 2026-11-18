@@ -263,7 +263,7 @@ export function EuropePayMap({
           </div>
         </>
       ) : (
-        <p className="mt-4 text-sm text-ink-muted">Not enough data to name a leader for {role === "All roles" ? "all role families" : familyLabel(role)} yet. We show one at the 8-salaried-ad gate.</p>
+        <p className="mt-4 text-sm text-ink-muted">Not enough data to name a leader for {role === "All roles" ? "all role families" : familyLabel(role)} yet. We name a leader once a country has 15 salaried ads (the table lists every country from 8).</p>
       )}
     </div>
   );

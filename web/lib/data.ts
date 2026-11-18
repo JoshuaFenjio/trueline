@@ -1319,7 +1319,9 @@ export const getHeroBand = async (role = "Software Engineer", level?: Level, top
 // (so the band always has enough cells to fill). No manual curation — it stays
 // fresh on its own. Same input on the same day => same pick (stable SSR).
 export function pickSpotlightRole(europe: EuropePayData, nowMs = Date.now()): string {
+  // "Other" is an unclassified bucket, not a role family — never spotlight it.
   const eligible = europe.roles
+    .filter((r) => r !== "Other")
     .filter((r) => (europe.data[r]?.countries.filter((c) => c.median != null).length ?? 0) >= 5)
     .sort();
   if (eligible.length === 0) return "Software Engineer";
