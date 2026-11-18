@@ -24,6 +24,7 @@ export const STATIC_PAGES: PublishedPage[] = [
   { path: "/insights/salary-transparency-statistics", title: "Salary transparency statistics", group: "static", live: true, priority: 0.8 },
   { path: "/methodology", title: "Methodology", group: "static", live: true, priority: 0.5 },
   { path: "/sitemap", title: "All pages", group: "static", live: true, priority: 0.3 },
+  { path: "/compare", title: "Compare companies", group: "static", live: false, priority: 0.3 },
   { path: "/for-companies", title: "For companies", group: "static", live: false, priority: 0.3 },
   { path: "/add", title: "Add your salary", group: "static", live: false, priority: 0.3 },
 ];
