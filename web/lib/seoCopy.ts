@@ -48,8 +48,15 @@ import { eurExact, BRAND } from "./seo";
 
 export const EMEA_PLACE = "Europe, the Middle East and Africa";
 
+// Country names that take a definite article in running English.
+const THE = new Set(["United Kingdom", "Netherlands", "United Arab Emirates", "Czech Republic", "Philippines", "United States", "Faroe Islands", "Isle of Man", "Channel Islands", "Vatican City"]);
+/** Place name as it reads after "in": "the Netherlands", "Germany", "Berlin". */
+export function inPlace(place: string): string {
+  return THE.has(place) ? `the ${place}` : place;
+}
+
 export function answerSentence(p: { subject: string; place: string; median: number; n: number; updated: string | null }): string {
-  return `The median advertised base salary for ${p.subject} in ${p.place} is ${eurExact(p.median)}, from ${p.n.toLocaleString("en-IE")} salaried live job ads tracked by ${BRAND}${p.updated ? ` (updated ${p.updated})` : ""}.`;
+  return `The median advertised base salary for ${p.subject} in ${inPlace(p.place)} is ${eurExact(p.median)}, from ${p.n.toLocaleString("en-IE")} salaried live job ads tracked by ${BRAND}${p.updated ? ` (updated ${p.updated})` : ""}.`;
 }
 
 /** FAQ for a role-scoped page (role, role × level, role × place). */
@@ -61,25 +68,25 @@ export function roleFaqs(p: {
 }): Faq[] {
   const out: Faq[] = [
     {
-      q: `How much does ${withArticle(p.noun)} earn in ${p.place}?`,
-      a: `Job ads for ${p.plural} in ${p.place} advertise a median base salary of ${eurExact(p.median)} a year; the middle half of ${p.n.toLocaleString("en-IE")} salaried ads offer between ${eurExact(p.p25)} and ${eurExact(p.p75)}.`,
+      q: `How much does ${withArticle(p.noun)} earn in ${inPlace(p.place)}?`,
+      a: `Job ads for ${p.plural} in ${inPlace(p.place)} advertise a median base salary of ${eurExact(p.median)} a year; the middle half of ${p.n.toLocaleString("en-IE")} salaried ads offer between ${eurExact(p.p25)} and ${eurExact(p.p75)}.`,
     },
     {
-      q: `What do the best-paid ${p.plural} in ${p.place} earn?`,
-      a: `The top 10% of salaried ${p.noun} job ads in ${p.place} advertise an annual base salary of ${eurExact(p.p90)} or more.`,
+      q: `What do the best-paid ${p.plural} in ${inPlace(p.place)} earn?`,
+      a: `The top 10% of salaried ${p.noun} job ads in ${inPlace(p.place)} advertise an annual base salary of ${eurExact(p.p90)} or more.`,
     },
   ];
   if (p.leader) {
     const where = p.leader.kind === "company" ? "employer" : p.leader.kind;
     out.push({
-      q: `Which ${where} pays ${p.plural} the most in ${p.place}?`,
-      a: `${p.leader.name} has the highest median advertised base for ${p.plural} in ${p.place} that clears our sample gate, at ${eurExact(p.leader.median)}.`,
+      q: `Which ${where} pays ${p.plural} the most in ${inPlace(p.place)}?`,
+      a: `${p.leader.name} has the highest median advertised base for ${p.plural} in ${inPlace(p.place)} that clears our sample gate, at ${eurExact(p.leader.median)}.`,
     });
   }
   if (p.trackedN > 0) {
     out.push({
-      q: `How many ${p.noun} job ads in ${p.place} disclose salary?`,
-      a: `${p.disclosedN.toLocaleString("en-IE")} of the ${p.trackedN.toLocaleString("en-IE")} live ${p.noun} job ads in ${p.place} tracked by ${BRAND} disclose pay (${Math.round((p.disclosedN / p.trackedN) * 100)}%).`,
+      q: `How many ${p.noun} job ads in ${inPlace(p.place)} disclose salary?`,
+      a: `${p.disclosedN.toLocaleString("en-IE")} of the ${p.trackedN.toLocaleString("en-IE")} live ${p.noun} job ads in ${inPlace(p.place)} tracked by ${BRAND} disclose pay (${Math.round((p.disclosedN / p.trackedN) * 100)}%).`,
     });
   }
   return out;
@@ -92,20 +99,20 @@ export function placeFaqs(p: {
   topCompany?: { name: string; median: number } | null;
 }): Faq[] {
   const out: Faq[] = [{
-    q: `What is the median salary in ${p.place}?`,
-    a: `Across all tracked roles, job ads in ${p.place} advertise a median base salary of ${eurExact(p.median)} a year, from ${p.n.toLocaleString("en-IE")} salaried live job ads.`,
+    q: `What is the median salary in ${inPlace(p.place)}?`,
+    a: `Across all tracked roles, job ads in ${inPlace(p.place)} advertise a median base salary of ${eurExact(p.median)} a year, from ${p.n.toLocaleString("en-IE")} salaried live job ads.`,
   }];
   if (p.topRole) out.push({
-    q: `Which role family pays the most in ${p.place}?`,
-    a: `${p.topRole.label} has the highest median advertised base in ${p.place} among role families with at least 8 salaried ads, at ${eurExact(p.topRole.median)}.`,
+    q: `Which role family pays the most in ${inPlace(p.place)}?`,
+    a: `${p.topRole.label} has the highest median advertised base in ${inPlace(p.place)} among role families with at least 8 salaried ads, at ${eurExact(p.topRole.median)}.`,
   });
   if (p.topCompany) out.push({
-    q: `Which company pays the most in ${p.place}?`,
-    a: `${p.topCompany.name} has the highest median advertised base in ${p.place} among employers with at least 3 salaried ads, at ${eurExact(p.topCompany.median)}.`,
+    q: `Which company pays the most in ${inPlace(p.place)}?`,
+    a: `${p.topCompany.name} has the highest median advertised base in ${inPlace(p.place)} among employers with at least 3 salaried ads, at ${eurExact(p.topCompany.median)}.`,
   });
   out.push({
-    q: `What share of job ads in ${p.place} disclose salary?`,
-    a: `${p.disclosurePct}% of the ${p.trackedN.toLocaleString("en-IE")} live job ads in ${p.place} tracked by ${BRAND} disclose pay.`,
+    q: `What share of job ads in ${inPlace(p.place)} disclose salary?`,
+    a: `${p.disclosurePct}% of the ${p.trackedN.toLocaleString("en-IE")} live job ads in ${inPlace(p.place)} tracked by ${BRAND} disclose pay.`,
   });
   return out;
 }

@@ -10,6 +10,7 @@ import { familyLabel } from "@/lib/roleNames";
 import { isManagementLevel } from "@/lib/levels";
 import { eur, eurK, slugify } from "@/lib/format";
 import { occupationLd, roundSpread, monthYear, robotsFor, currentYear, eurExact } from "@/lib/seo";
+import { inPlace } from "@/lib/seoCopy";
 import { rolePlural, occupationEligible, answerSentence, roleFaqs, roleNoun, withArticle } from "@/lib/seoCopy";
 import { CONCENTRATION_GATE } from "@/lib/payScale";
 
@@ -23,11 +24,11 @@ export function rolePlaceMetadata(hub: RolePlaceHub): Metadata {
   const path = rolePlacePath(hub.slug, hub.kind, hub.placeSlug);
   const y = currentYear();
   const title = sp
-    ? `${label} Salary in ${hub.place} ${y}: ${eurExact(sp.median)} median`
-    : `${label} Salary in ${hub.place} ${y}: live job ads`;
+    ? `${label} Salary in ${inPlace(hub.place)} ${y}: ${eurExact(sp.median)} median`
+    : `${label} Salary in ${inPlace(hub.place)} ${y}: live job ads`;
   const description = sp
-    ? `Median advertised base salary for ${rolePlural(hub.role)} in ${hub.place}: ${eurExact(sp.median)}, from ${sp.n} salaried live job ads (middle 50% ${eurExact(sp.p25)}–${eurExact(sp.p75)}). Live from company job boards.`
-    : `${rolePlural(hub.role)} in ${hub.place}: ${hub.trackedN} live job ads tracked, not yet enough salaried ads (8) to publish a median.`;
+    ? `Median advertised base salary for ${rolePlural(hub.role)} in ${inPlace(hub.place)}: ${eurExact(sp.median)}, from ${sp.n} salaried live job ads (middle 50% ${eurExact(sp.p25)}–${eurExact(sp.p75)}). Live from company job boards.`
+    : `${rolePlural(hub.role)} in ${inPlace(hub.place)}: ${hub.trackedN} live job ads tracked, not yet enough salaried ads (8) to publish a median.`;
   return {
     title, description,
     alternates: { canonical: path },
@@ -55,7 +56,7 @@ export function RolePlaceView({ hub, refreshed }: { hub: RolePlaceHub; refreshed
   const updated = monthYear(refreshed);
   const rs = sp ? roundSpread(sp) : null;
   const caption = rs
-    ? `Annual advertised base salary percentiles for ${plural} in ${hub.place}, from ${rs.n} salaried live job ads tracked by SalaryRadar${updated ? ` (updated ${updated})` : ""}.`
+    ? `Annual advertised base salary percentiles for ${plural} in ${inPlace(hub.place)}, from ${rs.n} salaried live job ads tracked by SalaryRadar${updated ? ` (updated ${updated})` : ""}.`
     : "";
   const lead = rs ? answerSentence({ subject: withArticle(roleNoun(hub.role)), place: hub.place, median: rs.median, n: rs.n, updated }) : null;
   const leaderRow = hub.cities[0] ?? hub.topCompanies[0] ?? null;
@@ -78,12 +79,12 @@ export function RolePlaceView({ hub, refreshed }: { hub: RolePlaceHub; refreshed
       <header className="mt-6">
         <div className="flex items-center gap-3">
           <Flag country={hub.country ?? hub.place} />
-          <h1 className="t-h2">{label} salary in {hub.place}</h1>
+          <h1 className="t-h2">{label} salary in {inPlace(hub.place)}</h1>
         </div>
-        <p className="mt-3 max-w-xl text-ink-muted">Advertised base pay for {plural} in {hub.place}, live from company job boards.</p>
+        <p className="mt-3 max-w-xl text-ink-muted">Advertised base pay for {plural} in {inPlace(hub.place)}, live from company job boards.</p>
         <div className="mt-3 flex flex-wrap gap-2 text-[12px]">
           <Link href={`/roles/${hub.slug}`} className="rounded-full border px-3 py-1 text-ink-muted hover:text-ink" style={{ background: "var(--surface-1)" }}>All {label} pay across EMEA</Link>
-          <Link href={placeHref} className="rounded-full border px-3 py-1 text-ink-muted hover:text-ink" style={{ background: "var(--surface-1)" }}>All roles in {hub.place}</Link>
+          <Link href={placeHref} className="rounded-full border px-3 py-1 text-ink-muted hover:text-ink" style={{ background: "var(--surface-1)" }}>All roles in {inPlace(hub.place)}</Link>
           {hub.kind === "city" && hub.country && (
             <Link href={rolePlacePath(hub.slug, "country", slugify(hub.country))} className="rounded-full border px-3 py-1 text-ink-muted hover:text-ink" style={{ background: "var(--surface-1)" }}>{label} in {hub.country}</Link>
           )}
@@ -92,7 +93,7 @@ export function RolePlaceView({ hub, refreshed }: { hub: RolePlaceHub; refreshed
 
       {!sp || !rs ? (
         <section className="mt-8 space-y-6">
-          <GatedState n={hub.overall.n} what={`${label} in ${hub.place}`} tracked={hub.trackedN} />
+          <GatedState n={hub.overall.n} what={`${label} in ${inPlace(hub.place)}`} tracked={hub.trackedN} />
           {hub.peers.length > 0 && (
             <div className="card">
               <div className="text-[15px] font-semibold">Where we can show {label} pay</div>
@@ -137,14 +138,14 @@ export function RolePlaceView({ hub, refreshed }: { hub: RolePlaceHub; refreshed
 
           {hub.cities.length > 0 && (
             <section className="mt-8">
-              <SectionHeader kicker="Cities" title={`${label} pay by city in ${hub.place}`} />
+              <SectionHeader kicker="Cities" title={`${label} pay by city in ${inPlace(hub.place)}`} />
               <div className="mt-5 card"><RankTable rows={toPayVMs(hub.cities, (s) => rolePlacePath(hub.slug, "city", s))} bars={false} /></div>
             </section>
           )}
 
           <section className="mt-8">
             <div className="card">
-              <div className="text-[15px] font-semibold">Latest {label} job ads in {hub.place}</div>
+              <div className="text-[15px] font-semibold">Latest {label} job ads in {inPlace(hub.place)}</div>
               <p className="mt-1.5 text-[12px] text-ink-faint">Pay shown only where the ad disclosed it. Titles open the employer&rsquo;s own posting.</p>
               <div className="mt-3"><PostingList postings={hub.latest} sortable emptyNote="No dated ads right now." /></div>
             </div>
@@ -154,7 +155,7 @@ export function RolePlaceView({ hub, refreshed }: { hub: RolePlaceHub; refreshed
 
           {occupationEligible(hub.role) && (
             <JsonLd data={occupationLd({
-              name: label, path, description: caption, pageTitle: `${label} salary in ${hub.place}`,
+              name: label, path, description: caption, pageTitle: `${label} salary in ${inPlace(hub.place)}`,
               location: hub.kind === "city" ? { kind: "city", name: hub.place, country: hub.country } : { kind: "country", name: hub.place },
               spread: rs, lastRefreshedIso: refreshed,
             })} />
